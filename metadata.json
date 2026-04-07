@@ -1,0 +1,5 @@
+{
+  "name": "Zentory",
+  "description": "Multi-tenant SaaS for Sales, Inventory, and Finance management.",
+  "requestFramePermissions": []
+}

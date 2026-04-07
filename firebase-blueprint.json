@@ -1,0 +1,136 @@
+{
+  "entities": {
+    "tenant": {
+      "title": "Tenant",
+      "description": "A business entity using the SaaS.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Business name" },
+        "slug": { "type": "string", "description": "Subdomain slug" },
+        "ownerId": { "type": "string", "description": "UID of the tenant admin" },
+        "subscription": { "type": "string", "enum": ["free", "pro", "enterprise"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "settings": { "type": "object" }
+      },
+      "required": ["name", "slug", "ownerId"]
+    },
+    "user": {
+      "title": "User",
+      "description": "A user of the system.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["superadmin", "admin", "staff"] },
+        "tenantId": { "type": "string", "description": "ID of the tenant they belong to (null for superadmin)" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "product": {
+      "title": "Product",
+      "description": "Inventory item.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "sku": { "type": "string" },
+        "barcode": { "type": "string" },
+        "hpp": { "type": "number", "description": "Cost of Goods Sold" },
+        "price": { "type": "number", "description": "Selling Price" },
+        "stock": { "type": "number" },
+        "category": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["tenantId", "name", "price", "hpp"]
+    },
+    "category": {
+      "title": "Category",
+      "description": "Product category.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["tenantId", "name"]
+    },
+    "warehouse": {
+      "title": "Warehouse",
+      "description": "Storage location.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["tenantId", "name"]
+    },
+    "transaction": {
+      "title": "Transaction",
+      "description": "Sales record.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "type": { "type": "string", "enum": ["sale", "expense"] },
+        "amount": { "type": "number" },
+        "items": { "type": "array" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["tenantId", "type", "amount", "date"]
+    },
+    "approval_request": {
+      "title": "Approval Request",
+      "description": "Request to change status of a cancelled order.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "requestedBy": { "type": "string" },
+        "requestedAt": { "type": "string", "format": "date-time" },
+        "targetStatus": { "type": "string", "enum": ["pending", "processing", "completed"] },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "resolvedBy": { "type": "string" },
+        "resolvedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "orderId", "requestedBy", "targetStatus", "status"]
+    }
+  },
+  "firestore": {
+    "/tenants/{tenantId}": {
+      "schema": "tenant",
+      "description": "Tenant configuration"
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User profiles"
+    },
+    "/products/{productId}": {
+      "schema": "product",
+      "description": "Product inventory"
+    },
+    "/categories/{categoryId}": {
+      "schema": "category",
+      "description": "Product categories"
+    },
+    "/warehouses/{warehouseId}": {
+      "schema": "warehouse",
+      "description": "Storage locations"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "transaction",
+      "description": "Sales and expense records"
+    },
+    "/approval_requests/{requestId}": {
+      "schema": "approval_request",
+      "description": "Requests for status changes"
+    }
+  }
+}
