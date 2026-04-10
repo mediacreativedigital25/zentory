@@ -1,136 +1,183 @@
 {
   "entities": {
-    "tenant": {
-      "title": "Tenant",
-      "description": "A business entity using the SaaS.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string", "description": "Business name" },
-        "slug": { "type": "string", "description": "Subdomain slug" },
-        "ownerId": { "type": "string", "description": "UID of the tenant admin" },
-        "subscription": { "type": "string", "enum": ["free", "pro", "enterprise"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "settings": { "type": "object" }
-      },
-      "required": ["name", "slug", "ownerId"]
-    },
-    "user": {
+    "User": {
       "title": "User",
-      "description": "A user of the system.",
+      "description": "User profile with role-based access control",
       "type": "object",
       "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
         "email": { "type": "string", "format": "email" },
-        "role": { "type": "string", "enum": ["superadmin", "admin", "staff"] },
-        "tenantId": { "type": "string", "description": "ID of the tenant they belong to (null for superadmin)" },
-        "displayName": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "role": { "type": "string", "enum": ["SuperAdmin", "Administrator", "Admin 01 Manager Bisnis", "Admin 02 Kasir", "Customer"] },
+        "tenantId": { "type": "string", "description": "ID of the tenant this user belongs to" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "role"]
+      "required": ["uid", "name", "email", "role"]
     },
-    "product": {
-      "title": "Product",
-      "description": "Inventory item.",
+    "Tenant": {
+      "title": "Tenant",
+      "description": "A business entity/store in the multi-tenant system",
       "type": "object",
       "properties": {
-        "tenantId": { "type": "string" },
+        "id": { "type": "string" },
         "name": { "type": "string" },
-        "sku": { "type": "string" },
-        "barcode": { "type": "string" },
-        "hpp": { "type": "number", "description": "Cost of Goods Sold" },
-        "price": { "type": "number", "description": "Selling Price" },
-        "stock": { "type": "number" },
-        "category": { "type": "string" },
-        "warehouseId": { "type": "string" },
-        "imageUrl": { "type": "string" },
-        "description": { "type": "string" }
+        "subdomain": { "type": "string", "description": "Unique slug for subdomain access" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Inactive", "Suspended"] },
+        "plan": { "type": "string", "enum": ["Free", "Pro", "Enterprise"] },
+        "businessType": { "type": "string", "enum": ["Retail", "Service", "Mixed"] },
+        "password": { "type": "string", "description": "Initial login password" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["tenantId", "name", "price", "hpp"]
+      "required": ["name", "subdomain", "status", "plan"]
     },
-    "category": {
-      "title": "Category",
-      "description": "Product category.",
+    "Service": {
+      "title": "Service",
+      "description": "Service offered for booking",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "tenantId": { "type": "string" },
         "name": { "type": "string" },
-        "description": { "type": "string" }
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "duration": { "type": "integer", "description": "Duration in minutes" },
+        "image": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["tenantId", "name"]
+      "required": ["tenantId", "name", "price", "duration"]
     },
-    "warehouse": {
-      "title": "Warehouse",
-      "description": "Storage location.",
+    "Booking": {
+      "title": "Booking",
+      "description": "Appointment or service booking",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "tenantId": { "type": "string" },
-        "name": { "type": "string" },
-        "location": { "type": "string" },
-        "description": { "type": "string" }
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "serviceId": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Completed", "Cancelled"] },
+        "total": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["tenantId", "name"]
+      "required": ["tenantId", "customerId", "serviceId", "date", "time", "status"]
     },
-    "transaction": {
+    "Transaction": {
       "title": "Transaction",
-      "description": "Sales record.",
+      "description": "Financial income or expense",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "tenantId": { "type": "string" },
-        "type": { "type": "string", "enum": ["sale", "expense"] },
+        "type": { "type": "string", "enum": ["Income", "Expense"] },
+        "category": { "type": "string" },
         "amount": { "type": "number" },
-        "items": { "type": "array" },
+        "description": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
-        "status": { "type": "string" },
-        "userId": { "type": "string" }
+        "referenceId": { "type": "string", "description": "Optional ID of related order or booking" }
       },
       "required": ["tenantId", "type", "amount", "date"]
     },
-    "approval_request": {
-      "title": "Approval Request",
-      "description": "Request to change status of a cancelled order.",
+    "Product": {
+      "title": "Product",
+      "description": "Inventory product item",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "stock": { "type": "integer" },
+        "categoryId": { "type": "string" },
+        "categoryName": { "type": "string" },
+        "image": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "name", "price", "stock"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "name"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Sales order from customer or manual entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
         "tenantId": { "type": "string" },
         "orderId": { "type": "string" },
-        "orderNumber": { "type": "string" },
-        "requestedBy": { "type": "string" },
-        "requestedAt": { "type": "string", "format": "date-time" },
-        "targetStatus": { "type": "string", "enum": ["pending", "processing", "completed"] },
-        "reason": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "resolvedBy": { "type": "string" },
-        "resolvedAt": { "type": "string", "format": "date-time" }
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "string" },
+              "productName": { "type": "string" },
+              "quantity": { "type": "integer" },
+              "price": { "type": "number" }
+            }
+          }
+        },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Processing", "Completed", "Cancelled"] },
+        "type": { "type": "string", "enum": ["Manual", "Catalog"] },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["tenantId", "orderId", "requestedBy", "targetStatus", "status"]
+      "required": ["tenantId", "customerId", "items", "total", "status", "type"]
     }
   },
   "firestore": {
     "/tenants/{tenantId}": {
-      "schema": "tenant",
-      "description": "Tenant configuration"
+      "schema": "Tenant",
+      "description": "Business tenants"
+    },
+    "/services/{serviceId}": {
+      "schema": "Service",
+      "description": "Services for booking"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Service bookings"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Financial transactions"
     },
     "/users/{userId}": {
-      "schema": "user",
+      "schema": "User",
       "description": "User profiles"
     },
     "/products/{productId}": {
-      "schema": "product",
-      "description": "Product inventory"
+      "schema": "Product",
+      "description": "Inventory products"
     },
     "/categories/{categoryId}": {
-      "schema": "category",
+      "schema": "Category",
       "description": "Product categories"
     },
-    "/warehouses/{warehouseId}": {
-      "schema": "warehouse",
-      "description": "Storage locations"
-    },
-    "/transactions/{transactionId}": {
-      "schema": "transaction",
-      "description": "Sales and expense records"
-    },
-    "/approval_requests/{requestId}": {
-      "schema": "approval_request",
-      "description": "Requests for status changes"
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Sales orders"
     }
   }
 }

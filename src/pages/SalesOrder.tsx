@@ -1,294 +1,442 @@
-import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, onSnapshot, runTransaction } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { collection, query, getDocs, where, addDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { useAuth } from '../hooks/useAuth';
-import { Product, Customer } from '../types';
-import { ShoppingCart, Search, Plus, Minus, Trash2, CreditCard, User, Tag, Briefcase, X, ListOrdered } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
-import ConfirmModal from '../components/ConfirmModal';
+import { useAuth } from '../contexts/AuthContext';
+import { generateOrderId } from '../lib/orderUtils';
+import { 
+  Search, 
+  Plus, 
+  Minus, 
+  Trash2, 
+  User, 
+  ShoppingCart,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Package,
+  X,
+  Filter,
+  UserPlus
+} from 'lucide-react';
+import { cn } from '../lib/utils';
+import { Product, Category, UserProfile, CartItem, Order } from '../types';
 
-export default function SalesOrder() {
-  const { profile } = useAuth();
-  const navigate = useNavigate();
+export const SalesOrder: React.FC = () => {
+  const { currentTenant } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [cart, setCart] = useState<{ product: Product; quantity: number }[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<string>('');
-  const [orderType, setOrderType] = useState<'manual' | 'service'>('manual');
-  const [search, setSearch] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [customers, setCustomers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCustomer, setSelectedCustomer] = useState<UserProfile | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!profile?.tenantId) return;
-    
-    const pQuery = query(collection(db, 'products'), where('tenantId', '==', profile.tenantId));
-    const cQuery = query(collection(db, 'customers'), where('tenantId', '==', profile.tenantId));
-
-    const unsubProducts = onSnapshot(pQuery, (snap) => {
-      setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
-    });
-
-    const unsubCustomers = onSnapshot(cQuery, (snap) => {
-      setCustomers(snap.docs.map(d => ({ id: d.id, ...d.data() } as Customer)));
-    });
-
-    return () => {
-      unsubProducts();
-      unsubCustomers();
+    const fetchData = async () => {
+      if (!currentTenant?.id) return;
+      try {
+        const [pSnap, cSnap, custSnap] = await Promise.all([
+          getDocs(query(collection(db, 'products'), where('tenantId', '==', currentTenant.id), where('isActive', '==', true))),
+          getDocs(query(collection(db, 'categories'), where('tenantId', '==', currentTenant.id))),
+          getDocs(query(collection(db, 'users'), where('role', '==', 'Customer'), where('tenantId', '==', currentTenant.id)))
+        ]);
+        
+        setProducts(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
+        setCategories(cSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)));
+        setCustomers(custSnap.docs.map(doc => doc.data() as UserProfile));
+      } catch (err) {
+        console.error('Error fetching POS data:', err);
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [profile]);
+    fetchData();
+  }, [currentTenant]);
 
   const addToCart = (product: Product) => {
-    if (orderType === 'manual' && product.stock <= 0) return;
-    const existing = cart.find(item => item.product.id === product.id);
-    if (existing) {
-      if (orderType === 'manual' && existing.quantity >= product.stock) return;
-      setCart(cart.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
-    } else {
-      setCart([...cart, { product, quantity: 1 }]);
-    }
+    if (product.stock <= 0) return;
+    setCart(prev => {
+      const existing = prev.find(item => item.productId === product.id);
+      if (existing) {
+        if (existing.quantity >= product.stock) return prev;
+        return prev.map(item => item.productId === product.id ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price } : item);
+      }
+      return [...prev, { 
+        productId: product.id, 
+        productName: product.name, 
+        quantity: 1, 
+        price: product.price, 
+        total: product.price,
+        image: product.image 
+      }];
+    });
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart(prev => prev.filter(item => item.productId !== productId));
   };
 
   const updateQuantity = (productId: string, delta: number) => {
-    setCart(cart.map(item => {
-      if (item.product.id === productId) {
-        const newQty = Math.max(0, item.quantity + delta);
-        if (orderType === 'manual' && newQty > item.product.stock) return item;
-        return { ...item, quantity: newQty };
+    setCart(prev => prev.map(item => {
+      if (item.productId === productId) {
+        const newQty = Math.max(1, item.quantity + delta);
+        const product = products.find(p => p.id === productId);
+        if (product && newQty > product.stock) return item;
+        return { ...item, quantity: newQty, total: newQty * item.price };
       }
       return item;
-    }).filter(item => item.quantity > 0));
+    }));
   };
 
-  const total = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+  const subtotal = cart.reduce((acc, item) => acc + item.total, 0);
+  const tax = 0; // Could be calculated based on tenant settings
+  const total = subtotal + tax;
 
-  const generateOrderNumber = async (type: 'manual' | 'catalog' | 'service') => {
-    const now = new Date();
-    const yearMonth = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0');
-    const prefix = type === 'manual' ? 'M' : type === 'catalog' ? 'IN' : '0J';
-    
-    // In a real app, you'd use a counter in Firestore to ensure uniqueness
-    // For this demo, we'll use a random suffix or count existing orders
-    const ordersRef = collection(db, 'orders');
-    const q = query(ordersRef, where('tenantId', '==', profile?.tenantId), where('type', '==', type));
-    const snap = await getDocs(q);
-    const sequence = (snap.size + 1).toString().padStart(6, '0');
-    
-    return `${prefix}${yearMonth}${sequence}`;
-  };
+  const handleSubmit = async () => {
+    if (!currentTenant?.id) return;
+    if (cart.length === 0) {
+      setError('Keranjang masih kosong.');
+      return;
+    }
 
-  const handleCheckout = async () => {
-    if (cart.length === 0 || isProcessing) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      const orderNumber = await generateOrderId('M', currentTenant.id);
+      const orderData: Omit<Order, 'id'> = {
+        tenantId: currentTenant.id,
+        orderNumber,
+        customerId: selectedCustomer?.uid || 'guest',
+        customerName: selectedCustomer?.name || 'Guest Customer',
+        customerPhone: selectedCustomer?.phone || '',
+        items: cart.map(({ image, ...item }) => item),
+        subtotal,
+        tax,
+        discount: 0,
+        total,
+        status: 'Completed',
+        paymentStatus: 'Paid',
+        paymentMethod: 'Cash',
+        type: 'POS',
+        createdAt: new Date().toISOString()
+      };
 
-    setConfirmConfig({
-      isOpen: true,
-      title: 'Konfirmasi Pesanan',
-      message: 'Apakah Anda yakin ingin memproses pesanan ini?',
-      onConfirm: async () => {
-        setConfirmConfig(null);
-        setIsProcessing(true);
-        try {
-          const orderNumber = await generateOrderNumber(orderType);
-          const customer = customers.find(c => c.id === selectedCustomer);
+      await addDoc(collection(db, 'orders'), orderData);
 
-          await addDoc(collection(db, 'orders'), {
-            orderNumber,
-            tenantId: profile?.tenantId,
-            customerId: selectedCustomer || null,
-            customerName: customer?.name || 'Guest',
-            type: orderType,
-            items: cart.map(item => ({
-              productId: item.product.id,
-              name: item.product.name,
-              quantity: item.quantity,
-              price: item.product.price
-            })),
-            totalAmount: total,
-            date: serverTimestamp(),
-            status: 'completed',
-            userId: profile?.uid,
-          });
-
-          // 1b. Create transaction for financial tracking
-          await addDoc(collection(db, 'transactions'), {
-            tenantId: profile?.tenantId,
-            type: 'sale',
-            amount: total,
-            items: cart.map(item => ({
-              productId: item.product.id,
-              name: item.product.name,
-              quantity: item.quantity,
-              price: item.product.price
-            })),
-            date: serverTimestamp(),
-            status: 'completed',
-            userId: profile?.uid,
-            orderNumber: orderNumber, // Reference to the order
-          });
-
-          // Update stock only for manual products (not services)
-          if (orderType === 'manual') {
-            for (const item of cart) {
-              const productRef = doc(db, 'products', item.product.id);
-              await runTransaction(db, async (transaction) => {
-                const pDoc = await transaction.get(productRef);
-                if (!pDoc.exists()) return;
-                const newStock = pDoc.data().stock - item.quantity;
-                transaction.update(productRef, { stock: newStock });
-              });
-            }
-          }
-
-          setCart([]);
-          setSelectedCustomer('');
-          alert(`Order ${orderNumber} created successfully!`);
-        } catch (err) {
-          console.error(err);
-          alert('Failed to create order.');
-        } finally {
-          setIsProcessing(false);
-        }
+      // Update stock
+      for (const item of cart) {
+        await updateDoc(doc(db, 'products', item.productId), {
+          stock: increment(-item.quantity)
+        });
       }
-    });
+
+      setSuccess(`Pesanan ${orderNumber} berhasil dibuat.`);
+      setCart([]);
+      setSelectedCustomer(null);
+      
+      // Refresh products to get updated stock
+      const pSnap = await getDocs(query(collection(db, 'products'), where('tenantId', '==', currentTenant.id), where('isActive', '==', true)));
+      setProducts(pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
+    } catch (err) {
+      setError('Gagal memproses pesanan.');
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || p.categoryId === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const filteredCustomers = customers.filter(c => 
+    c.name.toLowerCase().includes(customerSearch.toLowerCase()) || 
+    c.email.toLowerCase().includes(customerSearch.toLowerCase())
+  );
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-120px)]">
-      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">Buat Pesanan Baru</h2>
-            <button
-              onClick={() => navigate('/sales/receive')}
-              className="flex items-center px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-bold"
-            >
-              <ListOrdered className="w-4 h-4 mr-2" />
-              Daftar Pesanan
-            </button>
-          </div>
-          <div className="flex gap-4">
-            <button 
-              onClick={() => setOrderType('manual')}
-              className={`flex-1 py-2 rounded-lg text-sm font-bold flex items-center justify-center border transition-all ${orderType === 'manual' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-            >
-              <Tag className="w-4 h-4 mr-2" />
-              Manual Product
-            </button>
-            <button 
-              onClick={() => setOrderType('service')}
-              className={`flex-1 py-2 rounded-lg text-sm font-bold flex items-center justify-center border transition-all ${orderType === 'service' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-            >
-              <Briefcase className="w-4 h-4 mr-2" />
-              Service (Jasa)
-            </button>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search items..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            {products
-              .filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
-              .filter(p => (p.type || 'manual') === orderType)
-              .map((product) => (
-              <button
-                key={product.id}
-                onClick={() => addToCart(product)}
-                disabled={orderType === 'manual' && product.stock <= 0}
-                className="flex flex-col text-left group bg-white border border-gray-100 rounded-xl p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50"
-              >
-                <div className="aspect-square bg-gray-50 rounded-lg mb-3 overflow-hidden relative">
-                  <img src={product.imageUrl || `https://picsum.photos/seed/${product.id}/200/200`} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  {orderType === 'manual' && product.stock <= 0 && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="text-[10px] font-bold text-white bg-red-600 px-2 py-1 rounded">OUT OF STOCK</span>
-                    </div>
-                  )}
-                </div>
-                <h4 className="text-sm font-bold text-gray-900 truncate">{product.name}</h4>
-                <div className="flex justify-between items-center mt-2">
-                  <p className="text-indigo-600 font-extrabold text-sm">Rp.{(product.price || 0).toLocaleString()}</p>
-                  {orderType === 'manual' && <p className="text-[10px] text-gray-500">{product.stock} left</p>}
-                </div>
-              </button>
-            ))}
-          </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Point of Sale</h1>
+          <p className="text-gray-500 mt-1">Input penjualan langsung ke sistem.</p>
         </div>
       </div>
 
-      <div className="w-full lg:w-96 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 space-y-4">
-          <h3 className="text-lg font-bold flex items-center">
-            <ShoppingCart className="w-5 h-5 mr-2 text-indigo-600" />
-            Order Details
-          </h3>
-          <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Select Customer</label>
-            <select 
-              value={selectedCustomer}
-              onChange={(e) => setSelectedCustomer(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Guest Customer</option>
-              {customers.map(c => (
-                <option key={c.id} value={c.id}>{c.name} ({c.phone})</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {cart.map((item) => (
-            <div key={item.product.id} className="flex items-center justify-between">
-              <div className="flex-1 min-w-0 mr-4">
-                <p className="text-sm font-bold text-gray-900 truncate">{item.product.name}</p>
-                <p className="text-xs text-gray-500">Rp.{(item.product.price || 0).toLocaleString()} x {item.quantity}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Product Selection */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <Search size={18} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Cari produk atau SKU..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1 hover:bg-gray-100 rounded"><Minus className="w-4 h-4" /></button>
-                <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1 hover:bg-gray-100 rounded"><Plus className="w-4 h-4" /></button>
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+                <button
+                  onClick={() => setSelectedCategory('all')}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all",
+                    selectedCategory === 'all' ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  )}
+                >
+                  Semua
+                </button>
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={cn(
+                      "px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all",
+                      selectedCategory === cat.id ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                    )}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+              {loading ? (
+                <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400">
+                  <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
+                  <p>Memuat produk...</p>
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <button 
+                    key={product.id}
+                    onClick={() => addToCart(product)}
+                    disabled={product.stock <= 0}
+                    className={cn(
+                      "flex flex-col text-left p-3 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all group relative",
+                      product.stock <= 0 && "opacity-50 grayscale cursor-not-allowed"
+                    )}
+                  >
+                    <div className="aspect-square w-full mb-3 rounded-xl overflow-hidden bg-gray-50 relative">
+                      {product.image ? (
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <Package size={32} />
+                        </div>
+                      )}
+                      {product.stock <= 5 && product.stock > 0 && (
+                        <div className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                          Limit Stok
+                        </div>
+                      )}
+                    </div>
+                    <h4 className="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                      {product.name}
+                    </h4>
+                    <div className="mt-auto pt-2 flex items-center justify-between">
+                      <p className="text-indigo-600 font-extrabold text-sm">Rp {product.price.toLocaleString()}</p>
+                      <p className="text-[10px] font-bold text-gray-400">Stok: {product.stock}</p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400">
+                  <Search size={48} className="mb-4 opacity-20" />
+                  <p>Produk tidak ditemukan</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="p-6 bg-gray-50 border-t border-gray-100 space-y-4">
-          <div className="flex justify-between text-xl font-extrabold text-gray-900 pt-2">
-            <span>Total</span>
-            <span>Rp.{(total || 0).toLocaleString()}</span>
+        {/* Cart & Customer */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Customer Selection */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <User size={20} className="text-indigo-600" />
+                Pelanggan
+              </h3>
+              {!selectedCustomer && (
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Default: Guest</span>
+              )}
+            </div>
+            
+            {selectedCustomer ? (
+              <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-between group">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-indigo-900 truncate">{selectedCustomer.name}</p>
+                  <p className="text-xs text-indigo-600 truncate">{selectedCustomer.email}</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedCustomer(null)}
+                  className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-xl transition-all"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <Search size={16} />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Cari pelanggan..."
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    className="block w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="max-h-32 overflow-y-auto space-y-1 custom-scrollbar">
+                  {filteredCustomers.length > 0 ? filteredCustomers.map(customer => (
+                    <button
+                      key={customer.uid}
+                      onClick={() => setSelectedCustomer(customer)}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors flex items-center justify-between group"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-bold text-gray-900 group-hover:text-indigo-900 truncate">{customer.name}</p>
+                        <p className="text-gray-500 group-hover:text-indigo-600 truncate">{customer.email}</p>
+                      </div>
+                      <Plus size={14} className="opacity-0 group-hover:opacity-100" />
+                    </button>
+                  )) : (
+                    <p className="text-[10px] text-center text-gray-400 py-2">Tidak ada pelanggan terdaftar</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          <button
-            onClick={handleCheckout}
-            disabled={cart.length === 0 || isProcessing}
-            className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-lg shadow-indigo-200"
-          >
-            <CreditCard className="w-6 h-6 mr-2" />
-            {isProcessing ? 'Processing...' : 'Complete Order'}
-          </button>
+
+          {/* Cart */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col min-h-[500px] overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <ShoppingCart size={20} className="text-indigo-600" />
+                Keranjang
+              </h3>
+              <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-lg">
+                {cart.reduce((acc, item) => acc + item.quantity, 0)} Item
+              </span>
+            </div>
+
+            <div className="flex-1 p-6 space-y-4 overflow-y-auto max-h-[400px] custom-scrollbar">
+              {cart.map(item => (
+                <div key={item.productId} className="flex gap-4 group">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
+                    {item.image ? (
+                      <img src={item.image} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <Package size={20} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900 truncate">{item.productName}</p>
+                    <p className="text-xs text-indigo-600 font-bold mt-0.5">Rp {item.price.toLocaleString()}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1">
+                        <button 
+                          onClick={() => updateQuantity(item.productId, -1)} 
+                          className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="text-xs font-bold w-6 text-center">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.productId, 1)} 
+                          className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <button 
+                        onClick={() => removeFromCart(item.productId)} 
+                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {cart.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400 py-12">
+                  <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
+                    <Package size={32} className="opacity-20" />
+                  </div>
+                  <p className="text-sm font-medium">Keranjang masih kosong</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-gray-50/50 border-t border-gray-100 space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Subtotal</span>
+                  <span className="text-gray-900 font-bold">Rp {subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Pajak (0%)</span>
+                  <span className="text-gray-900 font-bold">Rp {tax.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                  <span className="text-gray-900 font-bold">Total</span>
+                  <span className="text-2xl font-black text-indigo-600">Rp {total.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-4 bg-red-50 text-red-600 text-xs rounded-2xl flex items-center gap-3 animate-shake">
+                  <AlertCircle size={18} className="shrink-0" />
+                  <p className="font-bold">{error}</p>
+                </div>
+              )}
+              {success && (
+                <div className="p-4 bg-emerald-50 text-emerald-600 text-xs rounded-2xl flex items-center gap-3">
+                  <CheckCircle2 size={18} className="shrink-0" />
+                  <p className="font-bold">{success}</p>
+                </div>
+              )}
+
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || cart.length === 0}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-100 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-3 text-lg"
+              >
+                {submitting ? <Loader2 className="animate-spin" size={24} /> : (
+                  <>
+                    <ShoppingCart size={24} />
+                    Bayar Sekarang
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-
-      {confirmConfig && (
-        <ConfirmModal
-          isOpen={confirmConfig.isOpen}
-          title={confirmConfig.title}
-          message={confirmConfig.message}
-          onConfirm={confirmConfig.onConfirm}
-          onCancel={() => setConfirmConfig(null)}
-        />
-      )}
     </div>
   );
-}
+};

@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
-import { auth, db } from '../lib/firebase';
-import { UserPlus, Mail, Lock, Building, User } from 'lucide-react';
-import { motion } from 'motion/react';
+import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db, googleProvider } from '../lib/firebase';
+import { Store, Mail, Lock, User, Phone, MapPin, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 
-export default function Register() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [businessName, setBusinessName] = useState('');
+import { useAuth } from '../contexts/AuthContext';
+
+export const Register: React.FC = () => {
+  const { currentTenant } = useAuth();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    address: '',
+    role: 'Customer' as any
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -20,33 +26,51 @@ export default function Register() {
     setLoading(true);
     setError('');
     try {
-      // 1. Create user
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      // Check if email is already associated with a tenant
+      const tenantsQuery = query(collection(db, 'tenants'), where('email', '==', formData.email));
+      const tenantsSnap = await getDocs(tenantsQuery);
+      let autoTenantId = null;
+      let autoRole = formData.role;
 
-      // 2. Create tenant
-      const tenantSlug = businessName.toLowerCase().replace(/\s+/g, '-');
-      const tenantRef = await addDoc(collection(db, 'tenants'), {
-        name: businessName,
-        slug: tenantSlug,
-        ownerId: user.uid,
-        subscription: 'free',
-        createdAt: serverTimestamp(),
-      });
+      if (!tenantsSnap.empty) {
+        autoTenantId = tenantsSnap.docs[0].id;
+        autoRole = 'Administrator'; // Force Administrator role if they own the tenant email
+      }
 
-      // 3. Create user profile
-      const isSuperAdminEmail = email === 'mediacreativedigital25@gmail.com';
-      await setDoc(doc(db, 'users', user.uid), {
-        email,
-        displayName,
-        role: isSuperAdminEmail ? 'superadmin' : 'admin',
-        tenantId: isSuperAdminEmail ? null : tenantRef.id,
-        createdAt: serverTimestamp(),
-      });
+      const { user } = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      
+      let role = autoRole;
+      if (formData.email === 'mediacreativedigital25@gmail.com') {
+        role = 'SuperAdmin';
+      }
 
-      navigate('/dashboard');
+      const userProfile = {
+        uid: user.uid,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        role: role,
+        tenantId: currentTenant ? currentTenant.id : autoTenantId,
+        createdAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, 'users', user.uid), userProfile);
+      
+      if (currentTenant) {
+        navigate(`/catalog?tenant=${currentTenant.subdomain}`);
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
-      setError(err.message);
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Email ini sudah terdaftar. Silakan masuk menggunakan akun yang ada.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password terlalu lemah. Gunakan minimal 6 karakter.');
+      } else {
+        setError('Gagal mendaftar. Silakan coba lagi nanti.');
+      }
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -54,104 +78,188 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8"
-      >
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-indigo-600">Zentory</h1>
-          <p className="text-gray-500 mt-2">Start your business journey with us.</p>
+      <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg mb-4">
+            <Store size={32} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {currentTenant ? currentTenant.name : 'Zentory'}
+          </h1>
+          <p className="text-gray-500 text-sm">
+            {currentTenant ? `Daftar sebagai Pelanggan ${currentTenant.name}` : 'Buat akun baru Anda'}
+          </p>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 text-sm">
+            <AlertCircle size={20} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Lengkap</label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <User size={18} />
+              </div>
               <input
                 type="text"
                 required
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                placeholder="John Doe"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                placeholder="Nama Lengkap"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
             <div className="relative">
-              <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                required
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                placeholder="My Awesome Shop"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <Mail size={18} />
+              </div>
               <input
                 type="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                placeholder="you@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                placeholder="nama@email.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <Lock size={18} />
+              </div>
               <input
                 type="password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
                 placeholder="••••••••"
               />
             </div>
           </div>
 
-          {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
-              {error}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">No. HP</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <Phone size={18} />
+              </div>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                placeholder="0812..."
+              />
+            </div>
+          </div>
+
+          {!currentTenant && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Role (Demo)</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <ShieldCheck size={18} />
+                </div>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm appearance-none"
+                >
+                  <option value="Customer">Customer</option>
+                  <option value="Administrator">Administrator (Business Owner)</option>
+                  <option value="Admin 01 Manager Bisnis">Manager Bisnis</option>
+                  <option value="Admin 02 Kasir">Kasir</option>
+                </select>
+              </div>
             </div>
           )}
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Alamat</label>
+            <div className="relative">
+              <div className="absolute top-3 left-3 pointer-events-none text-gray-400">
+                <MapPin size={18} />
+              </div>
+              <textarea
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm min-h-[100px]"
+                placeholder="Alamat Lengkap"
+              />
+            </div>
+          </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center disabled:opacity-50"
+            className="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 disabled:opacity-70 mt-4"
           >
-            {loading ? 'Creating account...' : (
-              <>
-                <UserPlus className="w-5 h-5 mr-2" />
-                Register
-              </>
-            )}
+            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Daftar Sekarang'}
+          </button>
+
+          <div className="md:col-span-2 relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Atau</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              setLoading(true);
+              try {
+                const { user } = await signInWithPopup(auth, googleProvider);
+                const docRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                  const role = user.email === '64.iklas@gmail.com' ? 'Administrator' : 'Customer';
+                  await setDoc(docRef, {
+                    uid: user.uid,
+                    name: user.displayName || 'User',
+                    email: user.email,
+                    role: role,
+                    createdAt: new Date().toISOString()
+                  });
+                }
+                navigate('/dashboard');
+              } catch (err) {
+                console.error(err);
+                setError('Gagal daftar dengan Google.');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            className="md:col-span-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+          >
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+            Daftar dengan Google
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
-          Already have an account?{' '}
+        <p className="mt-8 text-center text-sm text-gray-500">
+          Sudah punya akun?{' '}
           <Link to="/login" className="text-indigo-600 font-semibold hover:underline">
-            Login here
+            Masuk
           </Link>
-        </div>
-      </motion.div>
+        </p>
+      </div>
     </div>
   );
-}
+};
