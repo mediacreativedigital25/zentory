@@ -1,294 +1,273 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, getDocs, limit, orderBy, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { 
-  TrendingUp, 
-  Users, 
-  Package, 
-  ShoppingCart, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  Clock,
-  Calendar,
-  Wallet,
-  Plus,
-  ArrowRight
-} from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { format } from 'date-fns';
-import { cn } from '../lib/utils';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { collection, query, where, limit, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
+// ... (rest of imports)
 
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ReactNode;
-  trend?: { value: string; positive: boolean };
-  color: string;
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, color }) => (
-  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-    <div className="flex items-center justify-between mb-4">
-      <div className={cn("p-3 rounded-xl", color)}>
-        {icon}
-      </div>
-      {trend && (
-        <div className={cn(
-          "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full",
-          trend.positive ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-        )}>
-          {trend.positive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-          {trend.value}
-        </div>
-      )}
-    </div>
-    <p className="text-sm text-gray-500 font-medium mb-1">{title}</p>
-    <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
-  </div>
-);
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  // We don't throw here to avoid crashing the whole dashboard, but we log it
+}
+import { useAuth } from '../hooks/useAuth';
+import { Transaction, Product, Tenant } from '../types';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { TrendingUp, TrendingDown, Package, ShoppingCart, Wallet, ArrowUpRight, ArrowDownRight, Building2, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 
-export const Dashboard: React.FC = () => {
-  const { profile, isStaff, currentTenant } = useAuth();
-  const [stats, setStats] = useState({
-    totalSales: 0,
-    totalOrders: 0,
-    totalProducts: 0,
-    totalCustomers: 0,
-    totalBookings: 0,
-    totalBalance: 0
-  });
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const isRetail = currentTenant?.businessType === 'Retail' || currentTenant?.businessType === 'Mixed';
-  const isService = currentTenant?.businessType === 'Service' || currentTenant?.businessType === 'Mixed';
+export default function Dashboard() {
+  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [orderCount, setOrderCount] = useState(0);
+  const [productCount, setProductCount] = useState(0);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      if (!currentTenant?.id) return;
-      try {
-        const queries = [
-          getDocs(query(collection(db, 'orders'), where('tenantId', '==', currentTenant.id))),
-          getDocs(query(collection(db, 'products'), where('tenantId', '==', currentTenant.id))),
-          getDocs(query(collection(db, 'bookings'), where('tenantId', '==', currentTenant.id))),
-          getDocs(query(collection(db, 'transactions'), where('tenantId', '==', currentTenant.id))),
-          getDocs(query(collection(db, 'users'), where('role', '==', 'Customer'), where('tenantId', '==', currentTenant.id)))
-        ];
-        
-        const [ordersSnap, productsSnap, bookingsSnap, transactionsSnap, customersSnap] = await Promise.all(queries);
-        
-        const orders = ordersSnap.docs.map(doc => doc.data());
-        const totalSales = orders.reduce((acc, curr) => acc + (curr.total || 0), 0);
+    if (!profile) return;
 
-        const transactions = transactionsSnap.docs.map(doc => doc.data());
-        const income = transactions.filter(t => t.type === 'Income').reduce((acc, curr) => acc + (curr.amount || 0), 0);
-        const expense = transactions.filter(t => t.type === 'Expense').reduce((acc, curr) => acc + (curr.amount || 0), 0);
-        
-        setStats({
-          totalSales,
-          totalOrders: ordersSnap.size,
-          totalProducts: productsSnap.size,
-          totalCustomers: customersSnap.size,
-          totalBookings: bookingsSnap.size,
-          totalBalance: income - expense
-        });
+    let transQuery;
+    let allTransQuery;
+    let prodQuery;
+    let ordersQuery;
 
-        const recentOrdersSnap = await getDocs(query(
-          collection(db, 'orders'), 
-          where('tenantId', '==', currentTenant.id),
-          orderBy('createdAt', 'desc'), 
-          limit(5)
-        ));
-        setRecentOrders(recentOrdersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    let unsubTenants: (() => void) | null = null;
 
-    if (isStaff && currentTenant) {
-      fetchStats();
+    if (profile.tenantId) {
+      transQuery = query(
+        collection(db, 'transactions'),
+        where('tenantId', '==', profile.tenantId),
+        orderBy('date', 'desc'),
+        limit(10)
+      );
+      allTransQuery = query(
+        collection(db, 'transactions'),
+        where('tenantId', '==', profile.tenantId)
+      );
+      prodQuery = query(
+        collection(db, 'products'),
+        where('tenantId', '==', profile.tenantId)
+      );
+      ordersQuery = query(
+        collection(db, 'orders'),
+        where('tenantId', '==', profile.tenantId)
+      );
+    } else if (profile.role === 'superadmin') {
+      transQuery = query(collection(db, 'transactions'), orderBy('date', 'desc'), limit(10));
+      allTransQuery = query(collection(db, 'transactions'));
+      prodQuery = query(collection(db, 'products'));
+      ordersQuery = query(collection(db, 'orders'));
+
+      // Fetch tenants for name resolution
+      unsubTenants = onSnapshot(collection(db, 'tenants'), (snap) => {
+        setTenants(snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant)));
+      }, (err) => handleFirestoreError(err, OperationType.GET, 'tenants'));
     } else {
-      setLoading(false);
+      return;
     }
-  }, [isStaff, currentTenant]);
 
-  if (!isStaff) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <div className="w-24 h-24 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 mb-8 shadow-xl shadow-indigo-100/50">
-          <ShoppingCart size={48} />
+    const unsubTrans = onSnapshot(transQuery, (snap) => {
+      setRecentTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'recent_transactions'));
+
+    const unsubAllTrans = onSnapshot(allTransQuery, (snap) => {
+      setAllTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'all_transactions'));
+
+    const unsubProd = onSnapshot(prodQuery, (snap) => {
+      setProductCount(snap.size);
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'products_count'));
+
+    const unsubOrders = onSnapshot(ordersQuery, (snap) => {
+      setOrderCount(snap.size);
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'orders_count'));
+
+    return () => {
+      unsubTrans();
+      unsubAllTrans();
+      unsubProd();
+      unsubOrders();
+      if (unsubTenants) unsubTenants();
+    };
+  }, [profile]);
+
+  const stats = useMemo(() => {
+    const activeSales = allTransactions.filter(t => t.type === 'sale' && t.status !== 'cancelled');
+    const activeExpenses = allTransactions.filter(t => t.type === 'expense' && t.status !== 'cancelled');
+    
+    const sales = activeSales.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+    const expenses = activeExpenses.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+    
+    return {
+      totalSales: sales,
+      totalOrders: orderCount + activeSales.filter(t => !t.orderNumber).length,
+      totalProducts: productCount,
+      totalExpenses: expenses,
+    };
+  }, [allTransactions, productCount, orderCount]);
+
+  const chartData = useMemo(() => {
+    const last7Days = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d.toLocaleDateString('en-US', { weekday: 'short' });
+    }).reverse();
+
+    const dataMap = last7Days.reduce((acc, day) => ({ ...acc, [day]: { sales: 0, expenses: 0 } }), {} as any);
+
+    allTransactions.filter(t => t.status !== 'cancelled').forEach(t => {
+      const date = t.date instanceof Timestamp 
+        ? t.date.toDate() 
+        : (t.date?.seconds ? new Date(t.date.seconds * 1000) : new Date());
+      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+      if (dataMap[day]) {
+        if (t.type === 'sale') dataMap[day].sales += t.amount || 0;
+        if (t.type === 'expense') dataMap[day].expenses += t.amount || 0;
+      }
+    });
+
+    return last7Days.map(day => ({
+      name: day,
+      sales: dataMap[day].sales,
+      expenses: dataMap[day].expenses,
+    }));
+  }, [allTransactions]);
+
+  const StatCard = ({ title, value, icon: Icon, trend, color }: any) => (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-3 rounded-lg ${color}`}>
+          <Icon className="w-6 h-6 text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-3">Selamat Datang, {profile?.name}!</h1>
-        <p className="text-gray-500 max-w-md text-lg">
-          Jelajahi katalog {currentTenant?.name || 'toko'} kami dan temukan produk atau layanan terbaik untuk Anda.
-        </p>
-        <Link 
-          to="/catalog"
-          className="mt-10 bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:scale-105 transition-all flex items-center gap-2"
-        >
-          Mulai Belanja
-          <ArrowRight size={20} />
-        </Link>
+        {trend && (
+          <div className={`flex items-center text-sm font-medium ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {trend > 0 ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
+            {Math.abs(trend)}%
+          </div>
+        )}
       </div>
-    );
-  }
+      <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
+      <p className="text-2xl font-bold text-gray-900 mt-1">
+        {typeof value === 'number' && title.includes('Total') && !title.includes('Orders') && !title.includes('Products')
+          ? `Rp.${(value || 0).toLocaleString()}`
+          : (value || 0).toLocaleString()}
+      </p>
+    </div>
+  );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Selamat datang kembali, {profile?.name}. Berikut ringkasan bisnis Anda.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {isRetail && (
-            <Link to="/sales-order" className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-sm">
-              <Plus size={18} />
-              <span>POS Baru</span>
-            </Link>
-          )}
-          {isService && (
-            <Link to="/booking" className="flex items-center gap-2 bg-white text-indigo-600 border border-indigo-200 px-4 py-2.5 rounded-xl font-semibold hover:bg-indigo-50 transition-all shadow-sm">
-              <Calendar size={18} />
-              <span>Booking Baru</span>
-            </Link>
-          )}
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+        <p className="text-gray-500">Welcome back, {profile?.displayName || profile?.email}!</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Penjualan" 
-          value={`Rp ${stats.totalSales.toLocaleString()}`} 
-          icon={<TrendingUp size={24} />} 
-          trend={{ value: '12%', positive: true }}
-          color="bg-indigo-50 text-indigo-600"
-        />
-        <StatCard 
-          title="Saldo Kas" 
-          value={`Rp ${stats.totalBalance.toLocaleString()}`} 
-          icon={<Wallet size={24} />} 
-          color="bg-emerald-50 text-emerald-600"
-        />
-        {isRetail && (
-          <StatCard 
-            title="Total Pesanan" 
-            value={stats.totalOrders} 
-            icon={<ShoppingCart size={24} />} 
-            trend={{ value: '8%', positive: true }}
-            color="bg-blue-50 text-blue-600"
-          />
-        )}
-        {isService && (
-          <StatCard 
-            title="Total Booking" 
-            value={stats.totalBookings} 
-            icon={<Calendar size={24} />} 
-            trend={{ value: '15%', positive: true }}
-            color="bg-purple-50 text-purple-600"
-          />
-        )}
-        <StatCard 
-          title="Total Produk" 
-          value={stats.totalProducts} 
-          icon={<Package size={24} />} 
-          color="bg-orange-50 text-orange-600"
-        />
-        <StatCard 
-          title="Total Pelanggan" 
-          value={stats.totalCustomers} 
-          icon={<Users size={24} />} 
-          trend={{ value: '5%', positive: true }}
-          color="bg-sky-50 text-sky-600"
-        />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Total Sales" value={stats.totalSales} icon={ShoppingCart} trend={12} color="bg-indigo-500" />
+        <StatCard title="Total Orders" value={stats.totalOrders} icon={TrendingUp} trend={8} color="bg-green-500" />
+        <StatCard title="Total Products" value={stats.totalProducts} icon={Package} color="bg-orange-500" />
+        <StatCard title="Total Expenses" value={stats.totalExpenses} icon={Wallet} trend={-5} color="bg-red-500" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="font-bold text-gray-900">Pesanan Terbaru</h3>
-            <Link to="/order-receiving" className="text-indigo-600 text-sm font-semibold hover:underline flex items-center gap-1">
-              Lihat Semua
-              <ArrowRight size={14} />
-            </Link>
+      {/* Approval Shortcut */}
+      {profile?.role === 'admin' && (
+        <motion.div 
+          whileHover={{ y: -2 }}
+          onClick={() => navigate('/approvals')}
+          className="bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-100 flex items-center justify-between cursor-pointer group overflow-hidden relative"
+        >
+          <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+            <CheckCircle2 className="w-48 h-48 text-white" />
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50/50 text-gray-500 text-xs font-semibold uppercase tracking-wider">
-                <tr>
-                  <th className="px-6 py-4">ID Pesanan</th>
-                  <th className="px-6 py-4">Pelanggan</th>
-                  <th className="px-6 py-4">Total</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Tanggal</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{order.orderNumber || `#${order.id.slice(0, 8)}`}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{order.customerName}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-gray-900">Rp {order.total.toLocaleString()}</td>
-                    <td className="px-6 py-4">
-                      <span className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-bold",
-                        order.status === 'Completed' ? "bg-green-50 text-green-600" :
-                        order.status === 'Processing' ? "bg-blue-50 text-blue-600" :
-                        order.status === 'Cancelled' ? "bg-red-50 text-red-600" :
-                        "bg-amber-50 text-amber-600"
-                      )}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {order.createdAt ? format(new Date(order.createdAt), 'dd MMM yyyy') : '-'}
-                    </td>
-                  </tr>
-                ))}
-                {recentOrders.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-400 italic">
-                      Belum ada pesanan terbaru.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-6">Aktivitas Terakhir</h3>
-            <div className="space-y-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
-                    <Clock size={20} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-900 font-medium leading-tight">Stok produk "Sepatu Nike" menipis</p>
-                    <p className="text-xs text-gray-500 mt-1">2 jam yang lalu</p>
-                  </div>
-                </div>
-              ))}
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">Pusat Persetujuan</h3>
+              <p className="text-indigo-100">Cek pengajuan Sales, Finance, dan Purchase yang butuh tindakan Anda.</p>
             </div>
           </div>
+          <div className="bg-white/20 px-4 py-2 rounded-xl text-white font-bold text-sm backdrop-blur-md group-hover:bg-white/30 transition-colors relative z-10">
+            Buka Modul
+          </div>
+        </motion.div>
+      )}
 
-          <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
-            <h3 className="font-bold text-lg mb-2">Butuh Bantuan?</h3>
-            <p className="text-indigo-100 text-sm mb-6 leading-relaxed">
-              Tim support kami siap membantu Anda mengelola bisnis dengan Zentory.
-            </p>
-            <button className="w-full bg-white text-indigo-600 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-colors">
-              Hubungi Support
-            </button>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold mb-6">Sales vs Expenses</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="sales" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold mb-6">Recent Transactions</h3>
+          <div className="space-y-4">
+            {recentTransactions.map((t) => (
+              <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center">
+                  <div className={`p-2 rounded-full mr-4 ${t.type === 'sale' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {t.type === 'sale' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900 capitalize">{t.type}</p>
+                      {profile?.role === 'superadmin' && (
+                        <span className="flex items-center text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">
+                          <Building2 className="w-2 h-2 mr-1" />
+                          {tenants.find(ten => ten.id === t.tenantId)?.name || 'Unknown'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {t.date 
+                        ? new Date(t.date?.seconds * 1000).toLocaleDateString() 
+                        : 'Just now...'}
+                    </p>
+                  </div>
+                </div>
+                <p className={`text-sm font-bold ${t.type === 'sale' ? 'text-green-600' : 'text-red-600'}`}>
+                  {t.type === 'sale' ? '+' : '-'}Rp.{(t.amount || 0).toLocaleString()}
+                </p>
+              </div>
+            ))}
+            {recentTransactions.length === 0 && (
+              <p className="text-center text-gray-500 py-8">No transactions yet.</p>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-};
+}

@@ -32,6 +32,9 @@ export default function Stock() {
   }, [profile]);
 
   const filteredProducts = products.filter(p => {
+    // Exclude service products (Jasa) from stock monitoring as they don't have physical stock
+    if (p.type === 'service') return false;
+    
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
     const matchesStock = stockFilter === 'all' ? true : stockFilter === 'available' ? p.stock > 0 : p.stock <= 0;
     return matchesSearch && matchesStock;

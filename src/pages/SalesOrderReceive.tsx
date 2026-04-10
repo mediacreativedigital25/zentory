@@ -1,43 +1,162 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, getDocs, getDoc, Timestamp, limit, runTransaction } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { Order, ApprovalRequest } from '../types';
-import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send } from 'lucide-react';
+import { Order, ApprovalRequest, Tenant, BankAccount } from '../types';
+import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { auth } from '../lib/firebase';
 import ConfirmModal from '../components/ConfirmModal';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null, profile?: any) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: profile?.tenantId || (auth.currentUser as any)?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 export default function SalesOrderReceive() {
   const { profile } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'manual' | 'catalog' | 'service'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestTargetStatus, setRequestTargetStatus] = useState<'pending' | 'processing' | 'completed'>('pending');
+  const [requestReason, setRequestReason] = useState('');
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
+  const [tenantInfo, setTenantInfo] = useState<Tenant | null>(null);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [printType, setPrintType] = useState<'invoice' | 'receipt' | null>(null);
+  const [isSettledToday, setIsSettledToday] = useState(false);
+  const [isPrintDropdownOpen, setIsPrintDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleAfterPrint = () => {
+      setPrintType(null);
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => window.removeEventListener('afterprint', handleAfterPrint);
+  }, []);
+
+  useEffect(() => {
+    if (profile?.tenantId) {
+      getDoc(doc(db, 'tenants', profile.tenantId)).then(snap => {
+        if (snap.exists()) {
+          setTenantInfo({ id: snap.id, ...snap.data() } as Tenant);
+        }
+      });
+    }
+    if (profile?.role === 'superadmin') {
+      getDocs(collection(db, 'tenants')).then(snap => {
+        setTenants(snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant)));
+      });
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (!profile) return;
 
     const q = profile.role === 'superadmin'
-      ? query(collection(db, 'orders'), orderBy('date', 'desc'))
+      ? query(collection(db, 'orders'))
       : query(
           collection(db, 'orders'),
-          where('tenantId', '==', profile.tenantId),
-          orderBy('date', 'desc')
+          where('tenantId', '==', profile.tenantId)
         );
 
     const unsubscribe = onSnapshot(q, (snap) => {
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+      data.sort((a, b) => {
+        const dateA = a.date?.seconds || (a as any).createdAt?.seconds || 0;
+        const dateB = b.date?.seconds || (b as any).createdAt?.seconds || 0;
+        return dateB - dateA;
+      });
+      setOrders(data);
       setLoading(false);
     }, (err) => {
       console.error(err);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Check if today is settled
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const settledQ = query(
+      collection(db, 'dailyClosings'),
+      where('tenantId', '==', profile.tenantId),
+      where('date', '>=', Timestamp.fromDate(startOfDay)),
+      where('date', '<=', Timestamp.fromDate(endOfDay)),
+      limit(1)
+    );
+
+    const unsubscribeSettled = onSnapshot(settledQ, (snap) => {
+      setIsSettledToday(!snap.empty);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'dailyClosings', profile);
+    });
+
+    // Fetch bank accounts for mapping
+    const bQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId));
+    const unsubBanks = onSnapshot(bQuery, (snap) => {
+      setBankAccounts(snap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount)));
+    }, (error) => {
+      console.error('Error fetching bank accounts:', error);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeSettled();
+      unsubBanks();
+    };
   }, [profile]);
 
   const filteredOrders = orders.filter(o => filter === 'all' || o.type === filter);
@@ -61,20 +180,112 @@ export default function SalesOrderReceive() {
   };
 
   const updateStatus = async (orderId: string, newStatus: string) => {
+    // Check if the order date is settled
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    if (order && (order.date || (order as any).createdAt)) {
+      const orderDate = new Date(((order.date?.seconds || (order as any).createdAt?.seconds || 0)) * 1000);
+      const start = new Date(orderDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(orderDate);
+      end.setHours(23, 59, 59, 999);
+
+      const q = query(
+        collection(db, 'dailyClosings'),
+        where('tenantId', '==', profile?.tenantId),
+        where('date', '>=', Timestamp.fromDate(start)),
+        where('date', '<=', Timestamp.fromDate(end)),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Settlement Terdeteksi',
+          message: 'Pesanan ini berada pada hari yang sudah ditutup (Settled). Status tidak dapat diubah secara langsung. Silakan hubungi Super Admin jika diperlukan.',
+          onConfirm: () => setConfirmConfig(null),
+          showCancel: false
+        });
+        return;
+      }
+    }
+
     setConfirmConfig({
       isOpen: true,
       title: 'Konfirmasi Status',
-      message: `Apakah Anda yakin ingin mengubah status pesanan menjadi ${newStatus.toUpperCase()}?`,
+      message: `Apakah Anda yakin ingin mengubah status pesanan menjadi ${(newStatus || '').toUpperCase()}?`,
       onConfirm: async () => {
         setConfirmConfig(null);
         setIsUpdating(true);
         try {
+          const oldStatus = order.status;
+          
+          // 1. Update Order Status
           await updateDoc(doc(db, 'orders', orderId), { status: newStatus });
+          
+          // 2. Update corresponding transaction if it exists
+          if (order.orderNumber) {
+            const transQuery = profile?.role === 'superadmin'
+              ? query(
+                  collection(db, 'transactions'),
+                  where('orderNumber', '==', order.orderNumber)
+                )
+              : query(
+                  collection(db, 'transactions'),
+                  where('tenantId', '==', profile?.tenantId),
+                  where('orderNumber', '==', order.orderNumber)
+                );
+            try {
+              const transSnap = await getDocs(transQuery);
+              for (const tDoc of transSnap.docs) {
+                // Map transaction status: processing -> pending, others stay same
+                const transStatus = newStatus === 'processing' ? 'pending' : newStatus;
+                await updateDoc(doc(db, 'transactions', tDoc.id), { status: transStatus });
+              }
+            } catch (err) {
+              handleFirestoreError(err, OperationType.WRITE, 'transactions', profile);
+            }
+          }
+
+          // 3. Handle Stock Return/Deduction if status changes to/from cancelled
+          if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
+            // Return stock
+            for (const item of order.items) {
+              const productRef = doc(db, 'products', item.productId);
+              await runTransaction(db, async (transaction) => {
+                const pDoc = await transaction.get(productRef);
+                if (!pDoc.exists()) return;
+                const currentStock = pDoc.data().stock || 0;
+                transaction.update(productRef, { stock: currentStock + item.quantity });
+              });
+            }
+          } else if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
+            // Deduct stock again
+            for (const item of order.items) {
+              const productRef = doc(db, 'products', item.productId);
+              await runTransaction(db, async (transaction) => {
+                const pDoc = await transaction.get(productRef);
+                if (!pDoc.exists()) return;
+                const currentStock = pDoc.data().stock || 0;
+                const newStock = Math.max(0, currentStock - item.quantity);
+                transaction.update(productRef, { stock: newStock });
+              });
+            }
+          }
+
           if (selectedOrder?.id === orderId) {
             setSelectedOrder({ ...selectedOrder, status: newStatus as any });
           }
         } catch (err) {
           console.error(err);
+          setConfirmConfig({
+            isOpen: true,
+            title: 'Error',
+            message: 'Gagal memperbarui status pesanan. Silakan coba lagi.',
+            onConfirm: () => setConfirmConfig(null),
+            showCancel: false
+          });
         } finally {
           setIsUpdating(false);
         }
@@ -88,23 +299,59 @@ export default function SalesOrderReceive() {
     setIsUpdating(true);
     try {
       await addDoc(collection(db, 'approval_requests'), {
+        type: 'order_status',
         tenantId: profile.tenantId,
+        tenantName: tenantInfo?.name || 'Unknown Tenant',
         orderId: selectedOrder.id,
         orderNumber: selectedOrder.orderNumber,
         requestedBy: profile.uid,
         requestedAt: serverTimestamp(),
         targetStatus: requestTargetStatus,
+        reason: requestReason,
         status: 'pending'
       });
-      alert('Permintaan perubahan status telah dikirim ke Super Admin.');
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Permintaan Terkirim',
+        message: 'Permintaan perubahan status telah dikirim ke Super Admin untuk ditinjau.',
+        onConfirm: () => setConfirmConfig(null),
+        showCancel: false
+      });
       setIsRequestModalOpen(false);
+      setRequestReason('');
     } catch (err) {
       console.error(err);
-      alert('Gagal mengirim permintaan.');
+      handleFirestoreError(err, OperationType.CREATE, 'approval_requests', profile);
     } finally {
       setIsUpdating(false);
     }
   };
+  const handlePrint = (type: 'invoice' | 'receipt', order?: Order) => {
+    const targetOrder = order || selectedOrder;
+    if (!targetOrder) return;
+
+    setSelectedOrder(targetOrder);
+    setPrintType(type);
+    setIsPrintDropdownOpen(false);
+    
+    // Give time for the print section to render before printing
+    setTimeout(() => {
+      try {
+        window.print();
+      } catch (err) {
+        console.error('Print failed:', err);
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Print Error',
+          message: 'Gagal membuka jendela cetak. Pastikan browser Anda mengizinkan popup.',
+          onConfirm: () => setConfirmConfig(null),
+          showCancel: false
+        });
+        setPrintType(null);
+      }
+    }, 500);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-50 text-green-700 border-green-100';
@@ -149,6 +396,7 @@ export default function SalesOrderReceive() {
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
               <tr>
+                {profile?.role === 'superadmin' && <th className="px-6 py-4 font-medium">Tenant</th>}
                 <th className="px-6 py-4 font-medium">Order ID</th>
                 <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-6 py-4 font-medium">Customer</th>
@@ -161,9 +409,16 @@ export default function SalesOrderReceive() {
             <tbody className="divide-y divide-gray-100">
               {filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                  {profile?.role === 'superadmin' && (
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-bold text-gray-900">
+                        {tenants.find(t => t.id === order.tenantId)?.name || 'Unknown'}
+                      </span>
+                    </td>
+                  )}
                   <td className="px-6 py-4 font-mono font-bold text-indigo-600">{order.orderNumber}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {order.date ? new Date(order.date?.seconds * 1000).toLocaleDateString() : 'Just now...'}
+                    {order.date || order.createdAt ? new Date((order.date?.seconds || order.createdAt?.seconds || 0) * 1000).toLocaleDateString() : 'Just now...'}
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-900">{order.customerName}</p>
@@ -172,23 +427,35 @@ export default function SalesOrderReceive() {
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${getBadgeColor(order.type)}`}>
                       {getTypeIcon(order.type)}
-                      {order.type.toUpperCase()}
+                      {order.type?.toUpperCase() || 'N/A'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm font-bold text-gray-900">Rp.{(order.totalAmount || 0).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-gray-900">Rp.{(order.totalAmount || (order as any).total || 0).toLocaleString()}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(order.status)}`}>
                       {order.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => setSelectedOrder(order)}
-                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center justify-center ml-auto"
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      <span className="text-xs font-bold">Detail</span>
-                    </button>
+                    <div className="flex justify-end space-x-2">
+                      <button 
+                        onClick={() => handlePrint('invoice', order)}
+                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center group relative"
+                        title="Cetak Faktur (A4)"
+                      >
+                        <Printer className="w-4 h-4" />
+                        <span className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                          Cetak Faktur (A4)
+                        </span>
+                      </button>
+                      <button 
+                        onClick={() => setSelectedOrder(order)}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center"
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        <span className="text-xs font-bold">Detail</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -232,22 +499,33 @@ export default function SalesOrderReceive() {
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-gray-400 uppercase">Order Date</p>
                     <p className="text-gray-900">
-                      {selectedOrder.date ? new Date(selectedOrder.date.seconds * 1000).toLocaleString() : 'Just now...'}
+                      {selectedOrder.date || (selectedOrder as any).createdAt ? new Date((selectedOrder.date?.seconds || (selectedOrder as any).createdAt?.seconds || 0) * 1000).toLocaleString() : 'Just now...'}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-gray-400 uppercase">Order Type</p>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${getBadgeColor(selectedOrder.type)}`}>
                       {getTypeIcon(selectedOrder.type)}
-                      {selectedOrder.type.toUpperCase()}
+                      {selectedOrder.type?.toUpperCase() || 'N/A'}
                     </span>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-gray-400 uppercase">Current Status</p>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(selectedOrder.status)}`}>
-                      {selectedOrder.status.toUpperCase()}
+                      {selectedOrder.status?.toUpperCase() || 'N/A'}
                     </span>
                   </div>
+                  {selectedOrder.paymentMethod && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-gray-400 uppercase">Payment Method</p>
+                      <div className="flex items-center text-indigo-600">
+                        <Landmark className="w-3 h-3 mr-1" />
+                        <span className="text-sm font-bold">
+                          {bankAccounts.find(b => b.id === selectedOrder.paymentMethod)?.name || 'Unknown Account'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Items Table */}
@@ -280,7 +558,7 @@ export default function SalesOrderReceive() {
                         <tr>
                           <td colSpan={3} className="px-4 py-4 text-right font-bold text-gray-500">Total Amount</td>
                           <td className="px-4 py-4 text-right font-extrabold text-indigo-600 text-lg">
-                            Rp.{selectedOrder.totalAmount.toLocaleString()}
+                            Rp.{(selectedOrder.totalAmount || (selectedOrder as any).total || 0).toLocaleString()}
                           </td>
                         </tr>
                       </tfoot>
@@ -348,9 +626,56 @@ export default function SalesOrderReceive() {
                 </div>
               </div>
 
-              <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3 no-print">
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsPrintDropdownOpen(!isPrintDropdownOpen)}
+                    className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center shadow-lg shadow-indigo-100"
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print
+                  </button>
+                  
+                  <AnimatePresence>
+                    {isPrintDropdownOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-[55]" 
+                          onClick={() => setIsPrintDropdownOpen(false)} 
+                        />
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute bottom-full right-0 mb-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[60]"
+                        >
+                          <div className="p-2 bg-gray-50 border-b border-gray-100">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase px-3 py-1">Opsi Cetak</p>
+                          </div>
+                          <button 
+                            onClick={() => handlePrint('invoice')}
+                            className="w-full text-left px-4 py-3 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center transition-colors"
+                          >
+                            <FileText className="w-4 h-4 mr-3 text-indigo-500" />
+                            Cetak Faktur (A4)
+                          </button>
+                          <button 
+                            onClick={() => handlePrint('receipt')}
+                            className="w-full text-left px-4 py-3 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center transition-colors"
+                          >
+                            <Printer className="w-4 h-4 mr-3 text-indigo-500" />
+                            Cetak Struk (Thermal)
+                          </button>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
                 <button
-                  onClick={() => setSelectedOrder(null)}
+                  onClick={() => {
+                    setSelectedOrder(null);
+                    setIsPrintDropdownOpen(false);
+                  }}
                   className="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all"
                 >
                   Close Detail
@@ -360,6 +685,129 @@ export default function SalesOrderReceive() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Print Templates */}
+      <div className={`${printType ? 'block' : 'hidden'} print:block print-section fixed inset-0 bg-white z-[9999] overflow-auto`}>
+        {selectedOrder && (
+          <>
+            {printType === 'invoice' && (
+              <div className="p-10 text-black font-sans bg-white min-h-screen">
+                <div className="max-w-4xl mx-auto">
+                  <div className="flex justify-between items-start mb-10">
+                    <div>
+                      <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
+                      <p className="text-sm text-gray-500 max-w-xs">{tenantInfo?.settings?.description || 'Business Inventory & Sales Solutions'}</p>
+                    </div>
+                    <div className="text-right">
+                      <h2 className="text-3xl font-bold text-gray-900 uppercase tracking-tighter">INVOICE</h2>
+                      <p className="text-sm font-mono text-gray-500">#{selectedOrder.orderNumber}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {selectedOrder.date || (selectedOrder as any).createdAt ? new Date((selectedOrder.date?.seconds || (selectedOrder as any).createdAt?.seconds || 0) * 1000).toLocaleDateString() : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-10 mb-10 border-y border-gray-100 py-6">
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Billed To</p>
+                      <p className="text-lg font-bold text-gray-900">{selectedOrder.customerName}</p>
+                      <p className="text-sm text-gray-500 uppercase">{selectedOrder.type} Order</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Status</p>
+                      <p className="text-lg font-bold text-indigo-600 uppercase">{selectedOrder.status}</p>
+                    </div>
+                  </div>
+
+                  <table className="w-full mb-10">
+                    <thead>
+                      <tr className="border-b-2 border-gray-900 text-left text-xs font-bold uppercase tracking-wider">
+                        <th className="py-3">Description</th>
+                        <th className="py-3 text-center">Quantity</th>
+                        <th className="py-3 text-right">Unit Price</th>
+                        <th className="py-3 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {selectedOrder.items.map((item, i) => (
+                        <tr key={i} className="text-sm">
+                          <td className="py-4 font-medium">{item.name}</td>
+                          <td className="py-4 text-center">{item.quantity}</td>
+                          <td className="py-4 text-right">Rp.{item.price.toLocaleString()}</td>
+                          <td className="py-4 text-right font-bold">Rp.{(item.price * item.quantity).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-900">
+                        <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Grand Total</td>
+                        <td className="py-6 text-right text-2xl font-black text-indigo-600">
+                          Rp.{(selectedOrder.totalAmount || (selectedOrder as any).total || 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+
+                  <div className="mt-20 pt-10 border-t border-gray-100 text-center">
+                    <p className="text-sm font-bold text-gray-900">Thank you for your business!</p>
+                    <p className="text-xs text-gray-400 mt-1">Generated by Zentory POS System</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {printType === 'receipt' && (
+              <div className="p-4 text-black font-mono text-[10px] w-[80mm] mx-auto bg-white min-h-screen">
+                <div className="text-center mb-4">
+                  <h1 className="text-base font-bold uppercase">{tenantInfo?.name || 'ZENTORY'}</h1>
+                  <p className="text-[8px]">{tenantInfo?.settings?.description || 'Sales Receipt'}</p>
+                </div>
+                
+                <div className="border-t border-dashed border-gray-300 py-2 mb-2">
+                  <div className="flex justify-between">
+                    <span>Order:</span>
+                    <span>#{selectedOrder.orderNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Date:</span>
+                    <span>{selectedOrder.date || (selectedOrder as any).createdAt ? new Date((selectedOrder.date?.seconds || (selectedOrder as any).createdAt?.seconds || 0) * 1000).toLocaleString() : ''}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Cust:</span>
+                    <span>{selectedOrder.customerName}</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-dashed border-gray-300 py-2 mb-2">
+                  {selectedOrder.items.map((item, i) => (
+                    <div key={i} className="mb-1">
+                      <div className="flex justify-between">
+                        <span>{item.name}</span>
+                      </div>
+                      <div className="flex justify-between pl-2">
+                        <span>{item.quantity} x {item.price.toLocaleString()}</span>
+                        <span>{(item.price * item.quantity).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-dashed border-gray-300 py-2 font-bold text-xs">
+                  <div className="flex justify-between">
+                    <span>TOTAL</span>
+                    <span>Rp.{(selectedOrder.totalAmount || (selectedOrder as any).total || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="text-center mt-6">
+                  <p>TERIMA KASIH</p>
+                  <p className="text-[8px] mt-1">Zentory POS System</p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       <AnimatePresence>
         {isRequestModalOpen && (
@@ -389,6 +837,15 @@ export default function SalesOrderReceive() {
                     <option value="processing">PROCESS</option>
                     <option value="completed">COMPLETE</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Alasan Perubahan</label>
+                  <textarea
+                    value={requestReason}
+                    onChange={(e) => setRequestReason(e.target.value)}
+                    placeholder="Contoh: Salah input status, pelanggan ingin lanjut..."
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
+                  />
                 </div>
                 <div className="flex space-x-3 pt-4">
                   <button

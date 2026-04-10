@@ -1,8 +1,9 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { doc, getDoc, updateDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { UserProfile } from '../types';
+import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
 interface AuthContextType {
   user: User | null;
@@ -16,43 +17,79 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const initialForceLogoutAt = useRef<any>(undefined);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const profileDoc = await getDoc(doc(db, 'users', user.uid));
-        let profileData: UserProfile | null = null;
+    let unsubscribeProfile: (() => void) | null = null;
 
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      initialForceLogoutAt.current = undefined;
+      
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = null;
+      }
+
+      if (user) {
+        // Initial check and auto-upgrade
+        const profileRef = doc(db, 'users', user.uid);
+        const profileDoc = await getDoc(profileRef);
+        
         if (profileDoc.exists()) {
-          profileData = { uid: user.uid, ...profileDoc.data() } as UserProfile;
-          
-          // Auto-upgrade to superadmin if email matches
-          if (user.email === 'mediacreativedigital25@gmail.com' && profileData.role !== 'superadmin') {
-            await updateDoc(doc(db, 'users', user.uid), { role: 'superadmin', tenantId: null });
-            profileData.role = 'superadmin';
-            profileData.tenantId = null;
+          const data = profileDoc.data();
+          if (user.email === 'mediacreativedigital25@gmail.com' && data.role !== 'superadmin') {
+            await updateDoc(profileRef, { role: 'superadmin', tenantId: null });
           }
         } else if (user.email === 'mediacreativedigital25@gmail.com') {
-          // Create missing superadmin profile
-          const newProfile = {
+          await setDoc(profileRef, {
             email: user.email,
             displayName: user.displayName || 'Super Admin',
             role: 'superadmin',
             tenantId: null,
             createdAt: new Date(),
-          };
-          await setDoc(doc(db, 'users', user.uid), newProfile);
-          profileData = { uid: user.uid, ...newProfile } as UserProfile;
+          });
         }
-        
-        setProfile(profileData);
+
+        // Real-time profile listener
+        unsubscribeProfile = onSnapshot(profileRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data() as UserProfile;
+            
+            // Check for force logout using change detection
+            if (initialForceLogoutAt.current === undefined) {
+              initialForceLogoutAt.current = data.forceLogoutAt || null;
+            } else {
+              const currentForceLogout = data.forceLogoutAt ? 
+                (data.forceLogoutAt.seconds || new Date(data.forceLogoutAt).getTime()) : null;
+              const initialForceLogout = initialForceLogoutAt.current ? 
+                (initialForceLogoutAt.current.seconds || new Date(initialForceLogoutAt.current).getTime()) : null;
+
+              if (currentForceLogout !== initialForceLogout) {
+                signOut(auth);
+                return;
+              }
+            }
+            
+            setProfile({ uid: snap.id, ...data });
+          } else {
+            setProfile(null);
+          }
+          setLoading(false);
+        }, (error) => {
+          handleFirestoreError(error, OperationType.GET, `users/${user.uid}`, auth);
+          setLoading(false);
+        });
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, []);
 
   return (

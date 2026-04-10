@@ -1,5 +1,5 @@
 {
-  "name": "Zentory - Multi-Tenant Business OS",
-  "description": "A comprehensive SaaS platform for Retail, Service, and Mixed businesses with POS, Inventory, Booking, and Team management.",
+  "name": "Zentory",
+  "description": "Multi-tenant SaaS for Sales, Inventory, and Finance management.",
   "requestFramePermissions": []
 }

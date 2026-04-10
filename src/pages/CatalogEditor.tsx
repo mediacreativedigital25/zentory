@@ -3,8 +3,9 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Tenant } from '../types';
-import { Store, Palette, Globe, Save, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { Store, Palette, Globe, Save, ExternalLink, Image as ImageIcon, Upload } from 'lucide-react';
 import { motion } from 'motion/react';
+import ImageUpload from '../components/ImageUpload';
 
 export default function CatalogEditor() {
   const { profile } = useAuth();
@@ -121,25 +122,12 @@ export default function CatalogEditor() {
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={formData.logoUrl}
-                      onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="https://example.com/logo.png"
-                    />
-                  </div>
-                  <div className="w-12 h-12 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
-                    {formData.logoUrl ? (
-                      <img src={formData.logoUrl} alt="Logo Preview" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                    ) : (
-                      <ImageIcon className="w-6 h-6 text-gray-300" />
-                    )}
-                  </div>
-                </div>
+                <ImageUpload
+                  value={formData.logoUrl}
+                  onChange={(url) => setFormData({ ...formData, logoUrl: url })}
+                  folder="logos"
+                  label="Logo Toko"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Theme Color</label>

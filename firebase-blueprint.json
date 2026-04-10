@@ -1,183 +1,322 @@
 {
   "entities": {
-    "User": {
-      "title": "User",
-      "description": "User profile with role-based access control",
-      "type": "object",
-      "properties": {
-        "uid": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "phone": { "type": "string" },
-        "address": { "type": "string" },
-        "role": { "type": "string", "enum": ["SuperAdmin", "Administrator", "Admin 01 Manager Bisnis", "Admin 02 Kasir", "Customer"] },
-        "tenantId": { "type": "string", "description": "ID of the tenant this user belongs to" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["uid", "name", "email", "role"]
-    },
-    "Tenant": {
+    "tenant": {
       "title": "Tenant",
-      "description": "A business entity/store in the multi-tenant system",
+      "description": "A business entity using the SaaS.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "subdomain": { "type": "string", "description": "Unique slug for subdomain access" },
+        "name": { "type": "string", "description": "Business name" },
+        "slug": { "type": "string", "description": "Subdomain slug" },
+        "ownerId": { "type": "string", "description": "UID of the tenant admin" },
+        "subscription": { "type": "string", "enum": ["free", "pro", "enterprise"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "settings": { "type": "object" }
+      },
+      "required": ["name", "slug", "ownerId"]
+    },
+    "user": {
+      "title": "User",
+      "description": "A user of the system.",
+      "type": "object",
+      "properties": {
         "email": { "type": "string", "format": "email" },
-        "phone": { "type": "string" },
-        "address": { "type": "string" },
-        "status": { "type": "string", "enum": ["Active", "Inactive", "Suspended"] },
-        "plan": { "type": "string", "enum": ["Free", "Pro", "Enterprise"] },
-        "businessType": { "type": "string", "enum": ["Retail", "Service", "Mixed"] },
-        "password": { "type": "string", "description": "Initial login password" },
+        "role": { "type": "string", "enum": ["superadmin", "admin", "staff"] },
+        "tenantId": { "type": "string", "description": "ID of the tenant they belong to (null for superadmin)" },
+        "displayName": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "subdomain", "status", "plan"]
+      "required": ["email", "role"]
     },
-    "Service": {
-      "title": "Service",
-      "description": "Service offered for booking",
+    "product": {
+      "title": "Product",
+      "description": "Inventory item.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
         "tenantId": { "type": "string" },
         "name": { "type": "string" },
-        "description": { "type": "string" },
-        "price": { "type": "number" },
-        "duration": { "type": "integer", "description": "Duration in minutes" },
-        "image": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["tenantId", "name", "price", "duration"]
-    },
-    "Booking": {
-      "title": "Booking",
-      "description": "Appointment or service booking",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "tenantId": { "type": "string" },
-        "customerId": { "type": "string" },
-        "customerName": { "type": "string" },
-        "serviceId": { "type": "string" },
-        "serviceName": { "type": "string" },
-        "date": { "type": "string", "format": "date" },
-        "time": { "type": "string" },
-        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Completed", "Cancelled"] },
-        "total": { "type": "number" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["tenantId", "customerId", "serviceId", "date", "time", "status"]
-    },
-    "Transaction": {
-      "title": "Transaction",
-      "description": "Financial income or expense",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "tenantId": { "type": "string" },
-        "type": { "type": "string", "enum": ["Income", "Expense"] },
+        "sku": { "type": "string" },
+        "barcode": { "type": "string" },
+        "hpp": { "type": "number", "description": "Cost of Goods Sold" },
+        "price": { "type": "number", "description": "Selling Price" },
+        "stock": { "type": "number" },
         "category": { "type": "string" },
+        "warehouseId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["tenantId", "name", "price", "hpp"]
+    },
+    "category": {
+      "title": "Category",
+      "description": "Product category.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["tenantId", "name"]
+    },
+    "warehouse": {
+      "title": "Warehouse",
+      "description": "Storage location.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["tenantId", "name"]
+    },
+    "transaction": {
+      "title": "Transaction",
+      "description": "Sales record.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "type": { "type": "string", "enum": ["sale", "expense"] },
         "amount": { "type": "number" },
-        "description": { "type": "string" },
+        "items": { "type": "array" },
         "date": { "type": "string", "format": "date-time" },
-        "referenceId": { "type": "string", "description": "Optional ID of related order or booking" }
+        "status": { "type": "string" },
+        "userId": { "type": "string" },
+        "transactionNumber": { "type": "string" },
+        "bankAccountId": { "type": "string" }
       },
       "required": ["tenantId", "type", "amount", "date"]
     },
-    "Product": {
-      "title": "Product",
-      "description": "Inventory product item",
+    "approval_request": {
+      "title": "Approval Request",
+      "description": "Request to change status of a cancelled order.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
         "tenantId": { "type": "string" },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "price": { "type": "number" },
-        "stock": { "type": "integer" },
-        "categoryId": { "type": "string" },
-        "categoryName": { "type": "string" },
-        "image": { "type": "string" },
+        "orderId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "requestedBy": { "type": "string" },
+        "requestedAt": { "type": "string", "format": "date-time" },
+        "targetStatus": { "type": "string", "enum": ["pending", "processing", "completed"] },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "resolvedBy": { "type": "string" },
+        "resolvedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "orderId", "requestedBy", "targetStatus", "status"]
+    },
+    "daily_closing": {
+      "title": "Daily Closing",
+      "description": "Daily financial summary.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "totalSales": { "type": "number" },
+        "totalCost": { "type": "number" },
+        "totalExpenses": { "type": "number" },
+        "grossProfit": { "type": "number" },
+        "netProfit": { "type": "number" },
+        "transactionCount": { "type": "number" },
+        "charityAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["UNTUNG", "RUGI", "IMPAS"] },
+        "closedBy": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["tenantId", "name", "price", "stock"]
+      "required": ["tenantId", "totalSales", "grossProfit", "netProfit", "status"]
     },
-    "Category": {
-      "title": "Category",
-      "description": "Product category",
+    "expense_rule": {
+      "title": "Expense Rule",
+      "description": "Auto-fill rules for expenses.",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "category": { "type": "string" },
+        "defaultActivity": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "category", "defaultActivity"]
+    },
+    "bank_account": {
+      "title": "Bank Account",
+      "description": "Financial account for receiving payments.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string", "description": "e.g., BCA, Mandiri, QRIS, Cash" },
+        "accountNumber": { "type": "string", "description": "Account number or identifier" },
+        "accountHolder": { "type": "string", "description": "Name on account" },
+        "type": { "type": "string", "enum": ["BANK", "QRIS", "CASH", "E-WALLET"] },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "name", "type"]
+    },
+    "supplier": {
+      "title": "Supplier",
+      "description": "Vendors and suppliers",
+      "type": "object",
+      "properties": {
         "tenantId": { "type": "string" },
         "name": { "type": "string" },
+        "contactName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["tenantId", "name"]
     },
-    "Order": {
-      "title": "Order",
-      "description": "Sales order from customer or manual entry",
+    "purchase_request": {
+      "title": "Purchase Request",
+      "description": "Internal purchase requests",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
+        "prNumber": { "type": "string" },
         "tenantId": { "type": "string" },
-        "orderId": { "type": "string" },
-        "customerId": { "type": "string" },
-        "customerName": { "type": "string" },
-        "items": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "productId": { "type": "string" },
-              "productName": { "type": "string" },
-              "quantity": { "type": "integer" },
-              "price": { "type": "number" }
-            }
-          }
-        },
-        "total": { "type": "number" },
-        "status": { "type": "string", "enum": ["Pending", "Processing", "Completed", "Cancelled"] },
-        "type": { "type": "string", "enum": ["Manual", "Catalog"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "items": { "type": "array" },
+        "requestedBy": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "converted"] },
+        "reason": { "type": "string" }
       },
-      "required": ["tenantId", "customerId", "items", "total", "status", "type"]
+      "required": ["prNumber", "tenantId", "items", "requestedBy", "status"]
+    },
+    "purchase_order": {
+      "title": "Purchase Order",
+      "description": "Official purchase orders for suppliers",
+      "type": "object",
+      "properties": {
+        "poNumber": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "supplierName": { "type": "string" },
+        "prId": { "type": "string" },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["draft", "sent", "received", "cancelled"] }
+      },
+      "required": ["poNumber", "tenantId", "supplierId", "items", "totalAmount", "status"]
+    },
+    "goods_receipt": {
+      "title": "Goods Receipt",
+      "description": "Validation of incoming goods",
+      "type": "object",
+      "properties": {
+        "grNumber": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "poId": { "type": "string" },
+        "poNumber": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "items": { "type": "array" },
+        "receivedBy": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["draft", "completed"] }
+      },
+      "required": ["grNumber", "tenantId", "poId", "items", "receivedBy", "status"]
+    },
+    "purchase_invoice": {
+      "title": "Purchase Invoice",
+      "description": "Supplier bills",
+      "type": "object",
+      "properties": {
+        "piNumber": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "poId": { "type": "string" },
+        "poNumber": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "amount": { "type": "number" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["unpaid", "partial", "paid"] }
+      },
+      "required": ["piNumber", "tenantId", "poId", "amount", "dueDate", "status"]
+    },
+    "order": {
+      "title": "Order",
+      "description": "Customer order from catalog.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "customerAddress": { "type": "string" },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "paymentMethod": { "type": "string" }
+      },
+      "required": ["tenantId", "orderNumber", "customerName", "customerEmail", "customerAddress", "items", "totalAmount", "status", "date", "userId"]
     }
   },
   "firestore": {
     "/tenants/{tenantId}": {
-      "schema": "Tenant",
-      "description": "Business tenants"
-    },
-    "/services/{serviceId}": {
-      "schema": "Service",
-      "description": "Services for booking"
-    },
-    "/bookings/{bookingId}": {
-      "schema": "Booking",
-      "description": "Service bookings"
-    },
-    "/transactions/{transactionId}": {
-      "schema": "Transaction",
-      "description": "Financial transactions"
+      "schema": "tenant",
+      "description": "Tenant configuration"
     },
     "/users/{userId}": {
-      "schema": "User",
+      "schema": "user",
       "description": "User profiles"
     },
     "/products/{productId}": {
-      "schema": "Product",
-      "description": "Inventory products"
+      "schema": "product",
+      "description": "Product inventory"
     },
     "/categories/{categoryId}": {
-      "schema": "Category",
+      "schema": "category",
       "description": "Product categories"
     },
+    "/warehouses/{warehouseId}": {
+      "schema": "warehouse",
+      "description": "Storage locations"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "transaction",
+      "description": "Sales and expense records"
+    },
+    "/approval_requests/{requestId}": {
+      "schema": "approval_request",
+      "description": "Requests for status changes"
+    },
+    "/dailyClosings/{closingId}": {
+      "schema": "daily_closing",
+      "description": "Daily financial summaries"
+    },
+    "/expenseRules/{ruleId}": {
+      "schema": "expense_rule",
+      "description": "Auto-fill rules for expenses"
+    },
+    "/bank_accounts/{accountId}": {
+      "schema": "bank_account",
+      "description": "Bank accounts for payments"
+    },
+    "/suppliers/{supplierId}": {
+      "schema": "supplier",
+      "description": "Vendors and suppliers"
+    },
+    "/purchase_requests/{prId}": {
+      "schema": "purchase_request",
+      "description": "Internal purchase requests"
+    },
+    "/purchase_orders/{poId}": {
+      "schema": "purchase_order",
+      "description": "Official purchase orders"
+    },
+    "/goods_receipts/{grId}": {
+      "schema": "goods_receipt",
+      "description": "Validation of incoming goods"
+    },
+    "/purchase_invoices/{piId}": {
+      "schema": "purchase_invoice",
+      "description": "Supplier bills"
+    },
     "/orders/{orderId}": {
-      "schema": "Order",
-      "description": "Sales orders"
+      "schema": "order",
+      "description": "Customer orders"
     }
   }
 }

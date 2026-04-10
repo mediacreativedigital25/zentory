@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, addDoc, serverTimestamp, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { Transaction } from '../types';
+import { Transaction, Tenant } from '../types';
 import { Wallet, TrendingUp, TrendingDown, Plus, Search, Filter, ArrowUpRight, ArrowDownRight, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Finance() {
   const { profile } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -19,13 +20,21 @@ export default function Finance() {
   });
 
   useEffect(() => {
-    if (!profile?.tenantId) return;
+    if (!profile) return;
 
-    const q = query(
-      collection(db, 'transactions'),
-      where('tenantId', '==', profile.tenantId),
-      orderBy('date', 'desc')
-    );
+    const q = profile.role === 'superadmin'
+      ? query(collection(db, 'transactions'), orderBy('date', 'desc'))
+      : query(
+          collection(db, 'transactions'),
+          where('tenantId', '==', profile.tenantId),
+          orderBy('date', 'desc')
+        );
+
+    if (profile.role === 'superadmin') {
+      getDocs(collection(db, 'tenants')).then(snap => {
+        setTenants(snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant)));
+      });
+    }
 
     const unsubscribe = onSnapshot(q, (snap) => {
       setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
@@ -60,8 +69,8 @@ export default function Finance() {
     }
   };
 
-  const totalSales = transactions.filter(t => t.type === 'sale').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const totalSales = transactions.filter(t => t.type === 'sale' && t.status !== 'cancelled').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+  const totalExpenses = transactions.filter(t => t.type === 'expense' && t.status !== 'cancelled').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
   const balance = totalSales - totalExpenses;
 
   return (
@@ -150,6 +159,7 @@ export default function Finance() {
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
               <tr>
+                {profile?.role === 'superadmin' && <th className="px-6 py-4 font-medium">Tenant</th>}
                 <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-6 py-4 font-medium">Description</th>
                 <th className="px-6 py-4 font-medium">Type</th>
@@ -160,6 +170,13 @@ export default function Finance() {
             <tbody className="divide-y divide-gray-100">
               {transactions.map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                  {profile?.role === 'superadmin' && (
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-bold text-gray-900">
+                        {tenants.find(ten => ten.id === t.tenantId)?.name || 'Unknown'}
+                      </span>
+                    </td>
+                  )}
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {t.date 
                       ? new Date(t.date?.seconds * 1000).toLocaleDateString() 
@@ -167,7 +184,7 @@ export default function Finance() {
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-900">
-                      {t.type === 'sale' ? `Order #${t.id.slice(-6).toUpperCase()}` : (t as any).description || 'Expense'}
+                      {t.type === 'sale' ? `Order #${(t.id || '').slice(-6).toUpperCase()}` : (t as any).description || 'Expense'}
                     </p>
                     <p className="text-xs text-gray-500">{(t as any).category || (t.type === 'sale' ? 'Sales' : 'Operational')}</p>
                   </td>
@@ -182,9 +199,17 @@ export default function Finance() {
                     {t.type === 'sale' ? '+' : '-'}Rp.{(t.amount || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="flex items-center text-xs text-gray-500">
-                      <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
-                      Completed
+                    <span className={`flex items-center text-xs font-bold uppercase ${
+                      t.status === 'cancelled' ? 'text-red-500' : 
+                      t.status === 'pending' ? 'text-yellow-500' : 
+                      'text-green-500'
+                    }`}>
+                      <div className={`w-2 h-2 rounded-full mr-2 ${
+                        t.status === 'cancelled' ? 'bg-red-500' : 
+                        t.status === 'pending' ? 'bg-yellow-500' : 
+                        'bg-green-500'
+                      }`} />
+                      {t.status || 'Completed'}
                     </span>
                   </td>
                 </tr>

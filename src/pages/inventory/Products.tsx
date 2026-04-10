@@ -3,9 +3,10 @@ import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTime
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Product, Category, Warehouse } from '../../types';
-import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon, RefreshCw, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
+import ImageUpload from '../../components/ImageUpload';
 
 export default function Products() {
   const { profile } = useAuth();
@@ -14,7 +15,21 @@ export default function Products() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [bulkProducts, setBulkProducts] = useState<any[]>([{
+    name: '',
+    sku: '',
+    barcode: '',
+    hpp: 0,
+    price: 0,
+    stock: 0,
+    category: '',
+    warehouseId: '',
+    description: '',
+    imageUrl: '',
+    type: 'manual' as const
+  }]);
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; type?: 'danger' | 'info' | 'warning' } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -64,6 +79,91 @@ export default function Products() {
       unsubWarehouses();
     };
   }, [profile]);
+
+  const generateServiceSKU = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = 'J';
+    for (let i = 0; i < 5; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const generateSKU = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = 'P';
+    for (let i = 0; i < 7; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const addBulkRow = () => {
+    setBulkProducts([...bulkProducts, {
+      name: '',
+      sku: generateSKU(),
+      barcode: '',
+      hpp: 0,
+      price: 0,
+      stock: 0,
+      category: '',
+      warehouseId: '',
+      description: '',
+      imageUrl: '',
+      type: 'manual' as const
+    }]);
+  };
+
+  const removeBulkRow = (index: number) => {
+    if (bulkProducts.length === 1) return;
+    setBulkProducts(bulkProducts.filter((_, i) => i !== index));
+  };
+
+  const updateBulkRow = (index: number, field: string, value: any) => {
+    const newRows = [...bulkProducts];
+    newRows[index] = { ...newRows[index], [field]: value };
+    setBulkProducts(newRows);
+  };
+
+  const handleBulkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile?.tenantId) return;
+
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Simpan Bulk Produk',
+      message: `Apakah Anda yakin ingin menyimpan ${bulkProducts.length} produk sekaligus?`,
+      onConfirm: async () => {
+        setConfirmConfig(null);
+        try {
+          for (const product of bulkProducts) {
+            await addDoc(collection(db, 'products'), {
+              ...product,
+              tenantId: profile.tenantId,
+              createdAt: serverTimestamp(),
+            });
+          }
+          setIsBulkModalOpen(false);
+          setBulkProducts([{
+            name: '',
+            sku: '',
+            barcode: '',
+            hpp: 0,
+            price: 0,
+            stock: 0,
+            category: '',
+            warehouseId: '',
+            description: '',
+            imageUrl: '',
+            type: 'manual' as const
+          }]);
+        } catch (err) {
+          console.error(err);
+          alert('Failed to save bulk products.');
+        }
+      }
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,13 +251,53 @@ export default function Products() {
           <h2 className="text-2xl font-bold text-gray-900">Produk</h2>
           <p className="text-gray-500">Kelola daftar produk, HPP, dan harga jual.</p>
         </div>
-        <button
-          onClick={() => { setEditingProduct(null); setFormData({ name: '', sku: '', barcode: '', hpp: 0, price: 0, stock: 0, category: '', warehouseId: '', description: '', imageUrl: '', type: 'manual' }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Tambah Produk
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => { 
+              setBulkProducts([{
+                name: '',
+                sku: generateSKU(),
+                barcode: '',
+                hpp: 0,
+                price: 0,
+                stock: 0,
+                category: '',
+                warehouseId: '',
+                description: '',
+                imageUrl: '',
+                type: 'manual' as const
+              }]);
+              setIsBulkModalOpen(true); 
+            }}
+            className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg flex items-center hover:bg-indigo-100 transition-colors border border-indigo-100"
+          >
+            <Barcode className="w-5 h-5 mr-2" />
+            Bulk Scan Barcode
+          </button>
+          <button
+            onClick={() => { 
+              setEditingProduct(null); 
+              setFormData({ 
+                name: '', 
+                sku: generateSKU(), 
+                barcode: '', 
+                hpp: 0, 
+                price: 0, 
+                stock: 0, 
+                category: '', 
+                warehouseId: '', 
+                description: '', 
+                imageUrl: '', 
+                type: 'manual' 
+              }); 
+              setIsModalOpen(true); 
+            }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Tambah Manual
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -203,15 +343,23 @@ export default function Products() {
                       {product.type === 'service' ? 'JASA' : 'MANUAL'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400 italic">Rp.{(product.hpp || 0).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-sm text-gray-400 italic">
+                    {product.type === 'service' ? '-' : `Rp.${(product.hpp || 0).toLocaleString()}`}
+                  </td>
                   <td className="px-6 py-4 text-sm font-bold text-indigo-600">Rp.{(product.price || 0).toLocaleString()}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                      product.stock > 10 ? 'bg-green-50 text-green-700' : 
-                      product.stock > 0 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'
-                    }`}>
-                      {product.stock} TERSEDIA
-                    </span>
+                    {product.type === 'service' ? (
+                      <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700">
+                        NON-STOCK
+                      </span>
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                        product.stock > 10 ? 'bg-green-50 text-green-700' : 
+                        product.stock > 0 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'
+                      }`}>
+                        {product.stock} TERSEDIA
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end space-x-2">
@@ -237,6 +385,179 @@ export default function Products() {
       </div>
 
       <AnimatePresence>
+        {isBulkModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] h-[90vh] overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
+                <div>
+                  <h3 className="text-xl font-bold">Bulk Scan Barcode</h3>
+                  <p className="text-indigo-100 text-sm">Input banyak produk sekaligus dengan scanner.</p>
+                </div>
+                <button onClick={() => setIsBulkModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-auto p-6">
+                <form id="bulkForm" onSubmit={handleBulkSubmit} className="space-y-4">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="sticky top-0 bg-white z-10">
+                      <tr className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                        <th className="pb-4 px-2">Barcode</th>
+                        <th className="pb-4 px-2">Nama Produk</th>
+                        <th className="pb-4 px-2 w-32">SKU (Auto)</th>
+                        <th className="pb-4 px-2 w-32">Harga Beli</th>
+                        <th className="pb-4 px-2 w-32">Harga Jual</th>
+                        <th className="pb-4 px-2 w-24">QTY</th>
+                        <th className="pb-4 px-2 w-40">Kategori</th>
+                        <th className="pb-4 px-2 w-40">Gudang</th>
+                        <th className="pb-4 px-2 w-48">Foto Produk</th>
+                        <th className="pb-4 px-2">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {bulkProducts.map((row, index) => (
+                        <tr key={index} className="group">
+                          <td className="py-3 px-2">
+                            <input
+                              autoFocus={index === bulkProducts.length - 1}
+                              type="text"
+                              value={row.barcode}
+                              onChange={(e) => updateBulkRow(index, 'barcode', e.target.value)}
+                              placeholder="Scan..."
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold"
+                            />
+                          </td>
+                          <td className="py-3 px-2">
+                            <input
+                              type="text"
+                              required
+                              value={row.name}
+                              onChange={(e) => updateBulkRow(index, 'name', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            />
+                          </td>
+                          <td className="py-3 px-2">
+                            <input
+                              type="text"
+                              readOnly
+                              value={row.sku}
+                              className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-xs font-mono text-gray-500"
+                            />
+                          </td>
+                          <td className="py-3 px-2">
+                            <input
+                              type="number"
+                              required
+                              value={row.hpp}
+                              onChange={(e) => updateBulkRow(index, 'hpp', Number(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            />
+                          </td>
+                          <td className="py-3 px-2">
+                            <input
+                              type="number"
+                              required
+                              value={row.price}
+                              onChange={(e) => updateBulkRow(index, 'price', Number(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold text-indigo-600"
+                            />
+                          </td>
+                          <td className="py-3 px-2">
+                            <input
+                              type="number"
+                              required
+                              value={row.stock}
+                              onChange={(e) => updateBulkRow(index, 'stock', Number(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            />
+                          </td>
+                          <td className="py-3 px-2">
+                            <select
+                              required
+                              value={row.category}
+                              onChange={(e) => updateBulkRow(index, 'category', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            >
+                              <option value="">Pilih</option>
+                              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            </select>
+                          </td>
+                          <td className="py-3 px-2">
+                            <select
+                              required
+                              value={row.warehouseId}
+                              onChange={(e) => updateBulkRow(index, 'warehouseId', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                            >
+                              <option value="">Pilih</option>
+                              {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                            </select>
+                          </td>
+                          <td className="py-3 px-2">
+                            <div className="flex justify-center">
+                              <ImageUpload
+                                value={row.imageUrl}
+                                onChange={(url) => updateBulkRow(index, 'imageUrl', url)}
+                                folder="products"
+                                label=""
+                                compact={true}
+                                className="!space-y-0"
+                              />
+                            </div>
+                          </td>
+                          <td className="py-3 px-2">
+                            <button
+                              type="button"
+                              onClick={() => removeBulkRow(index)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </form>
+              </div>
+
+              <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+                <button
+                  type="button"
+                  onClick={addBulkRow}
+                  className="px-6 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition-all flex items-center"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Tambah Baris
+                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsBulkModalOpen(false)}
+                    className="px-8 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    form="bulkForm"
+                    type="submit"
+                    className="px-12 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                  >
+                    Simpan Semua Produk
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <motion.div
@@ -255,14 +576,14 @@ export default function Products() {
                 <div className="flex p-1 bg-gray-100 rounded-xl mb-4">
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, type: 'manual' })}
+                    onClick={() => setFormData({ ...formData, type: 'manual', sku: editingProduct?.type === 'manual' ? formData.sku : generateSKU() })}
                     className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${formData.type === 'manual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     Manual Produk
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, type: 'service' })}
+                    onClick={() => setFormData({ ...formData, type: 'service', sku: editingProduct?.type === 'service' ? formData.sku : generateServiceSKU(), hpp: 0, stock: 0, warehouseId: '' })}
                     className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${formData.type === 'service' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     Jasa (Service)
@@ -282,13 +603,25 @@ export default function Products() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">SKU (ID Unik)</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.sku}
-                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required
+                        readOnly
+                        value={formData.sku}
+                        className="w-full pl-4 pr-10 py-2 border border-gray-200 rounded-lg outline-none bg-gray-50 text-gray-500 cursor-not-allowed font-mono text-xs"
+                      />
+                      {!editingProduct && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, sku: formData.type === 'service' ? generateServiceSKU() : generateSKU() })}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-600 transition-colors"
+                          title="Regenerate SKU"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
@@ -302,7 +635,7 @@ export default function Products() {
                       />
                     </div>
                   </div>
-                  <div>
+                  <div className={formData.type === 'service' ? 'col-span-2' : ''}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                     <select
                       required
@@ -314,30 +647,34 @@ export default function Products() {
                       {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Gudang</label>
-                    <select
-                      value={formData.warehouseId}
-                      onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="">Pilih Gudang</option>
-                      {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center text-red-600">
-                      HPP (Rp.) <DollarSign className="w-3 h-3 ml-1" />
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      value={formData.hpp}
-                      onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                  <div>
+                  {formData.type === 'manual' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Gudang</label>
+                        <select
+                          value={formData.warehouseId}
+                          onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="">Pilih Gudang</option>
+                          {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center text-red-600">
+                          HPP (Rp.) <DollarSign className="w-3 h-3 ml-1" />
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          value={formData.hpp}
+                          onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div className={formData.type === 'service' ? 'col-span-2' : ''}>
                     <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center text-green-600">
                       Harga Jual (Rp.) <DollarSign className="w-3 h-3 ml-1" />
                     </label>
@@ -349,30 +686,25 @@ export default function Products() {
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock Awal</label>
-                    <input
-                      type="number"
-                      required
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">URL Gambar Produk</label>
-                    <div className="flex gap-4">
+                  {formData.type === 'manual' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Stock Awal</label>
                       <input
-                        type="text"
-                        value={formData.imageUrl}
-                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                        className="flex-1 px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="https://example.com/image.jpg"
+                        type="number"
+                        required
+                        value={formData.stock}
+                        onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
+                        className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                       />
-                      <div className="w-10 h-10 rounded bg-gray-50 border border-gray-200 flex items-center justify-center overflow-hidden">
-                        {formData.imageUrl ? <img src={formData.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <ImageIcon className="w-5 h-5 text-gray-300" />}
-                      </div>
                     </div>
+                  )}
+                  <div className="col-span-2">
+                    <ImageUpload
+                      value={formData.imageUrl}
+                      onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+                      folder="products"
+                      label="Foto Produk"
+                    />
                   </div>
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
