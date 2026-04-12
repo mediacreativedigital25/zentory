@@ -26,9 +26,18 @@ export default function Register() {
 
       // 2. Create tenant
       const tenantSlug = businessName.toLowerCase().replace(/\s+/g, '-');
+      
+      // Generate 3-character code
+      const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let tenantCode = '';
+      for (let i = 0; i < 3; i++) {
+        tenantCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
       const tenantRef = await addDoc(collection(db, 'tenants'), {
         name: businessName,
         slug: tenantSlug,
+        code: tenantCode,
         ownerId: user.uid,
         subscription: 'free',
         createdAt: serverTimestamp(),

@@ -19,6 +19,9 @@ export default function Customers() {
     email: '',
     phone: '',
     address: '',
+    type: 'umum' as 'umum' | 'langganan',
+    allowTempo: false,
+    tempoLimitDays: 30,
   });
   const [search, setSearch] = useState('');
 
@@ -54,18 +57,25 @@ export default function Customers() {
       onConfirm: async () => {
         setConfirmConfig(null);
         try {
+          const data = {
+            ...formData,
+            // Ensure allowTempo is only true for langganan if we want strictness, 
+            // but the user said "langganan memiliki pembayaran Tempo diatur pada menu customer"
+            // so we allow it to be set.
+          };
+
           if (editingCustomer) {
-            await updateDoc(doc(db, 'customers', editingCustomer.id), formData);
+            await updateDoc(doc(db, 'customers', editingCustomer.id), data);
           } else {
             await addDoc(collection(db, 'customers'), {
-              ...formData,
+              ...data,
               tenantId: profile.tenantId,
               createdAt: serverTimestamp(),
             });
           }
           setIsModalOpen(false);
           setEditingCustomer(null);
-          setFormData({ name: '', email: '', phone: '', address: '' });
+          setFormData({ name: '', email: '', phone: '', address: '', type: 'umum', allowTempo: false, tempoLimitDays: 30 });
         } catch (err) {
           console.error(err);
         }
@@ -94,7 +104,7 @@ export default function Customers() {
           <p className="text-gray-500">Maintain your customer database and contact information.</p>
         </div>
         <button
-          onClick={() => { setEditingCustomer(null); setFormData({ name: '', email: '', phone: '', address: '' }); setIsModalOpen(true); }}
+          onClick={() => { setEditingCustomer(null); setFormData({ name: '', email: '', phone: '', address: '', type: 'umum', allowTempo: false, tempoLimitDays: 30 }); setIsModalOpen(true); }}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -123,11 +133,42 @@ export default function Customers() {
             className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
           >
             <div className="flex justify-between items-start mb-4">
-              <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <UserRound className="w-6 h-6" />
+              <div className="flex items-center">
+                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mr-3">
+                  <UserRound className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                    customer.type === 'langganan' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {customer.type || 'umum'}
+                  </span>
+                  {customer.allowTempo && (
+                    <div className="flex flex-col gap-1 ml-1">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-orange-100 text-orange-700">
+                        TEMPO OK
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500">
+                        {customer.tempoLimitDays || 30} HARI
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex space-x-1">
-                <button onClick={() => { setEditingCustomer(customer); setFormData(customer); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                <button onClick={() => { 
+                  setEditingCustomer(customer); 
+                  setFormData({
+                    name: customer.name,
+                    email: customer.email,
+                    phone: customer.phone,
+                    address: customer.address,
+                    type: customer.type || 'umum',
+                    allowTempo: customer.allowTempo || false,
+                    tempoLimitDays: customer.tempoLimitDays || 30
+                  }); 
+                  setIsModalOpen(true); 
+                }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button onClick={() => handleDelete(customer.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
@@ -209,6 +250,60 @@ export default function Customers() {
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipe Pelanggan</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value as 'umum' | 'langganan' })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="umum">Umum</option>
+                      <option value="langganan">Langganan</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Izin Tempo</label>
+                    <div className="flex items-center h-[42px]">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer"
+                          checked={formData.allowTempo}
+                          onChange={(e) => setFormData({ ...formData, allowTempo: e.target.checked })}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <span className="ml-3 text-sm font-medium text-gray-700">{formData.allowTempo ? 'Ya' : 'Tidak'}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {formData.allowTempo && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 space-y-3">
+                        <label className="block text-xs font-bold text-orange-700 uppercase tracking-wider">Tenggat Waktu Pembayaran (Hari)</label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            min="1"
+                            value={formData.tempoLimitDays}
+                            onChange={(e) => setFormData({ ...formData, tempoLimitDays: parseInt(e.target.value) || 0 })}
+                            className="w-24 px-4 py-2 border border-orange-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 font-bold text-orange-900"
+                          />
+                          <span className="text-sm font-bold text-orange-600">Hari dari tanggal transaksi</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="pt-4 flex justify-end space-x-3">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
                   <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">

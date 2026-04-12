@@ -49,20 +49,44 @@ export default function Catalog() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1. Find tenant by slug
-        const tenantQuery = query(collection(db, 'tenants'), where('slug', '==', tenantSlug));
-        const tenantSnap = await getDocs(tenantQuery);
+        let tenantData: Tenant | null = null;
+
+        // 1. Check for Custom Domain first
+        const hostname = window.location.hostname;
+        const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+        const isAppDomain = hostname.includes('run.app') || hostname.includes('web.app') || hostname.includes('firebaseapp.com');
+
+        if (!isLocalhost && !isAppDomain) {
+          const domainQuery = query(collection(db, 'custom_domains'), where('domain', '==', hostname), where('status', '==', 'active'));
+          const domainSnap = await getDocs(domainQuery);
+          
+          if (!domainSnap.empty) {
+            const domainData = domainSnap.docs[0].data();
+            const tenantDoc = await getDocs(query(collection(db, 'tenants'), where('__name__', '==', domainData.tenantId)));
+            if (!tenantDoc.empty) {
+              tenantData = { id: tenantDoc.docs[0].id, ...tenantDoc.docs[0].data() } as Tenant;
+            }
+          }
+        }
+
+        // 2. Fallback to Slug if no domain match or on app domain
+        if (!tenantData && tenantSlug) {
+          const tenantQuery = query(collection(db, 'tenants'), where('slug', '==', tenantSlug));
+          const tenantSnap = await getDocs(tenantQuery);
+          if (!tenantSnap.empty) {
+            tenantData = { id: tenantSnap.docs[0].id, ...tenantSnap.docs[0].data() } as Tenant;
+          }
+        }
         
-        if (!tenantSnap.empty) {
-          const tenantData = { id: tenantSnap.docs[0].id, ...tenantSnap.docs[0].data() } as Tenant;
+        if (tenantData) {
           setTenant(tenantData);
 
-          // 2. Fetch products for this tenant
+          // 3. Fetch products for this tenant
           const prodQuery = query(collection(db, 'products'), where('tenantId', '==', tenantData.id));
           const prodSnap = await getDocs(prodQuery);
           setProducts(prodSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
 
-          // 3. Fetch bank accounts for this tenant
+          // 4. Fetch bank accounts for this tenant
           const bankQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', tenantData.id), where('isActive', '==', true));
           const bankSnap = await getDocs(bankQuery);
           const banks = bankSnap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount));
@@ -337,19 +361,39 @@ export default function Catalog() {
               </button>
 
               {user ? (
-                <button 
-                  onClick={() => navigate(`/catalog/${tenantSlug}/dashboard`)}
-                  className="p-2 text-gray-700 hover:bg-gray-100 rounded-full transition-all"
-                >
-                  <User className="w-6 h-6" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => navigate(`/catalog/${tenantSlug}/dashboard`)}
+                    className="p-2 text-gray-700 hover:bg-gray-100 rounded-full transition-all flex items-center gap-2"
+                  >
+                    <User className="w-6 h-6" />
+                    <span className="hidden sm:inline text-sm font-bold">{profile?.displayName?.split(' ')[0] || 'Akun'}</span>
+                  </button>
+                  <button 
+                    onClick={() => logout()}
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                    title="Keluar"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </button>
+                </div>
               ) : (
-                <button 
-                  onClick={() => navigate(`/catalog/${tenantSlug}/auth`)}
-                  className="p-2 text-gray-700 hover:bg-gray-100 rounded-full transition-all"
-                >
-                  <User className="w-6 h-6" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => navigate(`/catalog/${tenantSlug}/auth`)}
+                    className="px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
+                  >
+                    Masuk
+                  </button>
+                  <button 
+                    onClick={() => {
+                      navigate(`/catalog/${tenantSlug}/auth`, { state: { mode: 'register' } });
+                    }}
+                    className="px-4 py-2 text-sm font-bold bg-black text-white rounded-xl hover:bg-gray-800 transition-all hidden sm:block"
+                  >
+                    Daftar
+                  </button>
+                </div>
               )}
             </div>
           </div>

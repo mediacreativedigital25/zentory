@@ -1,34 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, limit, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
-// ... (rest of imports)
-
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-    },
-    operationType,
-    path
-  };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  // We don't throw here to avoid crashing the whole dashboard, but we log it
-}
+import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { useAuth } from '../hooks/useAuth';
 import { Transaction, Product, Tenant } from '../types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { TrendingUp, TrendingDown, Package, ShoppingCart, Wallet, ArrowUpRight, ArrowDownRight, Building2, CheckCircle2 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, TrendingDown, Package, ShoppingCart, Wallet, ArrowUpRight, ArrowDownRight, Building2, CheckCircle2, CreditCard, Tag, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
@@ -37,8 +14,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [allOrders, setAllOrders] = useState<any[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [orderCount, setOrderCount] = useState(0);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [productCount, setProductCount] = useState(0);
 
   useEffect(() => {
@@ -76,35 +54,45 @@ export default function Dashboard() {
       prodQuery = query(collection(db, 'products'));
       ordersQuery = query(collection(db, 'orders'));
 
-      // Fetch tenants for name resolution
       unsubTenants = onSnapshot(collection(db, 'tenants'), (snap) => {
         setTenants(snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant)));
-      }, (err) => handleFirestoreError(err, OperationType.GET, 'tenants'));
+      }, (err) => handleFirestoreError(err, OperationType.GET, 'tenants', auth, profile));
     } else {
       return;
     }
 
     const unsubTrans = onSnapshot(transQuery, (snap) => {
       setRecentTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'recent_transactions'));
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'recent_transactions', auth, profile));
 
     const unsubAllTrans = onSnapshot(allTransQuery, (snap) => {
       setAllTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'all_transactions'));
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'all_transactions', auth, profile));
 
     const unsubProd = onSnapshot(prodQuery, (snap) => {
       setProductCount(snap.size);
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'products_count'));
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'products_count', auth, profile));
 
     const unsubOrders = onSnapshot(ordersQuery, (snap) => {
-      setOrderCount(snap.size);
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'orders_count'));
+      setAllOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'orders_count', auth, profile));
+
+    const unsubBanks = onSnapshot(
+      profile.tenantId 
+        ? query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId))
+        : collection(db, 'bank_accounts'), 
+      (snap) => {
+        setBankAccounts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      },
+      (err) => handleFirestoreError(err, OperationType.GET, 'bank_accounts', auth, profile)
+    );
 
     return () => {
       unsubTrans();
       unsubAllTrans();
       unsubProd();
       unsubOrders();
+      unsubBanks();
       if (unsubTenants) unsubTenants();
     };
   }, [profile]);
@@ -115,14 +103,45 @@ export default function Dashboard() {
     
     const sales = activeSales.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
     const expenses = activeExpenses.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+
+    // Payment Insights
+    const paymentMethods: any = {};
+    const paymentStatus: any = { lunas: 0, tempo: 0 };
+    const productSales: any = {};
+
+    allOrders.forEach(order => {
+      // Payment Method
+      const bank = bankAccounts.find(b => b.id === order.paymentMethod);
+      const methodName = bank ? bank.name : 'Unknown';
+      paymentMethods[methodName] = (paymentMethods[methodName] || 0) + order.totalAmount;
+
+      // Payment Status
+      if (order.paymentType === 'credit') paymentStatus.tempo += order.totalAmount;
+      else paymentStatus.lunas += order.totalAmount;
+
+      // Products
+      order.items?.forEach((item: any) => {
+        productSales[item.name] = (productSales[item.name] || 0) + item.quantity;
+      });
+    });
+
+    const topProducts = Object.entries(productSales)
+      .map(([name, qty]: any) => ({ name, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+
+    const paymentMethodData = Object.entries(paymentMethods).map(([name, value]) => ({ name, value }));
     
     return {
       totalSales: sales,
-      totalOrders: orderCount + activeSales.filter(t => !t.orderNumber).length,
+      totalOrders: allOrders.length,
       totalProducts: productCount,
       totalExpenses: expenses,
+      paymentMethodData,
+      paymentStatus,
+      topProducts
     };
-  }, [allTransactions, productCount, orderCount]);
+  }, [allTransactions, productCount, allOrders, bankAccounts]);
 
   const chartData = useMemo(() => {
     const last7Days = [...Array(7)].map((_, i) => {
@@ -188,6 +207,38 @@ export default function Dashboard() {
         <StatCard title="Total Expenses" value={stats.totalExpenses} icon={Wallet} trend={-5} color="bg-red-500" />
       </div>
 
+      {/* Payment Status Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-100 text-green-600 rounded-xl">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Lunas</p>
+              <p className="text-2xl font-black text-gray-900">Rp.{stats.paymentStatus.lunas.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">PAID</span>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-orange-100 text-orange-600 rounded-xl">
+              <Wallet className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Tempo</p>
+              <p className="text-2xl font-black text-gray-900">Rp.{stats.paymentStatus.tempo.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">CREDIT</span>
+          </div>
+        </div>
+      </div>
+
       {/* Approval Shortcut */}
       {profile?.role === 'admin' && (
         <motion.div 
@@ -215,6 +266,7 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales vs Expenses */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6">Sales vs Expenses</h3>
           <div className="h-80">
@@ -231,8 +283,72 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Payment Methods */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-6">Recent Transactions</h3>
+          <h3 className="text-lg font-semibold mb-6">Metode Pembayaran</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={stats.paymentMethodData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {stats.paymentMethodData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={['#6366f1', '#10b981', '#f59e0b', '#ef4444'][index % 4]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: number) => `Rp.${value.toLocaleString()}`} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex justify-center gap-4 mt-4">
+              {stats.paymentMethodData.map((item, index) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444'][index % 4] }} />
+                  <span className="text-xs text-gray-500">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Top Products */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold">Produk Terlaris</h3>
+            <Tag className="w-5 h-5 text-gray-400" />
+          </div>
+          <div className="space-y-4">
+            {stats.topProducts.map((p, i) => (
+              <div key={p.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-sm">
+                    {i + 1}
+                  </div>
+                  <p className="font-medium text-gray-900">{p.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-indigo-600">{p.qty} unit</p>
+                  <p className="text-[10px] text-gray-400 uppercase font-bold">Terjual</p>
+                </div>
+              </div>
+            ))}
+            {stats.topProducts.length === 0 && (
+              <p className="text-center text-gray-500 py-8">Belum ada data penjualan.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold">Transaksi Terakhir</h3>
+            <TrendingUp className="w-5 h-5 text-gray-400" />
+          </div>
           <div className="space-y-4">
             {recentTransactions.map((t) => (
               <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">

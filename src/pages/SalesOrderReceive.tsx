@@ -3,7 +3,7 @@ import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, 
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Order, ApprovalRequest, Tenant, BankAccount } from '../types';
-import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark } from 'lucide-react';
+import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth } from '../lib/firebase';
 import ConfirmModal from '../components/ConfirmModal';
@@ -76,6 +76,10 @@ export default function SalesOrderReceive() {
   const [printType, setPrintType] = useState<'invoice' | 'receipt' | null>(null);
   const [isSettledToday, setIsSettledToday] = useState(false);
   const [isPrintDropdownOpen, setIsPrintDropdownOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const handleAfterPrint = () => {
@@ -159,7 +163,14 @@ export default function SalesOrderReceive() {
     };
   }, [profile]);
 
-  const filteredOrders = orders.filter(o => filter === 'all' || o.type === filter);
+  const filteredOrders = orders.filter(o => {
+    const matchesFilter = filter === 'all' || o.type === filter;
+    const matchesSearch = 
+      o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
+      o.customerName.toLowerCase().includes(search.toLowerCase()) ||
+      o.id.toLowerCase().includes(search.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   const getBadgeColor = (type: string) => {
     switch (type) {
@@ -293,6 +304,67 @@ export default function SalesOrderReceive() {
     });
   };
 
+  const handleRecordPayment = async () => {
+    if (!selectedOrder || !profile || paymentAmount <= 0) return;
+
+    setIsUpdating(true);
+    try {
+      const currentPaid = (selectedOrder as any).paidAmount || 0;
+      const totalAmount = selectedOrder.totalAmount || (selectedOrder as any).total || 0;
+      const newPaid = currentPaid + paymentAmount;
+      const newPaymentStatus = newPaid >= totalAmount ? 'paid' : 'partial';
+      const newStatus = newPaid >= totalAmount ? 'completed' : selectedOrder.status;
+
+      await runTransaction(db, async (transaction) => {
+        // 1. Update Order
+        const orderRef = doc(db, 'orders', selectedOrder.id);
+        transaction.update(orderRef, {
+          paidAmount: newPaid,
+          paymentStatus: newPaymentStatus,
+          status: newStatus,
+          updatedAt: serverTimestamp()
+        });
+
+        // 2. Create Transaction
+        const transRef = doc(collection(db, 'transactions'));
+        transaction.set(transRef, {
+          tenantId: profile.tenantId,
+          type: 'sale',
+          category: 'Sales Payment',
+          amount: paymentAmount,
+          totalOrderAmount: totalAmount,
+          date: serverTimestamp(),
+          status: 'completed',
+          userId: profile.uid,
+          orderNumber: selectedOrder.orderNumber,
+          bankAccountId: selectedBankAccountId || null,
+          createdAt: serverTimestamp()
+        });
+      });
+
+      setSelectedOrder({
+        ...selectedOrder,
+        paidAmount: newPaid,
+        paymentStatus: newPaymentStatus,
+        status: newStatus
+      } as any);
+      setIsPaymentModalOpen(false);
+      setPaymentAmount(0);
+      
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Pembayaran Berhasil',
+        message: `Pembayaran sebesar Rp.${paymentAmount.toLocaleString()} telah dicatat.`,
+        onConfirm: () => setConfirmConfig(null),
+        showCancel: false
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mencatat pembayaran.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
   const handleRequestChange = async () => {
     if (!selectedOrder || !profile) return;
 
@@ -386,6 +458,8 @@ export default function SalesOrderReceive() {
           <input
             type="text"
             placeholder="Search Order ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
@@ -402,6 +476,7 @@ export default function SalesOrderReceive() {
                 <th className="px-6 py-4 font-medium">Customer</th>
                 <th className="px-6 py-4 font-medium">Type</th>
                 <th className="px-6 py-4 font-medium">Amount</th>
+                <th className="px-6 py-4 font-medium">Payment</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium text-right">Action</th>
               </tr>
@@ -431,6 +506,15 @@ export default function SalesOrderReceive() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm font-bold text-gray-900">Rp.{(order.totalAmount || (order as any).total || 0).toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${
+                      (order as any).paymentStatus === 'paid' ? 'bg-green-50 text-green-700 border-green-100' :
+                      (order as any).paymentStatus === 'partial' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
+                      'bg-red-50 text-red-700 border-red-100'
+                    }`}>
+                      {(order as any).paymentStatus || 'UNPAID'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(order.status)}`}>
                       {order.status}
@@ -515,6 +599,21 @@ export default function SalesOrderReceive() {
                       {selectedOrder.status?.toUpperCase() || 'N/A'}
                     </span>
                   </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-gray-400 uppercase">Payment Status</p>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                      (selectedOrder as any).paymentStatus === 'paid' ? 'bg-green-50 text-green-700 border-green-100' :
+                      (selectedOrder as any).paymentStatus === 'partial' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
+                      'bg-red-50 text-red-700 border-red-100'
+                    }`}>
+                      {((selectedOrder as any).paymentStatus || 'UNPAID').toUpperCase()}
+                    </span>
+                    {(selectedOrder as any).paymentStatus === 'partial' && (
+                      <p className="text-[10px] text-gray-500 mt-1">
+                        Paid: Rp.{((selectedOrder as any).paidAmount || 0).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
                   {selectedOrder.paymentMethod && (
                     <div className="space-y-1">
                       <p className="text-xs font-bold text-gray-400 uppercase">Payment Method</p>
@@ -573,6 +672,27 @@ export default function SalesOrderReceive() {
                     Update Status
                   </h4>
                   
+                  {selectedOrder.status !== 'cancelled' && (selectedOrder as any).paymentStatus !== 'paid' && (
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h5 className="text-sm font-bold text-indigo-900">Sisa Tagihan</h5>
+                        <p className="text-lg font-black text-indigo-600">
+                          Rp.{( (selectedOrder.totalAmount || (selectedOrder as any).total || 0) - ((selectedOrder as any).paidAmount || 0) ).toLocaleString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setPaymentAmount((selectedOrder.totalAmount || (selectedOrder as any).total || 0) - ((selectedOrder as any).paidAmount || 0));
+                          setIsPaymentModalOpen(true);
+                        }}
+                        className="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-all flex items-center justify-center shadow-lg shadow-indigo-100"
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Catat Pembayaran Baru
+                      </button>
+                    </div>
+                  )}
+
                   {selectedOrder.status === 'cancelled' ? (
                     <div className="p-4 bg-red-50 border border-red-100 rounded-xl space-y-3">
                       <p className="text-xs text-red-700 font-medium">
@@ -877,6 +997,69 @@ export default function SalesOrderReceive() {
           onCancel={() => setConfirmConfig(null)}
         />
       )}
+
+      {/* Payment Modal */}
+      <AnimatePresence>
+        {isPaymentModalOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
+                <h3 className="text-xl font-bold">Catat Pembayaran</h3>
+                <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Jumlah Pembayaran</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</span>
+                    <input
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Metode Pembayaran / Bank</label>
+                  <select
+                    value={selectedBankAccountId}
+                    onChange={(e) => setSelectedBankAccountId(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Pilih Bank / Kas</option>
+                    {bankAccounts.map(b => (
+                      <option key={b.id} value={b.id}>{b.name} {b.accountNumber ? `(${b.accountNumber})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="pt-4 flex gap-3">
+                  <button
+                    onClick={() => setIsPaymentModalOpen(false)}
+                    className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleRecordPayment}
+                    disabled={isUpdating || paymentAmount <= 0}
+                    className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {isUpdating ? 'Memproses...' : 'Simpan Pembayaran'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

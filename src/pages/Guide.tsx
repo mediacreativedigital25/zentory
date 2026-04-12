@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { useAuth } from '../hooks/useAuth';
 import { 
   BookOpen, 
   LayoutDashboard, 
@@ -133,10 +134,51 @@ const guides: GuideSection[] = [
         ]
       }
     ]
+  },
+  {
+    id: 'barcode-management',
+    title: 'Barcode Produk (Baru)',
+    icon: ShieldCheck,
+    roles: ['superadmin', 'admin', 'staff'],
+    content: [
+      {
+        subtitle: 'Manajemen Barcode Produk',
+        steps: [
+          'Scan Barcode: Gunakan ikon kamera pada form produk untuk memindai barcode fisik menggunakan kamera perangkat.',
+          'Generate Barcode: Jika produk tidak memiliki barcode, klik ikon "Wand" untuk membuat barcode otomatis.',
+          'Print Label: Pilih satu atau beberapa produk, lalu klik tombol "Print Barcode" untuk mencetak label stiker (Nama Produk + Barcode).',
+          'Bulk Scan: Gunakan fitur "Bulk Scan" untuk memproses banyak produk sekaligus hanya dengan memindai barcode.'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'user-monitoring',
+    title: 'Monitoring Aktivitas (Baru)',
+    icon: ShieldCheck,
+    roles: ['superadmin'],
+    content: [
+      {
+        subtitle: 'Monitoring Aktivitas (Superadmin)',
+        steps: [
+          'Status Online: Lihat titik hijau pada profil pengguna di tab Users untuk mengetahui siapa yang sedang aktif.',
+          'Filter Online: Gunakan filter "Online" untuk menyaring daftar pengguna yang sedang membuka aplikasi.',
+          'Riwayat Login: Cek kolom "Activity" untuk melihat kapan terakhir kali pengguna masuk (In) dan keluar (Out).',
+          'Logout Paksa: Gunakan tombol "Logout" pada baris pengguna untuk memutuskan sesi pengguna secara paksa jika diperlukan.'
+        ]
+      }
+    ]
   }
 ];
 
 export default function Guide() {
+  const { profile } = useAuth();
+  
+  const filteredGuides = guides.filter(section => {
+    if (!profile) return false;
+    return section.roles.includes(profile.role as any);
+  });
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-20">
       <header className="flex items-center justify-between">
@@ -154,7 +196,7 @@ export default function Guide() {
         <div className="md:col-span-1 space-y-2">
           <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm sticky top-24">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 mb-4">Daftar Isi</p>
-            {guides.map((section) => (
+            {filteredGuides.map((section) => (
               <a
                 key={section.id}
                 href={`#${section.id}`}
@@ -181,7 +223,7 @@ export default function Guide() {
 
         {/* Content Area */}
         <div className="md:col-span-2 space-y-12">
-          {guides.map((section, index) => (
+          {filteredGuides.map((section, index) => (
             <motion.section
               key={section.id}
               id={section.id}

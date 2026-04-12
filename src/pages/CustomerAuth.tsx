@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
 import { LogIn, UserPlus, Mail, Lock, User, MapPin, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,7 +10,8 @@ import { Tenant } from '../types';
 export default function CustomerAuth() {
   const { tenantSlug } = useParams();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const location = useLocation();
+  const [mode, setMode] = useState<'login' | 'register'>(location.state?.mode || 'login');
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

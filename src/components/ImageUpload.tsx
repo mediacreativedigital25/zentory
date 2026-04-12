@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { Upload, X, Image as ImageIcon, Loader2, AlertCircle } from 'lucide-react';
 
 interface ImageUploadProps {
   value: string;
@@ -17,8 +16,8 @@ export default function ImageUpload({
   value, 
   onChange, 
   label = "Upload Foto", 
-  maxSizeMB = 1,
-  folder = "uploads",
+  maxSizeMB = 2,
+  folder = "zentory",
   className = "",
   compact = false
 }: ImageUploadProps) {
@@ -26,12 +25,22 @@ export default function ImageUpload({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Reset error
     setError(null);
+
+    // Check if Cloudinary is configured
+    if (!cloudName || !uploadPreset) {
+      setError('Cloudinary belum dikonfigurasi di Settings');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     // Validate size
     if (file.size > maxSizeMB * 1024 * 1024) {
@@ -49,17 +58,21 @@ export default function ImageUpload({
 
     setIsUploading(true);
     try {
-      const timestamp = Date.now();
-      const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-      const storageRef = ref(storage, `${folder}/${fileName}`);
-      
-      const snapshot = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(snapshot.ref);
-      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+      formData.append('folder', folder);
+
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        formData
+      );
+
+      const url = response.data.secure_url;
       onChange(url);
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError('Gagal mengupload gambar. Silakan coba lagi.');
+    } catch (err: any) {
+      console.error('Cloudinary upload error:', err);
+      setError(err.response?.data?.error?.message || 'Gagal mengupload gambar ke Cloudinary.');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -142,7 +155,7 @@ export default function ImageUpload({
 
       {error && (
         <p className="text-[10px] font-bold text-red-500 ml-1 flex items-center gap-1">
-          <X className="w-3 h-3" />
+          <AlertCircle className="w-3 h-3" />
           {error}
         </p>
       )}

@@ -12,7 +12,7 @@ service cloud.firestore {
     
     function isSuperAdmin() {
       return isAuthenticated() && (
-        (request.auth.token.email == "mediacreativedigital25@gmail.com" && request.auth.token.email_verified == true) ||
+        request.auth.token.email == "mediacreativedigital25@gmail.com" ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin')
       );
@@ -37,7 +37,7 @@ service cloud.firestore {
       return isAuthenticated() && 
              getUserData() != null &&
              getUserData().tenantId == tenantId && 
-             getUserData().role == 'admin';
+             (getUserData().role == 'admin' || hasPermission('tenant_settings'));
     }
     
     function isTenantStaff(tenantId) {
@@ -205,6 +205,22 @@ service cloud.firestore {
     match /purchase_invoices/{piId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
       allow write: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.method == 'create' ? request.resource.data.tenantId : resource.data.tenantId) || hasPermission('purchase_invoices'));
+    }
+
+    match /custom_domains/{domainId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || (resource.data.tenantId != null && isTenantStaff(resource.data.tenantId)));
+      allow write: if isSuperAdmin();
+    }
+
+    match /system_roadmap/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    match /stock_logs/{logId} {
+      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
+      allow create: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
+      allow update, delete: if isSuperAdmin();
     }
   }
 }

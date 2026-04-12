@@ -43,11 +43,30 @@ export default function BankAccounts() {
       where('tenantId', '==', profile.tenantId)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as BankAccount[];
+      
+      // Check for TUNAI account
+      const tunaiAccount = data.find(a => a.name.toUpperCase() === 'TUNAI');
+      if (!tunaiAccount && profile?.tenantId) {
+        try {
+          await addDoc(collection(db, 'bank_accounts'), {
+            tenantId: profile.tenantId,
+            name: 'TUNAI',
+            accountNumber: 'CASH',
+            accountHolder: 'Sistem',
+            type: 'CASH',
+            isActive: true,
+            createdAt: serverTimestamp()
+          });
+        } catch (err) {
+          console.error('Error creating TUNAI account:', err);
+        }
+      }
+
       setAccounts(data.sort((a, b) => a.name.localeCompare(b.name)));
       setLoading(false);
     });
@@ -160,18 +179,22 @@ export default function BankAccounts() {
               className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all relative overflow-hidden group"
             >
               <div className="absolute top-0 right-0 p-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => handleEdit(account)}
-                  className="p-2 bg-white shadow-sm border border-gray-100 rounded-lg text-gray-600 hover:text-indigo-600 transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(account.id)}
-                  className="p-2 bg-white shadow-sm border border-gray-100 rounded-lg text-gray-600 hover:text-red-600 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {account.name.toUpperCase() !== 'TUNAI' && (
+                  <>
+                    <button
+                      onClick={() => handleEdit(account)}
+                      className="p-2 bg-white shadow-sm border border-gray-100 rounded-lg text-gray-600 hover:text-indigo-600 transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(account.id)}
+                      className="p-2 bg-white shadow-sm border border-gray-100 rounded-lg text-gray-600 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
               </div>
 
               <div className="flex items-start space-x-4">
@@ -181,6 +204,11 @@ export default function BankAccounts() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     <h3 className="font-bold text-gray-900 truncate">{account.name}</h3>
+                    {account.name.toUpperCase() === 'TUNAI' && (
+                      <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 text-[8px] font-black uppercase rounded-full">
+                        Sistem
+                      </span>
+                    )}
                     {!account.isActive && (
                       <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full">
                         Nonaktif

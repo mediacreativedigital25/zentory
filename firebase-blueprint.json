@@ -23,7 +23,10 @@
         "role": { "type": "string", "enum": ["superadmin", "admin", "staff"] },
         "tenantId": { "type": "string", "description": "ID of the tenant they belong to (null for superadmin)" },
         "displayName": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLoginAt": { "type": "string", "format": "date-time" },
+        "lastLogoutAt": { "type": "string", "format": "date-time" },
+        "isOnline": { "type": "boolean" }
       },
       "required": ["email", "role"]
     },
@@ -251,6 +254,58 @@
         "paymentMethod": { "type": "string" }
       },
       "required": ["tenantId", "orderNumber", "customerName", "customerEmail", "customerAddress", "items", "totalAmount", "status", "date", "userId"]
+    },
+    "customer": {
+      "title": "Customer",
+      "description": "Client information.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "type": { "type": "string", "enum": ["umum", "langganan"] },
+        "allowTempo": { "type": "boolean" },
+        "tempoLimitDays": { "type": "number", "description": "Number of days for credit term" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "name", "type"]
+    },
+    "custom_domain": {
+      "title": "Custom Domain",
+      "description": "Custom domain mapping for tenants.",
+      "type": "object",
+      "properties": {
+        "domain": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "pending"] },
+        "sslStatus": { "type": "string", "enum": ["valid", "invalid", "pending"] },
+        "isPrimary": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["domain", "tenantId", "status", "isPrimary"]
+    },
+    "stock_log": {
+      "title": "Stock Log",
+      "description": "Audit trail for stock changes.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "type": { "type": "string", "enum": ["IN", "OUT", "ADJUSTMENT", "SALE", "PURCHASE", "CANCEL"] },
+        "quantity": { "type": "number" },
+        "previousStock": { "type": "number" },
+        "currentStock": { "type": "number" },
+        "referenceId": { "type": "string" },
+        "referenceNumber": { "type": "string" },
+        "note": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "productId", "type", "quantity", "previousStock", "currentStock", "userId", "createdAt"]
     }
   },
   "firestore": {
@@ -317,6 +372,18 @@
     "/orders/{orderId}": {
       "schema": "order",
       "description": "Customer orders"
+    },
+    "/custom_domains/{domainId}": {
+      "schema": "custom_domain",
+      "description": "Custom domain mappings"
+    },
+    "/stock_logs/{logId}": {
+      "schema": "stock_log",
+      "description": "Stock mutation history"
+    },
+    "/customers/{customerId}": {
+      "schema": "customer",
+      "description": "Customer records"
     }
   }
 }

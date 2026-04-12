@@ -1,8 +1,40 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { History, CheckCircle2, Rocket, Shield, Layout, ShoppingCart, UserCheck, Wallet, Truck } from 'lucide-react';
+import { History, CheckCircle2, Rocket, Shield, Layout, ShoppingCart, UserCheck, Wallet, Truck, Barcode } from 'lucide-react';
 
 const changelogData = [
+  {
+    date: '12 April 2026',
+    version: 'v2.0.0',
+    title: 'Riwayat Stok & Klasifikasi Pelanggan',
+    icon: History,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    changes: [
+      'Peluncuran Tab "Riwayat Stok" (Audit Log) global pada menu Produk dengan filter periode tanggal kustom.',
+      'Sistem Klasifikasi Pelanggan: Pemisahan tipe pelanggan "Umum" dan "Langganan".',
+      'Implementasi Izin Pembayaran Tempo: Pengaturan izin kredit per pelanggan dengan tenggat waktu (Due Date) yang dapat disesuaikan.',
+      'Otomatisasi Kalkulasi Jatuh Tempo: Sistem secara otomatis menghitung tanggal jatuh tempo saat transaksi kredit dilakukan.',
+      'Integrasi Validasi Tempo pada POS & Sales Order: Tombol Tempo terkunci otomatis untuk pelanggan tanpa izin.',
+      'Peningkatan Audit Trail: Setiap mutasi stok kini mencatat referensi transaksi dan user yang bertanggung jawab secara real-time.'
+    ]
+  },
+  {
+    date: '11 April 2026',
+    version: 'v1.9.0',
+    title: 'Sistem Barcode & Keamanan Role',
+    icon: Barcode,
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50',
+    changes: [
+      'Integrasi pemindaian barcode menggunakan kamera perangkat (Html5-QRCode) pada modul Produk.',
+      'Fitur "Generate Barcode" otomatis untuk standarisasi produk yang belum memiliki barcode.',
+      'Sistem cetak label barcode (Single & Multi-select) untuk mempermudah pelabelan stok fisik.',
+      'Perbaikan kritis pada sistem login dan sinkronisasi izin akses untuk Role Custom.',
+      'Implementasi halaman "No Access" dan proteksi rute berbasis izin (Permission-based Routing).',
+      'Peningkatan validasi navigasi sidebar untuk memastikan keamanan data antar role.'
+    ]
+  },
   {
     date: '10 April 2026',
     version: 'v1.8.0',

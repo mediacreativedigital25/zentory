@@ -19,6 +19,8 @@ export default function Finance() {
     category: '',
   });
 
+  const [search, setSearch] = useState('');
+
   useEffect(() => {
     if (!profile) return;
 
@@ -144,6 +146,8 @@ export default function Finance() {
               <input
                 type="text"
                 placeholder="Search transactions..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -168,7 +172,13 @@ export default function Finance() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {transactions.map((t) => (
+              {transactions
+                .filter(t => 
+                  t.description?.toLowerCase().includes(search.toLowerCase()) || 
+                  t.category?.toLowerCase().includes(search.toLowerCase()) ||
+                  t.id?.toLowerCase().includes(search.toLowerCase())
+                )
+                .map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                   {profile?.role === 'superadmin' && (
                     <td className="px-6 py-4">

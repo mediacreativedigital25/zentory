@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, addDoc, updateDoc, doc, serverTimestamp, onSnapshot, orderBy, increment } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
-import { GoodsReceipt, PurchaseOrder, Supplier } from '../../types';
+import { GoodsReceipt, PurchaseOrder, Supplier, Product } from '../../types';
 import { Plus, Search, Edit2, FileText, X, Package, Printer, Truck, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
+import { logStockChange } from '../../lib/stock-logger';
+import { getDoc } from 'firebase/firestore';
 
 export default function GoodsReceipts() {
   const { profile } = useAuth();
@@ -63,8 +65,20 @@ export default function GoodsReceipts() {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `GR-${year}${month}-${random}`;
+    const prefix = `GR${year}${month}`;
+    
+    // Find the highest sequence for the current month
+    const sameMonthReceipts = receipts.filter(r => r.grNumber?.startsWith(prefix));
+    let nextSeq = 1;
+    if (sameMonthReceipts.length > 0) {
+      const sequences = sameMonthReceipts.map(r => {
+        const seqStr = r.grNumber.replace(prefix, '');
+        return parseInt(seqStr, 10) || 0;
+      });
+      nextSeq = Math.max(...sequences) + 1;
+    }
+    
+    return `${prefix}${String(nextSeq).padStart(6, '0')}`;
   };
 
   const handlePOSelection = (poId: string) => {
@@ -140,9 +154,26 @@ export default function GoodsReceipts() {
           // Update Stock for each item
           for (const item of receipt.items) {
             const productRef = doc(db, 'products', item.productId);
+            const productSnap = await getDoc(productRef);
+            const currentStock = productSnap.exists() ? (productSnap.data() as Product).stock : 0;
+
             await updateDoc(productRef, {
               stock: increment(item.quantityReceived)
             });
+
+            await logStockChange(
+              profile?.tenantId!,
+              item.productId,
+              item.name,
+              'PURCHASE',
+              item.quantityReceived,
+              currentStock,
+              currentStock + item.quantityReceived,
+              profile?.uid!,
+              profile?.displayName || 'System',
+              { id: receipt.id, number: receipt.grNumber },
+              `Goods Receipt from PO: ${receipt.poNumber || '-'}`
+            );
           }
 
           // Update GR status

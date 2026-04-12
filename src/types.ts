@@ -17,12 +17,16 @@ export interface UserProfile {
   address?: string;
   createdAt: any;
   forceLogoutAt?: any;
+  lastLoginAt?: any;
+  lastLogoutAt?: any;
+  isOnline?: boolean;
 }
 
 export interface Tenant {
   id: string;
   name: string;
   slug: string;
+  code?: string;
   ownerId: string;
   subscription: 'free' | 'pro' | 'enterprise';
   createdAt: any;
@@ -31,6 +35,47 @@ export interface Tenant {
     themeColor?: string;
     description?: string;
   };
+  customDomains?: string[];
+  
+  // Cooperation & Business Details
+  ownerName?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  businessType?: string;
+  taxId?: string; // NPWP
+  cooperationStatus?: 'active' | 'pending' | 'ended' | 'trial';
+  cooperationStartDate?: any;
+  notes?: string;
+}
+
+export interface CustomDomain {
+  id: string;
+  domain: string;
+  tenantId: string;
+  tenantName?: string;
+  status: 'active' | 'pending';
+  sslStatus: 'valid' | 'invalid' | 'pending';
+  isPrimary: boolean;
+  createdAt: any;
+  verifiedAt?: any;
+}
+
+export interface StockLog {
+  id: string;
+  tenantId: string;
+  productId: string;
+  productName: string;
+  type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'SALE' | 'PURCHASE' | 'CANCEL';
+  quantity: number;
+  previousStock: number;
+  currentStock: number;
+  referenceId?: string; // Order ID, PO ID, etc.
+  referenceNumber?: string; // Order Number, PO Number, etc.
+  note?: string;
+  userId: string;
+  userName: string;
+  createdAt: any;
 }
 
 export interface Product {
@@ -74,6 +119,9 @@ export interface Customer {
   email: string;
   phone: string;
   address: string;
+  type: 'umum' | 'langganan';
+  allowTempo: boolean;
+  tempoLimitDays?: number;
   createdAt: any;
 }
 
@@ -86,8 +134,12 @@ export interface Order {
   type: 'manual' | 'catalog' | 'service';
   items: { productId: string; name: string; quantity: number; price: number; hpp: number }[];
   totalAmount: number;
+  paidAmount?: number;
+  paymentStatus?: 'paid' | 'partial' | 'unpaid';
+  paymentType?: 'cash' | 'credit';
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   date: any;
+  dueDate?: any;
   userId: string;
   paymentMethod?: string; // ID of BankAccount
 }
@@ -99,6 +151,7 @@ export interface Transaction {
   amount: number;
   items?: { productId: string; name: string; quantity: number; price: number; hpp: number }[];
   date: any;
+  dueDate?: any;
   status: 'completed' | 'pending' | 'cancelled';
   userId: string;
   orderNumber?: string;

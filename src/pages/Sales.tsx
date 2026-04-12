@@ -1,35 +1,66 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, addDoc, serverTimestamp, increment, doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp, increment, doc, updateDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { Product, Transaction } from '../types';
-import { ShoppingCart, Search, Plus, Minus, Trash2, CreditCard, User, Tag, X } from 'lucide-react';
+import { Product, Transaction, StockLog, Customer, BankAccount } from '../types';
+import { ShoppingCart, Search, Plus, Minus, Trash2, CreditCard, User, Tag, X, Landmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
+import { logStockChange } from '../lib/stock-logger';
 
 export default function Sales() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [cart, setCart] = useState<{ product: Product; quantity: number }[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [paymentType, setPaymentType] = useState<'cash' | 'credit'>('cash');
+  const [paymentMethodType, setPaymentMethodType] = useState<'tunai' | 'transfer'>('tunai');
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
 
   useEffect(() => {
     if (!profile?.tenantId) return;
     
-    const q = query(collection(db, 'products'), where('tenantId', '==', profile.tenantId));
-    const unsubscribe = onSnapshot(q, (snap) => {
+    const pQuery = query(collection(db, 'products'), where('tenantId', '==', profile.tenantId));
+    const cQuery = query(collection(db, 'customers'), where('tenantId', '==', profile.tenantId));
+    const bQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId));
+
+    const unsubProducts = onSnapshot(pQuery, (snap) => {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
-      setLoading(false);
-    }, (err) => {
-      console.error(err);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const unsubCustomers = onSnapshot(cQuery, (snap) => {
+      setCustomers(snap.docs.map(d => ({ id: d.id, ...d.data() } as Customer)));
+    });
+
+    const unsubBanks = onSnapshot(bQuery, (snap) => {
+      const banks = snap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount));
+      setBankAccounts(banks);
+      
+      const tunaiAccount = banks.find(b => b.name.toUpperCase() === 'TUNAI');
+      if (tunaiAccount && paymentMethodType === 'tunai') {
+        setSelectedBankAccountId(tunaiAccount.id);
+      }
+    });
+
+    return () => {
+      unsubProducts();
+      unsubCustomers();
+      unsubBanks();
+    };
   }, [profile]);
+
+  const currentCustomer = customers.find(c => c.id === selectedCustomer);
+  const canUseTempo = currentCustomer?.type === 'langganan' && currentCustomer?.allowTempo;
 
   const addToCart = (product: Product) => {
     if (product.stock <= 0) return;
@@ -58,47 +89,70 @@ export default function Sales() {
   const handleCheckout = async () => {
     if (cart.length === 0 || isProcessing) return;
 
-    setConfirmConfig({
-      isOpen: true,
-      title: 'Konfirmasi Pembayaran',
-      message: 'Apakah Anda yakin ingin menyelesaikan transaksi ini?',
-      onConfirm: async () => {
-        setConfirmConfig(null);
-        setIsProcessing(true);
-        try {
-          // 1. Create transaction
-          await addDoc(collection(db, 'transactions'), {
-            tenantId: profile?.tenantId,
-            type: 'sale',
-            amount: total,
-            items: cart.map(item => ({
-              productId: item.product.id,
-              name: item.product.name,
-              quantity: item.quantity,
-              price: item.product.price
-            })),
-            date: serverTimestamp(),
-            status: 'completed',
-            userId: profile?.uid,
-          });
-
-          // 2. Update stock
-          for (const item of cart) {
-            await updateDoc(doc(db, 'products', item.product.id), {
-              stock: increment(-item.quantity)
-            });
-          }
-
-          setCart([]);
-          alert('Transaction completed successfully!');
-        } catch (err) {
-          console.error(err);
-          alert('Transaction failed.');
-        } finally {
-          setIsProcessing(false);
-        }
+    setIsProcessing(true);
+    try {
+      // Calculate Due Date if credit
+      let dueDate = null;
+      if (paymentType === 'credit' && currentCustomer?.allowTempo) {
+        const days = currentCustomer.tempoLimitDays || 30;
+        const date = new Date();
+        date.setDate(date.getDate() + days);
+        dueDate = Timestamp.fromDate(date);
       }
-    });
+
+      // 1. Create transaction
+      const transRef = await addDoc(collection(db, 'transactions'), {
+        tenantId: profile?.tenantId,
+        type: 'sale',
+        amount: total,
+        items: cart.map(item => ({
+          productId: item.product.id,
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price
+        })),
+        date: serverTimestamp(),
+        dueDate,
+        status: paymentType === 'cash' ? 'completed' : 'pending',
+        paymentType,
+        paymentMethod: selectedBankAccountId,
+        customerId: selectedCustomer || null,
+        customerName: currentCustomer?.name || 'Guest',
+        userId: profile?.uid,
+      });
+
+      // 2. Update stock
+      for (const item of cart) {
+        await updateDoc(doc(db, 'products', item.product.id), {
+          stock: increment(-item.quantity)
+        });
+
+        await logStockChange(
+          profile?.tenantId!,
+          item.product.id,
+          item.product.name,
+          'SALE',
+          item.quantity,
+          item.product.stock,
+          item.product.stock - item.quantity,
+          profile?.uid!,
+          profile?.displayName || 'System',
+          { id: transRef.id, number: 'SALE-' + transRef.id.slice(0, 5).toUpperCase() },
+          'Sales transaction'
+        );
+      }
+
+      setCart([]);
+      setIsCheckoutModalOpen(false);
+      setSelectedCustomer('');
+      setPaymentType('cash');
+      alert('Transaction completed successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Transaction failed.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const filteredProducts = products.filter(p => 
@@ -163,9 +217,21 @@ export default function Sales() {
             <ShoppingCart className="w-5 h-5 mr-2 text-indigo-600" />
             Current Order
           </h3>
-          <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-full">
-            {cart.length} items
-          </span>
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedCustomer}
+              onChange={(e) => setSelectedCustomer(e.target.value)}
+              className="text-xs border border-gray-200 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="">Guest Customer</option>
+              {customers.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-full">
+              {cart.length} items
+            </span>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -212,19 +278,115 @@ export default function Sales() {
           </div>
 
           <button
-            onClick={handleCheckout}
+            onClick={() => setIsCheckoutModalOpen(true)}
             disabled={cart.length === 0 || isProcessing}
             className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-lg shadow-indigo-200"
           >
             {isProcessing ? 'Processing...' : (
               <>
                 <CreditCard className="w-6 h-6 mr-2" />
-                Pay Now
+                Checkout
               </>
             )}
           </button>
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      <AnimatePresence>
+        {isCheckoutModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
+                <h3 className="text-xl font-bold flex items-center">
+                  <CreditCard className="w-6 h-6 mr-2" />
+                  Pembayaran
+                </h3>
+                <button
+                  onClick={() => setIsCheckoutModalOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="space-y-3">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Metode Pembayaran</label>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setPaymentMethodType('tunai')}
+                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethodType === 'tunai' ? 'bg-green-50 text-green-600 border-green-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                    >
+                      <Landmark className="w-6 h-6" />
+                      Tunai
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethodType('transfer')}
+                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethodType === 'transfer' ? 'bg-blue-50 text-blue-600 border-blue-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                    >
+                      <CreditCard className="w-6 h-6" />
+                      Transfer
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Tipe Transaksi</label>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setPaymentType('cash')}
+                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'cash' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                    >
+                      Lunas
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (canUseTempo) {
+                          setPaymentType('credit');
+                        }
+                      }}
+                      disabled={!canUseTempo}
+                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'credit' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'} ${!canUseTempo ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      Tempo
+                    </button>
+                  </div>
+                  {!canUseTempo && selectedCustomer && (
+                    <p className="text-[10px] text-red-500 font-bold mt-1">
+                      * Pelanggan ini tidak diizinkan untuk pembayaran Tempo.
+                    </p>
+                  )}
+                  {!selectedCustomer && (
+                    <p className="text-[10px] text-orange-500 font-bold mt-1">
+                      * Pilih pelanggan Langganan untuk mengaktifkan pembayaran Tempo.
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-gray-500 font-bold">Total Tagihan</span>
+                    <span className="text-2xl font-black text-indigo-600">Rp.{total.toLocaleString()}</span>
+                  </div>
+                  <button
+                    onClick={handleCheckout}
+                    disabled={isProcessing}
+                    className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                  >
+                    {isProcessing ? 'Memproses...' : 'Konfirmasi & Bayar'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {confirmConfig && (
         <ConfirmModal

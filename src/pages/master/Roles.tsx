@@ -28,6 +28,7 @@ const FEATURES = [
   { id: 'purchase_invoices', label: 'Purchase: Purchase Invoice' },
   { id: 'purchase_suppliers', label: 'Purchase: Supplier' },
   { id: 'catalog_editor', label: 'Catalog Editor' },
+  { id: 'tenant_settings', label: 'Profil Bisnis' },
   { id: 'master_users', label: 'Master: Tambah User' },
   { id: 'master_roles', label: 'Master: Tambah Role' },
   { id: 'changelog', label: 'Changelog' },

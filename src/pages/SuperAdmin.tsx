@@ -1,35 +1,92 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, doc, updateDoc, onSnapshot, serverTimestamp, where, deleteDoc, writeBatch, getDoc, runTransaction } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, updateDoc, onSnapshot, serverTimestamp, where, deleteDoc, writeBatch, getDoc, runTransaction, Timestamp, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Tenant, UserProfile, ApprovalRequest } from '../types';
-import { Users, Building2, ShieldCheck, Activity, Search, CheckCircle2, XCircle, Clock, Trash2, AlertTriangle, RefreshCcw, LogOut } from 'lucide-react';
+import { Users, Building2, ShieldCheck, Activity, Search, CheckCircle2, XCircle, Clock, Trash2, AlertTriangle, RefreshCcw, LogOut, Globe, Eye, Edit3, X, Save, Phone, Mail, MapPin, Briefcase, FileText, Calendar, ListChecks, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { auth } from '../lib/firebase';
 import ConfirmModal from '../components/ConfirmModal';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
 export default function SuperAdmin() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'tenants' | 'approvals' | 'users' | 'reset'>('tenants');
+  const [activeTab, setActiveTab] = useState<'tenants' | 'approvals' | 'users' | 'reset' | 'roadmap'>('tenants');
   const [selectedResetTenant, setSelectedResetTenant] = useState<string>('');
+  const [selectedTenantForDetail, setSelectedTenantForDetail] = useState<Tenant | null>(null);
+  const [isEditingTenant, setIsEditingTenant] = useState(false);
+  const [tenantFormData, setTenantFormData] = useState<Partial<Tenant>>({});
   const [resetCollections, setResetCollections] = useState<string[]>([]);
   const [isResetting, setIsResetting] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [isGeneratingCodes, setIsGeneratingCodes] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [tenantSearch, setTenantSearch] = useState('');
+  const [userFilter, setUserFilter] = useState<'all' | 'online'>('all');
+  const [roadmapItems, setRoadmapItems] = useState<any[]>([]);
+  const [isRoadmapLoading, setIsRoadmapLoading] = useState(false);
+
+  useEffect(() => {
+    const unsubRoadmap = onSnapshot(query(collection(db, 'system_roadmap'), orderBy('order', 'asc')), (snap) => {
+      if (snap.empty) {
+        const defaults = [
+          { order: 1, title: 'Riwayat Stok (Stock Ledger)', description: 'Pencatatan mutasi stok masuk/keluar secara detail.', status: 'completed', category: 'Inventory' },
+          { order: 2, title: 'Notifikasi Stok Rendah', description: 'Peringatan otomatis saat stok mencapai batas minimum.', status: 'pending', category: 'Inventory' },
+          { order: 3, title: 'Laporan & Analitik Visual', description: 'Grafik tren penjualan dan performa produk.', status: 'pending', category: 'Reporting' },
+          { order: 4, title: 'Manajemen Pemasok', description: 'Database supplier dan histori pembelian.', status: 'pending', category: 'Purchase' },
+          { order: 5, title: 'Validasi Keamanan Firestore', description: 'Audit dan penguatan security rules.', status: 'completed', category: 'Security' },
+          { order: 6, title: 'Ekspor/Impor Data', description: 'Fitur download data ke format Excel/CSV.', status: 'pending', category: 'System' },
+          { order: 7, title: 'Optimasi Mobile (PWA)', description: 'Aplikasi dapat diinstal di HP untuk operasional gudang.', status: 'pending', category: 'System' },
+        ];
+        Promise.all(defaults.map(item => addDoc(collection(db, 'system_roadmap'), item)))
+          .catch(err => console.error('Error initializing roadmap:', err));
+      } else {
+        setRoadmapItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'system_roadmap', auth, profile);
+    });
+
+    return () => unsubRoadmap();
+  }, []);
+
+  const toggleRoadmapStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    await updateDoc(doc(db, 'system_roadmap', id), { status: newStatus });
+  };
 
   const collectionsToReset = [
+    // Sales & Finance
     { id: 'orders', label: 'Orders (Pesanan)' },
     { id: 'transactions', label: 'Transactions (Keuangan)' },
+    { id: 'bank_accounts', label: 'Bank Accounts (Rekening)' },
+    { id: 'dailyClosings', label: 'Daily Closings (Tutup Buku)' },
+    { id: 'charityRecords', label: 'Charity Records (Zakat/Infaq)' },
+    
+    // Inventory
     { id: 'products', label: 'Products (Produk)' },
-    { id: 'customers', label: 'Customers (Pelanggan)' },
     { id: 'categories', label: 'Categories (Kategori)' },
     { id: 'warehouses', label: 'Warehouses (Gudang)' },
+    
+    // Purchase
+    { id: 'suppliers', label: 'Suppliers (Pemasok)' },
+    { id: 'purchase_requests', label: 'Purchase Requests (PR)' },
+    { id: 'purchase_orders', label: 'Purchase Orders (PO)' },
+    { id: 'goods_receipts', label: 'Goods Receipts (GR)' },
+    { id: 'purchase_invoices', label: 'Purchase Invoices (PI)' },
+    
+    // System
+    { id: 'customers', label: 'Customers (Pelanggan)' },
     { id: 'approval_requests', label: 'Approval Requests' },
+    { id: 'expenseRules', label: 'Expense Rules (Aturan Biaya)' },
+    { id: 'roles', label: 'Custom Roles (Jabatan)' },
   ];
 
   useEffect(() => {
@@ -37,9 +94,6 @@ export default function SuperAdmin() {
       try {
         const tenantSnap = await getDocs(query(collection(db, 'tenants'), orderBy('createdAt', 'desc')));
         setTenants(tenantSnap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant)));
-
-        const userSnap = await getDocs(collection(db, 'users'));
-        setUsers(userSnap.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile)));
       } catch (err) {
         handleFirestoreError(err, OperationType.GET, 'tenants_or_users', auth, profile);
       }
@@ -54,8 +108,25 @@ export default function SuperAdmin() {
       setLoading(false);
     });
 
-    return () => unsubApprovals();
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
+      setUsers(snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile)));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'users', auth, profile);
+    });
+
+    return () => {
+      unsubApprovals();
+      unsubUsers();
+    };
   }, []);
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.displayName?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      user.email?.toLowerCase().includes(userSearch.toLowerCase());
+    const matchesFilter = userFilter === 'all' || user.isOnline;
+    return matchesSearch && matchesFilter;
+  });
 
   const updateSubscription = async (tenantId: string, plan: string) => {
     await updateDoc(doc(db, 'tenants', tenantId), { subscription: plan });
@@ -230,6 +301,80 @@ export default function SuperAdmin() {
     }
   };
 
+  const handleSaveTenantDetails = async () => {
+    if (!selectedTenantForDetail) return;
+    try {
+      const tenantRef = doc(db, 'tenants', selectedTenantForDetail.id);
+      await updateDoc(tenantRef, {
+        ...tenantFormData,
+        updatedAt: serverTimestamp()
+      });
+      
+      setTenants(tenants.map(t => t.id === selectedTenantForDetail.id ? { ...t, ...tenantFormData } : t));
+      setSelectedTenantForDetail({ ...selectedTenantForDetail, ...tenantFormData } as Tenant);
+      setIsEditingTenant(false);
+      
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Berhasil',
+        message: 'Data tenant berhasil diperbarui.',
+        onConfirm: () => setConfirmConfig(null),
+        showCancel: false
+      });
+    } catch (err) {
+      console.error(err);
+      handleFirestoreError(err, OperationType.UPDATE, `tenants/${selectedTenantForDetail.id}`, auth, profile);
+    }
+  };
+
+  const generateMissingCodes = async () => {
+    setIsGeneratingCodes(true);
+    try {
+      const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const batch = writeBatch(db);
+      let count = 0;
+
+      for (const tenant of tenants) {
+        if (!tenant.code) {
+          let newCode = '';
+          for (let i = 0; i < 3; i++) {
+            newCode += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          batch.update(doc(db, 'tenants', tenant.id), { code: newCode });
+          count++;
+        }
+      }
+
+      if (count > 0) {
+        await batch.commit();
+        // Refresh tenants
+        const tenantSnap = await getDocs(query(collection(db, 'tenants'), orderBy('createdAt', 'desc')));
+        setTenants(tenantSnap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant)));
+        
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Berhasil',
+          message: `${count} kode tenant berhasil digenerate.`,
+          onConfirm: () => setConfirmConfig(null),
+          showCancel: false
+        });
+      } else {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Info',
+          message: 'Semua tenant sudah memiliki kode.',
+          onConfirm: () => setConfirmConfig(null),
+          showCancel: false
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      handleFirestoreError(err, OperationType.UPDATE, 'tenants_batch_update', auth, profile);
+    } finally {
+      setIsGeneratingCodes(false);
+    }
+  };
+
   const handleReset = async () => {
     if (!selectedResetTenant) return;
     if (resetCollections.length === 0) return;
@@ -311,13 +456,13 @@ export default function SuperAdmin() {
             <p className="text-2xl font-bold">{users.length}</p>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-          <div className="p-3 bg-green-100 text-green-600 rounded-lg mr-4">
-            <Activity className="w-6 h-6" />
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => navigate('/superadmin/domains')}>
+          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-lg mr-4">
+            <Globe className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Active Sessions</p>
-            <p className="text-2xl font-bold">42</p>
+            <p className="text-sm text-gray-500">Custom Domains</p>
+            <p className="text-2xl font-bold">Manage</p>
           </div>
         </div>
       </div>
@@ -354,17 +499,36 @@ export default function SuperAdmin() {
           <RefreshCcw className="w-4 h-4 mr-2" />
           Reset Data
         </button>
+        <button
+          onClick={() => setActiveTab('roadmap')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center ${activeTab === 'roadmap' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          <ListChecks className="w-4 h-4 mr-2" />
+          Roadmap & Planning
+        </button>
       </div>
 
       {activeTab === 'tenants' ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Tenant Management</h3>
+            <div className="flex items-center space-x-4">
+              <h3 className="text-lg font-semibold">Tenant Management</h3>
+              <button
+                onClick={generateMissingCodes}
+                disabled={isGeneratingCodes}
+                className="flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors disabled:opacity-50"
+              >
+                <RefreshCcw className={`w-3 h-3 mr-2 ${isGeneratingCodes ? 'animate-spin' : ''}`} />
+                Generate Missing Codes
+              </button>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search tenants..."
+                value={tenantSearch}
+                onChange={(e) => setTenantSearch(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -374,6 +538,7 @@ export default function SuperAdmin() {
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                 <tr>
                   <th className="px-6 py-4 font-medium">Business Name</th>
+                  <th className="px-6 py-4 font-medium">Code</th>
                   <th className="px-6 py-4 font-medium">Slug</th>
                   <th className="px-6 py-4 font-medium">Subscription</th>
                   <th className="px-6 py-4 font-medium">Created At</th>
@@ -381,13 +546,20 @@ export default function SuperAdmin() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {tenants.map((tenant) => (
+                {tenants
+                  .filter(t => t.name.toLowerCase().includes(tenantSearch.toLowerCase()) || t.code?.toLowerCase().includes(tenantSearch.toLowerCase()))
+                  .map((tenant) => (
                   <tr key={tenant.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-900">{tenant.name}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded font-mono text-xs font-bold">
+                        {tenant.code || '---'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-gray-500">{tenant.slug}</td>
                     <td className="px-6 py-4">
                       <select
-                        value={tenant.subscription}
+                        value={tenant.subscription || 'free'}
                         onChange={(e) => updateSubscription(tenant.id, e.target.value)}
                         className="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 outline-none border-none"
                       >
@@ -400,7 +572,17 @@ export default function SuperAdmin() {
                       {tenant.createdAt ? new Date(tenant.createdAt?.seconds * 1000).toLocaleDateString() : '-'}
                     </td>
                     <td className="px-6 py-4">
-                      <button className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">View Details</button>
+                      <button 
+                        onClick={() => {
+                          setSelectedTenantForDetail(tenant);
+                          setTenantFormData(tenant);
+                          setIsEditingTenant(false);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium flex items-center"
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        View Details
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -520,14 +702,33 @@ export default function SuperAdmin() {
         </div>
       ) : activeTab === 'users' ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Global User Management</h3>
-            <div className="relative">
+          <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <h3 className="text-lg font-semibold">Global User Management</h3>
+              <div className="flex bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setUserFilter('all')}
+                  className={`px-3 py-1 text-[10px] font-black uppercase rounded-md transition-all ${userFilter === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  ALL
+                </button>
+                <button
+                  onClick={() => setUserFilter('online')}
+                  className={`px-3 py-1 text-[10px] font-black uppercase rounded-md transition-all flex items-center ${userFilter === 'online' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${userFilter === 'online' ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  Online
+                </button>
+              </div>
+            </div>
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search users..."
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -536,25 +737,41 @@ export default function SuperAdmin() {
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
                 <tr>
                   <th className="px-6 py-4 font-medium">User</th>
+                  <th className="px-6 py-4 font-medium">Status</th>
                   <th className="px-6 py-4 font-medium">Role</th>
                   <th className="px-6 py-4 font-medium">Tenant</th>
-                  <th className="px-6 py-4 font-medium">Created At</th>
+                  <th className="px-6 py-4 font-medium">Activity</th>
                   <th className="px-6 py-4 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.uid} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs mr-3">
-                          {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs mr-3">
+                            {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                          </div>
+                          {user.isOnline && (
+                            <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm" title="Online"></div>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-bold text-gray-900">{user.displayName || 'No Name'}</p>
                           <p className="text-[10px] text-gray-500">{user.email}</p>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {user.isOnline ? (
+                        <span className="flex items-center text-[10px] font-bold text-green-600 uppercase">
+                          <Activity className="w-3 h-3 mr-1" />
+                          Online
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Offline</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${
@@ -573,8 +790,19 @@ export default function SuperAdmin() {
                         <span className="text-[10px] text-gray-400 font-mono">{user.tenantId || 'global'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {user.createdAt ? new Date(user.createdAt?.seconds * 1000).toLocaleDateString() : '-'}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center text-[10px] text-gray-500">
+                          <Clock className="w-3 h-3 mr-1 text-green-500" />
+                          <span className="font-medium">In:</span>
+                          <span className="ml-1">{user.lastLoginAt ? new Date(user.lastLoginAt?.seconds * 1000).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                        </div>
+                        <div className="flex items-center text-[10px] text-gray-500">
+                          <LogOut className="w-3 h-3 mr-1 text-red-400" />
+                          <span className="font-medium">Out:</span>
+                          <span className="ml-1">{user.lastLogoutAt ? new Date(user.lastLogoutAt?.seconds * 1000).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
@@ -618,7 +846,82 @@ export default function SuperAdmin() {
             </table>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'roadmap' ? (
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div className="flex justify-between items-start mb-8">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+                  <ListChecks className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">System Roadmap & Planning</h3>
+                  <p className="text-sm text-gray-500">Daftar pengembangan fitur Zentory di masa mendatang.</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-black text-indigo-600">
+                  {Math.round((roadmapItems.filter(i => i.status === 'completed').length / roadmapItems.length) * 100) || 0}%
+                </div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Progress Selesai</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {roadmapItems.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => toggleRoadmapStatus(item.id, item.status)}
+                  className={`group p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
+                    item.status === 'completed' 
+                      ? 'border-green-100 bg-green-50/30' 
+                      : 'border-gray-50 bg-white hover:border-indigo-100 hover:shadow-md'
+                  }`}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                      item.status === 'completed' 
+                        ? 'bg-green-500 border-green-500' 
+                        : 'border-gray-200 group-hover:border-indigo-500'
+                    }`}>
+                      {item.status === 'completed' && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter ${
+                          item.category === 'Inventory' ? 'bg-blue-100 text-blue-700' :
+                          item.category === 'Security' ? 'bg-purple-100 text-purple-700' :
+                          item.category === 'Reporting' ? 'bg-amber-100 text-amber-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {item.category}
+                        </span>
+                        <h4 className={`font-bold text-sm ${item.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                          {item.title}
+                        </h4>
+                      </div>
+                      <p className={`text-xs ${item.status === 'completed' ? 'text-gray-300' : 'text-gray-500'}`}>
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 transition-all ${item.status === 'completed' ? 'text-green-300' : 'text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1'}`} />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
+              <h4 className="text-sm font-bold text-indigo-900 mb-2 flex items-center">
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                Catatan Pengembang
+              </h4>
+              <p className="text-xs text-indigo-700 leading-relaxed">
+                Roadmap ini adalah panduan pengembangan sistem Zentory. Item yang ditandai sebagai selesai telah diimplementasikan dalam kode inti. Anda dapat memantau progress pengembangan secara real-time melalui halaman ini.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : activeTab === 'reset' ? (
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
             <div className="flex items-center space-x-4 mb-8">
@@ -630,7 +933,6 @@ export default function SuperAdmin() {
                 <p className="text-sm text-gray-500">Hapus data transaksi dan master data untuk tenant tertentu.</p>
               </div>
             </div>
-
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Pilih Tenant</label>
@@ -647,7 +949,21 @@ export default function SuperAdmin() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-4">Pilih Data yang Akan Dihapus</label>
+                <div className="flex items-center justify-between mb-4">
+                  <label className="block text-sm font-bold text-gray-700">Pilih Data yang Akan Dihapus</label>
+                  <button
+                    onClick={() => {
+                      if (resetCollections.length === collectionsToReset.length) {
+                        setResetCollections([]);
+                      } else {
+                        setResetCollections(collectionsToReset.map(c => c.id));
+                      }
+                    }}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                  >
+                    {resetCollections.length === collectionsToReset.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
+                  </button>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {collectionsToReset.map(coll => (
                     <label key={coll.id} className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
@@ -722,7 +1038,7 @@ export default function SuperAdmin() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {confirmConfig && (
         <ConfirmModal
@@ -733,6 +1049,282 @@ export default function SuperAdmin() {
           onCancel={() => setConfirmConfig(null)}
         />
       )}
+
+      {/* Tenant Detail Modal */}
+      <AnimatePresence>
+        {selectedTenantForDetail && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
+                <div className="flex items-center space-x-3">
+                  <Building2 className="w-6 h-6" />
+                  <div>
+                    <h3 className="text-xl font-bold">{selectedTenantForDetail.name}</h3>
+                    <p className="text-xs text-indigo-100">ID: {selectedTenantForDetail.id}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {!isEditingTenant ? (
+                    <button
+                      onClick={() => setIsEditingTenant(true)}
+                      className="flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-sm font-bold"
+                    >
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Edit Data
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSaveTenantDetails}
+                      className="flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 rounded-xl transition-colors text-sm font-bold"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Simpan Perubahan
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedTenantForDetail(null)}
+                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Basic Info */}
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">
+                      Informasi Dasar & Kontak
+                    </h4>
+                    
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Bisnis</label>
+                          <div className="flex items-center text-gray-900 font-medium px-4 py-2 bg-gray-50 rounded-xl">
+                            {selectedTenantForDetail.name}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Kode Tenant</label>
+                          {isEditingTenant ? (
+                            <input
+                              type="text"
+                              maxLength={3}
+                              value={tenantFormData.code || ''}
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, code: e.target.value.toUpperCase() })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono uppercase"
+                              placeholder="KODE"
+                            />
+                          ) : (
+                            <div className="flex items-center text-indigo-600 font-black font-mono px-4 py-2 bg-indigo-50 rounded-xl">
+                              {selectedTenantForDetail.code || '---'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Owner / Penanggung Jawab</label>
+                        {isEditingTenant ? (
+                          <input
+                            type="text"
+                            value={tenantFormData.ownerName || ''}
+                            onChange={(e) => setTenantFormData({ ...tenantFormData, ownerName: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="Nama Lengkap Owner"
+                          />
+                        ) : (
+                          <div className="flex items-center text-gray-900 font-medium">
+                            <Users className="w-4 h-4 mr-2 text-gray-400" />
+                            {selectedTenantForDetail.ownerName || '-'}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email Bisnis</label>
+                          {isEditingTenant ? (
+                            <input
+                              type="email"
+                              value={tenantFormData.email || ''}
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, email: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="email@bisnis.com"
+                            />
+                          ) : (
+                            <div className="flex items-center text-gray-900 font-medium">
+                              <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                              {selectedTenantForDetail.email || '-'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nomor Telepon/WA</label>
+                          {isEditingTenant ? (
+                            <input
+                              type="text"
+                              value={tenantFormData.phone || ''}
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, phone: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="0812..."
+                            />
+                          ) : (
+                            <div className="flex items-center text-gray-900 font-medium">
+                              <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                              {selectedTenantForDetail.phone || '-'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Alamat Lengkap</label>
+                        {isEditingTenant ? (
+                          <textarea
+                            value={tenantFormData.address || ''}
+                            onChange={(e) => setTenantFormData({ ...tenantFormData, address: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none h-20 resize-none"
+                            placeholder="Alamat Kantor / Toko"
+                          />
+                        ) : (
+                          <div className="flex items-start text-gray-900 font-medium">
+                            <MapPin className="w-4 h-4 mr-2 text-gray-400 mt-1" />
+                            <span className="flex-1">{selectedTenantForDetail.address || '-'}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Business & Cooperation */}
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2">
+                      Detail Bisnis & Kerja Sama
+                    </h4>
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Jenis Usaha</label>
+                          {isEditingTenant ? (
+                            <input
+                              type="text"
+                              value={tenantFormData.businessType || ''}
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, businessType: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="Retail, Jasa, Kuliner, dll"
+                            />
+                          ) : (
+                            <div className="flex items-center text-gray-900 font-medium">
+                              <Briefcase className="w-4 h-4 mr-2 text-gray-400" />
+                              {selectedTenantForDetail.businessType || '-'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">NPWP / Tax ID</label>
+                          {isEditingTenant ? (
+                            <input
+                              type="text"
+                              value={tenantFormData.taxId || ''}
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, taxId: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                              placeholder="Nomor NPWP"
+                            />
+                          ) : (
+                            <div className="flex items-center text-gray-900 font-medium">
+                              <FileText className="w-4 h-4 mr-2 text-gray-400" />
+                              {selectedTenantForDetail.taxId || '-'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Status Kerja Sama</label>
+                          {isEditingTenant ? (
+                            <select
+                              value={tenantFormData.cooperationStatus || 'pending'}
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, cooperationStatus: e.target.value as any })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                            >
+                              <option value="trial">Masa Percobaan (Trial)</option>
+                              <option value="pending">Menunggu (Pending)</option>
+                              <option value="active">Aktif (Active)</option>
+                              <option value="ended">Berakhir (Ended)</option>
+                            </select>
+                          ) : (
+                            <div className="flex items-center">
+                              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                selectedTenantForDetail.cooperationStatus === 'active' ? 'bg-green-100 text-green-700' :
+                                selectedTenantForDetail.cooperationStatus === 'trial' ? 'bg-blue-100 text-blue-700' :
+                                selectedTenantForDetail.cooperationStatus === 'ended' ? 'bg-red-100 text-red-700' :
+                                'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {selectedTenantForDetail.cooperationStatus || 'PENDING'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal Mulai</label>
+                          {isEditingTenant ? (
+                            <input
+                              type="date"
+                              value={tenantFormData.cooperationStartDate ? new Date(tenantFormData.cooperationStartDate.seconds * 1000).toISOString().split('T')[0] : ''}
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, cooperationStartDate: Timestamp.fromDate(new Date(e.target.value)) })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                            />
+                          ) : (
+                            <div className="flex items-center text-gray-900 font-medium">
+                              <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                              {selectedTenantForDetail.cooperationStartDate ? new Date(selectedTenantForDetail.cooperationStartDate.seconds * 1000).toLocaleDateString('id-ID') : '-'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Catatan Kerja Sama</label>
+                        {isEditingTenant ? (
+                          <textarea
+                            value={tenantFormData.notes || ''}
+                            onChange={(e) => setTenantFormData({ ...tenantFormData, notes: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none"
+                            placeholder="Catatan khusus, kesepakatan, dll"
+                          />
+                        ) : (
+                          <div className="p-4 bg-gray-50 rounded-xl text-sm text-gray-600 italic">
+                            {selectedTenantForDetail.notes || 'Tidak ada catatan.'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+                <button
+                  onClick={() => setSelectedTenantForDetail(null)}
+                  className="px-6 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-100 transition-all"
+                >
+                  Tutup
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

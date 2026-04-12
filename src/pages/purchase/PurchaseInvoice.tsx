@@ -77,8 +77,20 @@ export default function PurchaseInvoices() {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `INV-SUP-${year}${month}-${random}`;
+    const prefix = `PI${year}${month}`;
+    
+    // Find the highest sequence for the current month
+    const sameMonthInvoices = invoices.filter(i => i.piNumber?.startsWith(prefix));
+    let nextSeq = 1;
+    if (sameMonthInvoices.length > 0) {
+      const sequences = sameMonthInvoices.map(i => {
+        const seqStr = i.piNumber.replace(prefix, '');
+        return parseInt(seqStr, 10) || 0;
+      });
+      nextSeq = Math.max(...sequences) + 1;
+    }
+    
+    return `${prefix}${String(nextSeq).padStart(6, '0')}`;
   };
 
   const handlePOSelection = (poId: string) => {

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, updateDoc, doc, getDocs, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { initializeApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { db, auth } from '../../lib/firebase';
+import firebaseConfig from '../../../firebase-applet-config.json';
 import { useAuth } from '../../hooks/useAuth';
 import { UserProfile, Role, Tenant } from '../../types';
 import { Users as UsersIcon, Plus, X, Edit2, Trash2, Shield, Mail, Building2, LogOut } from 'lucide-react';
@@ -21,7 +24,8 @@ export default function Users() {
     email: '',
     displayName: '',
     role: '',
-    tenantId: ''
+    tenantId: '',
+    password: ''
   });
 
   useEffect(() => {
@@ -88,11 +92,25 @@ export default function Users() {
           updatedAt: serverTimestamp()
         });
       } else {
-        // For new users, we create a document. 
-        // Note: They still need to sign up via Firebase Auth with this email.
-        // We use a random ID for now, but ideally we'd use email or wait for signup.
-        const newUserRef = doc(collection(db, 'users'));
-        await setDoc(newUserRef, {
+        // Create user in Firebase Auth using a secondary app instance
+        // to avoid logging out the current admin
+        const secondaryApp = initializeApp(firebaseConfig, 'Secondary');
+        const secondaryAuth = getAuth(secondaryApp);
+        
+        const userCredential = await createUserWithEmailAndPassword(
+          secondaryAuth, 
+          formData.email, 
+          formData.password
+        );
+        
+        const newUid = userCredential.user.uid;
+        
+        // Sign out from secondary app immediately
+        await signOut(secondaryAuth);
+
+        // Create user profile in Firestore
+        await setDoc(doc(db, 'users', newUid), {
+          uid: newUid,
           email: formData.email,
           displayName: formData.displayName,
           role: formData.role,
@@ -102,10 +120,10 @@ export default function Users() {
       }
       setIsModalOpen(false);
       setEditingUser(null);
-      setFormData({ email: '', displayName: '', role: '', tenantId: '' });
-    } catch (err) {
+      setFormData({ email: '', displayName: '', role: '', tenantId: '', password: '' });
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to save user.');
+      alert('Failed to save user: ' + (err.message || 'Unknown error'));
     }
   };
 
@@ -141,7 +159,7 @@ export default function Users() {
           <p className="text-gray-500">Kelola pengguna dan penetapan role mereka.</p>
         </div>
         <button
-          onClick={() => { setEditingUser(null); setFormData({ email: '', displayName: '', role: '', tenantId: '' }); setIsModalOpen(true); }}
+          onClick={() => { setEditingUser(null); setFormData({ email: '', displayName: '', role: '', tenantId: '', password: '' }); setIsModalOpen(true); }}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -209,7 +227,8 @@ export default function Users() {
                             email: user.email,
                             displayName: user.displayName,
                             role: user.role,
-                            tenantId: user.tenantId || ''
+                            tenantId: user.tenantId || '',
+                            password: ''
                           });
                           setIsModalOpen(true);
                         }}
@@ -283,20 +302,34 @@ export default function Users() {
               
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {!editingUser && (
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="user@example.com"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
                       <input
-                        type="email"
+                        type="password"
                         required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="user@example.com"
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        minLength={6}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="Min. 6 karakter"
+                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>
-                  </div>
+                  </>
                 )}
 
                 <div>

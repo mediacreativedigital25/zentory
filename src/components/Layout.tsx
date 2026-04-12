@@ -3,11 +3,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { LayoutDashboard, Package, ShoppingCart, Wallet, Store, LogOut, Settings, Users, ChevronDown, UserRound, Menu, X, History, BookOpen, Calculator, Truck, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Wallet, Store, LogOut, Settings, Users, ChevronDown, UserRound, Menu, X, History, BookOpen, Calculator, Truck, CheckCircle2, Globe, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { profile } = useAuth();
+  const { profile, permissions: userPermissions } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
@@ -83,35 +83,40 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ]
     },
     { label: 'Catalog Editor', icon: Store, path: '/catalog-editor', roles: ['admin', 'superadmin'], permission: 'catalog_editor' },
+    { label: 'Profil Bisnis', icon: Building2, path: '/settings/business', roles: ['admin'], permission: 'tenant_settings' },
     { label: 'Changelog', icon: History, path: '/changelog', roles: ['admin', 'staff', 'superadmin'], permission: 'changelog' },
     { label: 'Panduan', icon: BookOpen, path: '/guide', roles: ['admin', 'staff', 'superadmin'], permission: 'guide' },
-    { label: 'Superadmin', icon: Users, path: '/superadmin', roles: ['superadmin'] },
+    { 
+      label: 'Superadmin', 
+      icon: Users, 
+      roles: ['superadmin'],
+      children: [
+        { label: 'Dashboard', path: '/superadmin' },
+        { label: 'Domain Management', path: '/superadmin/domains' },
+      ]
+    },
   ];
 
-  const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [roleName, setRoleName] = useState<string>('');
 
   React.useEffect(() => {
     if (profile) {
       if (['superadmin', 'admin', 'staff', 'customer'].includes(profile.role)) {
-        // System roles have all permissions for now, or we can define them
-        setUserPermissions([]); // Empty means check roles instead
         setRoleName(profile.role.charAt(0).toUpperCase() + profile.role.slice(1));
       } else if (profile.role) {
-        // Custom role
-        const fetchRole = async () => {
+        // Custom role - fetch name if needed, or we can just use the ID for now
+        // But we already have the permissions from useAuth
+        const fetchRoleName = async () => {
           try {
             const roleDoc = await getDoc(doc(db, 'roles', profile.role));
             if (roleDoc.exists()) {
-              const data = roleDoc.data();
-              setUserPermissions(data.permissions || []);
-              setRoleName(data.name);
+              setRoleName(roleDoc.data().name);
             }
           } catch (err) {
-            console.error('Error fetching custom role:', err);
+            console.error('Error fetching role name:', err);
           }
         };
-        fetchRole();
+        fetchRoleName();
       }
     }
   }, [profile]);
@@ -120,21 +125,42 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (!profile) return false;
     if (profile.role === 'superadmin') return true;
     
-    // Check system roles first
-    if (['admin', 'staff'].includes(profile.role)) {
-      return item.roles?.includes(profile.role);
-    }
+    const isSystemRole = ['admin', 'staff'].includes(profile.role);
 
     // Check custom role permissions
+    if (!isSystemRole) {
+      if (item.children) {
+        // For parent items, show if any child is allowed
+        return item.children.some((child: any) => {
+          if (child.permission) return userPermissions.includes(child.permission);
+          if (child.roles) return !child.roles.includes('superadmin');
+          if (item.roles) return !item.roles.includes('superadmin');
+          return true;
+        });
+      }
+      
+      if (item.permission) {
+        return userPermissions.includes(item.permission);
+      }
+      
+      // If no permission key, check roles
+      if (item.roles) {
+        // Custom roles are not superadmin, so if it's superadmin-only, deny
+        return !item.roles.includes('superadmin');
+      }
+      
+      return true;
+    }
+
+    // System roles (admin, staff)
     if (item.children) {
-      // For parent items, show if any child is allowed
-      return item.children.some((child: any) => !child.permission || userPermissions.includes(child.permission));
+      return item.children.some((child: any) => {
+        const allowedRoles = child.roles || item.roles;
+        return !allowedRoles || allowedRoles.includes(profile.role);
+      });
     }
-    // If no permission key is defined, it's public for authenticated users (unless restricted by roles)
-    if (!item.permission) {
-      return !item.roles || item.roles.length === 0;
-    }
-    return userPermissions.includes(item.permission);
+    
+    return !item.roles || item.roles.includes(profile.role);
   };
 
   const filteredNav = navItems.filter(hasPermission).map(item => {
@@ -142,11 +168,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       return {
         ...item,
         children: item.children.filter((child: any) => {
-          if (['admin', 'staff'].includes(profile?.role || '')) {
-            return !child.roles || child.roles.includes(profile?.role);
+          if (profile?.role === 'superadmin') return true;
+          
+          const isSystemRole = ['admin', 'staff'].includes(profile?.role || '');
+          if (isSystemRole) {
+            const allowedRoles = child.roles || item.roles;
+            return !allowedRoles || allowedRoles.includes(profile?.role || '');
           }
+          
           // For custom roles, check permission key
-          return !child.permission || userPermissions.includes(child.permission);
+          if (child.permission) {
+            return userPermissions.includes(child.permission);
+          }
+          
+          // If no permission key, check roles
+          const allowedRoles = child.roles || item.roles;
+          if (allowedRoles) {
+            return !allowedRoles.includes('superadmin');
+          }
+          
+          return true;
         })
       };
     }

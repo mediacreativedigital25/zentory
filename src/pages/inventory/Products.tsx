@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
-import { Product, Category, Warehouse } from '../../types';
-import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon, RefreshCw, Upload } from 'lucide-react';
+import { Product, Category, Warehouse, StockLog } from '../../types';
+import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon, RefreshCw, Upload, Camera, Printer, Wand2, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
 import ImageUpload from '../../components/ImageUpload';
+import BarcodeScanner from '../../components/BarcodeScanner';
+import PrintBarcodeModal from '../../components/PrintBarcodeModal';
+import { logStockChange } from '../../lib/stock-logger';
 
 export default function Products() {
   const { profile } = useAuth();
@@ -16,6 +19,14 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [selectedProductForHistory, setSelectedProductForHistory] = useState<Product | null>(null);
+  const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [printData, setPrintData] = useState<{ name: string; barcode: string }[]>([]);
+  const [scanningIndex, setScanningIndex] = useState<number | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [bulkProducts, setBulkProducts] = useState<any[]>([{
     name: '',
@@ -31,6 +42,13 @@ export default function Products() {
     type: 'manual' as const
   }]);
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; type?: 'danger' | 'info' | 'warning' } | null>(null);
+  const [activeTab, setActiveTab] = useState<'products' | 'history'>('products');
+  const [globalStockLogs, setGlobalStockLogs] = useState<StockLog[]>([]);
+  const [historySearch, setHistorySearch] = useState('');
+  const [dateRange, setDateRange] = useState({
+    start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  });
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -73,12 +91,45 @@ export default function Products() {
       setWarehouses(snap.docs.map(d => ({ id: d.id, ...d.data() } as Warehouse)));
     });
 
+    let unsubLogs = () => {};
+    if (selectedProductForHistory) {
+      const logsQuery = query(
+        collection(db, 'stock_logs'),
+        where('productId', '==', selectedProductForHistory.id),
+        orderBy('createdAt', 'desc')
+      );
+      unsubLogs = onSnapshot(logsQuery, (snap) => {
+        setStockLogs(snap.docs.map(d => ({ id: d.id, ...d.data() } as StockLog)));
+      });
+    }
+
+    let unsubGlobalLogs = () => {};
+    if (activeTab === 'history' && profile?.tenantId) {
+      const startTimestamp = new Date(dateRange.start);
+      startTimestamp.setHours(0, 0, 0, 0);
+      const endTimestamp = new Date(dateRange.end);
+      endTimestamp.setHours(23, 59, 59, 999);
+
+      const globalLogsQuery = query(
+        collection(db, 'stock_logs'),
+        where('tenantId', '==', profile.tenantId),
+        where('createdAt', '>=', startTimestamp),
+        where('createdAt', '<=', endTimestamp),
+        orderBy('createdAt', 'desc')
+      );
+      unsubGlobalLogs = onSnapshot(globalLogsQuery, (snap) => {
+        setGlobalStockLogs(snap.docs.map(d => ({ id: d.id, ...d.data() } as StockLog)));
+      });
+    }
+
     return () => {
       unsubProducts();
       unsubCategories();
       unsubWarehouses();
+      unsubLogs();
+      unsubGlobalLogs();
     };
-  }, [profile]);
+  }, [profile, selectedProductForHistory, activeTab, dateRange]);
 
   const generateServiceSKU = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -137,11 +188,27 @@ export default function Products() {
         setConfirmConfig(null);
         try {
           for (const product of bulkProducts) {
-            await addDoc(collection(db, 'products'), {
+            const docRef = await addDoc(collection(db, 'products'), {
               ...product,
               tenantId: profile.tenantId,
               createdAt: serverTimestamp(),
             });
+
+            if (product.stock > 0) {
+              await logStockChange(
+                profile.tenantId!,
+                docRef.id,
+                product.name,
+                'IN',
+                product.stock,
+                0,
+                product.stock,
+                profile.uid,
+                profile.displayName || 'System',
+                undefined,
+                'Initial bulk stock'
+              );
+            }
           }
           setIsBulkModalOpen(false);
           setBulkProducts([{
@@ -192,13 +259,46 @@ export default function Products() {
         setConfirmConfig(null);
         try {
           if (editingProduct) {
+            const stockDiff = formData.stock - editingProduct.stock;
             await updateDoc(doc(db, 'products', editingProduct.id), formData);
+            
+            if (stockDiff !== 0) {
+              await logStockChange(
+                profile.tenantId!,
+                editingProduct.id,
+                formData.name,
+                stockDiff > 0 ? 'ADJUSTMENT' : 'ADJUSTMENT',
+                Math.abs(stockDiff),
+                editingProduct.stock,
+                formData.stock,
+                profile.uid,
+                profile.displayName || 'System',
+                undefined,
+                'Manual adjustment'
+              );
+            }
           } else {
-            await addDoc(collection(db, 'products'), {
+            const docRef = await addDoc(collection(db, 'products'), {
               ...formData,
               tenantId: profile.tenantId,
               createdAt: serverTimestamp(),
             });
+
+            if (formData.stock > 0) {
+              await logStockChange(
+                profile.tenantId!,
+                docRef.id,
+                formData.name,
+                'IN',
+                formData.stock,
+                0,
+                formData.stock,
+                profile.uid,
+                profile.displayName || 'System',
+                undefined,
+                'Initial stock'
+              );
+            }
           }
           setIsModalOpen(false);
           setEditingProduct(null);
@@ -242,6 +342,42 @@ export default function Products() {
     setIsModalOpen(true);
   };
 
+  const generateBarcode = () => {
+    // Generate a 12-digit numeric barcode
+    const timestamp = Date.now().toString().slice(-8);
+    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    return timestamp + random;
+  };
+
+  const toggleProductSelection = (id: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkPrint = () => {
+    const productsToPrint = products
+      .filter(p => selectedProducts.includes(p.id) && p.barcode)
+      .map(p => ({ name: p.name, barcode: p.barcode! }));
+    
+    if (productsToPrint.length === 0) {
+      alert('Pilih setidaknya satu produk yang memiliki barcode untuk dicetak.');
+      return;
+    }
+    
+    setPrintData(productsToPrint);
+    setIsPrintModalOpen(true);
+  };
+
+  const handleScan = (barcode: string) => {
+    if (scanningIndex !== null) {
+      updateBulkRow(scanningIndex, 'barcode', barcode);
+    } else {
+      setFormData({ ...formData, barcode });
+    }
+    setScanningIndex(null);
+  };
+
   if (loading) return <div className="p-8 text-center text-gray-500">Loading Products...</div>;
 
   return (
@@ -252,6 +388,15 @@ export default function Products() {
           <p className="text-gray-500">Kelola daftar produk, HPP, dan harga jual.</p>
         </div>
         <div className="flex gap-3">
+          {selectedProducts.length > 0 && (
+            <button
+              onClick={handleBulkPrint}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition-colors shadow-lg shadow-green-100"
+            >
+              <Printer className="w-5 h-5 mr-2" />
+              Cetak Label ({selectedProducts.length})
+            </button>
+          )}
           <button
             onClick={() => { 
               setBulkProducts([{
@@ -300,11 +445,45 @@ export default function Products() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+            activeTab === 'products' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Daftar Produk
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+            activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Riwayat Stok
+        </button>
+      </div>
+
+      {activeTab === 'products' ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
               <tr>
+                <th className="px-6 py-4 font-medium w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedProducts(products.map(p => p.id));
+                      } else {
+                        setSelectedProducts([]);
+                      }
+                    }}
+                    checked={selectedProducts.length === products.length && products.length > 0}
+                  />
+                </th>
                 <th className="px-6 py-4 font-medium">Produk</th>
                 <th className="px-6 py-4 font-medium">SKU / Barcode</th>
                 <th className="px-6 py-4 font-medium">Kategori</th>
@@ -317,7 +496,15 @@ export default function Products() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {products.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${selectedProducts.includes(product.id) ? 'bg-indigo-50/30' : ''}`}>
+                  <td className="px-6 py-4">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={selectedProducts.includes(product.id)}
+                      onChange={() => toggleProductSelection(product.id)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className="w-10 h-10 rounded-lg bg-gray-100 mr-3 overflow-hidden">
@@ -363,9 +550,31 @@ export default function Products() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end space-x-2">
+                      <button 
+                        onClick={() => {
+                          setSelectedProductForHistory(product);
+                          setIsHistoryModalOpen(true);
+                        }}
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Riwayat Stok"
+                      >
+                        <History className="w-4 h-4" />
+                      </button>
                       <button onClick={() => openEditModal(product)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                         <Edit2 className="w-4 h-4" />
                       </button>
+                      {product.barcode && (
+                        <button 
+                          onClick={() => {
+                            setPrintData([{ name: product.name, barcode: product.barcode! }]);
+                            setIsPrintModalOpen(true);
+                          }} 
+                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Print Barcode"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                      )}
                       <button onClick={() => handleDelete(product.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -383,6 +592,131 @@ export default function Products() {
           </div>
         )}
       </div>
+    ) : (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Cari Produk / SKU</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari nama produk atau SKU..."
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              />
+            </div>
+          </div>
+          <div className="w-48">
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Dari Tanggal</label>
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            />
+          </div>
+          <div className="w-48">
+            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Sampai Tanggal</label>
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+              className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            />
+          </div>
+          <button
+            onClick={() => {
+              setDateRange({
+                start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+                end: new Date().toISOString().split('T')[0]
+              });
+              setHistorySearch('');
+            }}
+            className="px-4 py-2 text-gray-500 hover:text-indigo-600 font-bold text-sm"
+          >
+            Reset
+          </button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-4 font-bold">Waktu</th>
+                  <th className="px-6 py-4 font-bold">Produk</th>
+                  <th className="px-6 py-4 font-bold">Tipe</th>
+                  <th className="px-6 py-4 font-bold text-right">Qty</th>
+                  <th className="px-6 py-4 font-bold text-right">Sblm</th>
+                  <th className="px-6 py-4 font-bold text-right">Ssdh</th>
+                  <th className="px-6 py-4 font-bold">Referensi</th>
+                  <th className="px-6 py-4 font-bold">User</th>
+                  <th className="px-6 py-4 font-bold">Catatan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {globalStockLogs
+                  .filter(log => 
+                    log.productName?.toLowerCase().includes(historySearch.toLowerCase()) ||
+                    log.productId?.toLowerCase().includes(historySearch.toLowerCase())
+                  )
+                  .map((log) => (
+                  <tr key={log.id} className="text-xs hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
+                      {log.createdAt ? new Date(log.createdAt.seconds * 1000).toLocaleString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : '-'}
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-gray-900">{log.productName}</p>
+                      <p className="text-[10px] text-gray-400 font-mono">{log.productId}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                        log.type === 'IN' || log.type === 'PURCHASE' ? 'bg-green-100 text-green-700' :
+                        log.type === 'OUT' || log.type === 'SALE' ? 'bg-red-100 text-red-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {log.type}
+                      </span>
+                    </td>
+                    <td className={`px-6 py-4 text-right font-bold ${
+                      log.type === 'IN' || log.type === 'PURCHASE' ? 'text-green-600' :
+                      log.type === 'OUT' || log.type === 'SALE' ? 'text-red-600' :
+                      'text-blue-600'
+                    }`}>
+                      {log.type === 'IN' || log.type === 'PURCHASE' ? '+' : '-'}{log.quantity}
+                    </td>
+                    <td className="px-6 py-4 text-right text-gray-400">{log.previousStock}</td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-900">{log.currentStock}</td>
+                    <td className="px-6 py-4 text-indigo-600 font-bold">
+                      {log.referenceNumber || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">{log.userName}</td>
+                    <td className="px-6 py-4 text-gray-400 italic max-w-[150px] truncate" title={log.note}>
+                      {log.note || '-'}
+                    </td>
+                  </tr>
+                ))}
+                {globalStockLogs.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-6 py-12 text-center text-gray-400">
+                      <History className="w-12 h-12 text-gray-100 mx-auto mb-4" />
+                      <p>Tidak ada riwayat stok ditemukan untuk periode ini.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    )}
 
       <AnimatePresence>
         {isBulkModalOpen && (
@@ -424,20 +758,43 @@ export default function Products() {
                       {bulkProducts.map((row, index) => (
                         <tr key={index} className="group">
                           <td className="py-3 px-2">
-                            <input
-                              autoFocus={index === bulkProducts.length - 1}
-                              type="text"
-                              value={row.barcode}
-                              onChange={(e) => updateBulkRow(index, 'barcode', e.target.value)}
-                              placeholder="Scan..."
-                              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold"
-                            />
+                            <div className="relative group/scan">
+                                <input
+                                  autoFocus={index === bulkProducts.length - 1}
+                                  type="text"
+                                  value={row.barcode || ''}
+                                  onChange={(e) => updateBulkRow(index, 'barcode', e.target.value)}
+                                  placeholder="Scan..."
+                                  className="w-full pl-3 pr-16 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold"
+                                />
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => updateBulkRow(index, 'barcode', generateBarcode())}
+                                  className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
+                                  title="Generate Barcode"
+                                >
+                                  <Wand2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setScanningIndex(index);
+                                    setIsScannerOpen(true);
+                                  }}
+                                  className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
+                                  title="Scan with camera"
+                                >
+                                  <Camera className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
                           </td>
                           <td className="py-3 px-2">
                             <input
                               type="text"
                               required
-                              value={row.name}
+                              value={row.name || ''}
                               onChange={(e) => updateBulkRow(index, 'name', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                             />
@@ -446,7 +803,7 @@ export default function Products() {
                             <input
                               type="text"
                               readOnly
-                              value={row.sku}
+                              value={row.sku || ''}
                               className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-xs font-mono text-gray-500"
                             />
                           </td>
@@ -454,7 +811,7 @@ export default function Products() {
                             <input
                               type="number"
                               required
-                              value={row.hpp}
+                              value={row.hpp || 0}
                               onChange={(e) => updateBulkRow(index, 'hpp', Number(e.target.value))}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                             />
@@ -463,7 +820,7 @@ export default function Products() {
                             <input
                               type="number"
                               required
-                              value={row.price}
+                              value={row.price || 0}
                               onChange={(e) => updateBulkRow(index, 'price', Number(e.target.value))}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold text-indigo-600"
                             />
@@ -472,7 +829,7 @@ export default function Products() {
                             <input
                               type="number"
                               required
-                              value={row.stock}
+                              value={row.stock || 0}
                               onChange={(e) => updateBulkRow(index, 'stock', Number(e.target.value))}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                             />
@@ -596,7 +953,7 @@ export default function Products() {
                     <input
                       type="text"
                       required
-                      value={formData.name}
+                      value={formData.name || ''}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     />
@@ -608,7 +965,7 @@ export default function Products() {
                         type="text"
                         required
                         readOnly
-                        value={formData.sku}
+                        value={formData.sku || ''}
                         className="w-full pl-4 pr-10 py-2 border border-gray-200 rounded-lg outline-none bg-gray-50 text-gray-500 cursor-not-allowed font-mono text-xs"
                       />
                       {!editingProduct && (
@@ -629,17 +986,39 @@ export default function Products() {
                       <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type="text"
-                        value={formData.barcode}
+                        value={formData.barcode || ''}
                         onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full pl-10 pr-20 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Manual / Scan / Generate"
                       />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, barcode: generateBarcode() })}
+                          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
+                          title="Generate Barcode"
+                        >
+                          <Wand2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setScanningIndex(null);
+                            setIsScannerOpen(true);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
+                          title="Scan with camera"
+                        >
+                          <Camera className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className={formData.type === 'service' ? 'col-span-2' : ''}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                     <select
                       required
-                      value={formData.category}
+                      value={formData.category || ''}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     >
@@ -652,7 +1031,7 @@ export default function Products() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Gudang</label>
                         <select
-                          value={formData.warehouseId}
+                          value={formData.warehouseId || ''}
                           onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                         >
@@ -667,7 +1046,7 @@ export default function Products() {
                         <input
                           type="number"
                           required
-                          value={formData.hpp}
+                          value={formData.hpp || 0}
                           onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
                           className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                         />
@@ -681,7 +1060,7 @@ export default function Products() {
                     <input
                       type="number"
                       required
-                      value={formData.price}
+                      value={formData.price || 0}
                       onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     />
@@ -692,7 +1071,7 @@ export default function Products() {
                       <input
                         type="number"
                         required
-                        value={formData.stock}
+                        value={formData.stock || 0}
                         onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                       />
@@ -709,7 +1088,7 @@ export default function Products() {
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
                     <textarea
-                      value={formData.description}
+                      value={formData.description || ''}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                     />
@@ -745,6 +1124,137 @@ export default function Products() {
           onConfirm={confirmConfig.onConfirm}
           onCancel={() => setConfirmConfig(null)}
         />
+      )}
+
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={handleScan}
+      />
+
+      {isPrintModalOpen && printData.length > 0 && (
+        <PrintBarcodeModal
+          isOpen={isPrintModalOpen}
+          onClose={() => {
+            setIsPrintModalOpen(false);
+            setPrintData([]);
+          }}
+          products={printData}
+        />
+      )}
+
+      {isHistoryModalOpen && selectedProductForHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+          >
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <History className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Riwayat Stok</h3>
+                  <p className="text-indigo-100 text-sm">{selectedProductForHistory.name} ({selectedProductForHistory.sku})</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsHistoryModalOpen(false);
+                  setSelectedProductForHistory(null);
+                }} 
+                className="p-2 hover:bg-white/10 rounded-full"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-6">
+              <div className="bg-gray-50 rounded-xl p-4 mb-6 flex justify-between items-center">
+                <div className="flex space-x-8">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Stok Saat Ini</p>
+                    <p className="text-2xl font-black text-indigo-600">{selectedProductForHistory.stock}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Mutasi</p>
+                    <p className="text-2xl font-black text-gray-900">{stockLogs.length}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Kategori</p>
+                  <p className="text-sm font-bold text-gray-700">{selectedProductForHistory.category}</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase tracking-wider">
+                    <tr>
+                      <th className="px-4 py-3 font-bold">Waktu</th>
+                      <th className="px-4 py-3 font-bold">Tipe</th>
+                      <th className="px-4 py-3 font-bold text-right">Qty</th>
+                      <th className="px-4 py-3 font-bold text-right">Sblm</th>
+                      <th className="px-4 py-3 font-bold text-right">Ssdh</th>
+                      <th className="px-4 py-3 font-bold">Referensi</th>
+                      <th className="px-4 py-3 font-bold">User</th>
+                      <th className="px-4 py-3 font-bold">Catatan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {stockLogs.map((log) => (
+                      <tr key={log.id} className="text-xs hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                          {log.createdAt ? new Date(log.createdAt.seconds * 1000).toLocaleString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                            log.type === 'IN' || log.type === 'PURCHASE' ? 'bg-green-100 text-green-700' :
+                            log.type === 'OUT' || log.type === 'SALE' ? 'bg-red-100 text-red-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {log.type}
+                          </span>
+                        </td>
+                        <td className={`px-4 py-3 text-right font-bold ${
+                          log.type === 'IN' || log.type === 'PURCHASE' ? 'text-green-600' :
+                          log.type === 'OUT' || log.type === 'SALE' ? 'text-red-600' :
+                          'text-blue-600'
+                        }`}>
+                          {log.type === 'IN' || log.type === 'PURCHASE' ? '+' : '-'}{log.quantity}
+                        </td>
+                        <td className="px-4 py-3 text-right text-gray-400">{log.previousStock}</td>
+                        <td className="px-4 py-3 text-right font-bold text-gray-900">{log.currentStock}</td>
+                        <td className="px-4 py-3 text-indigo-600 font-bold">
+                          {log.referenceNumber || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{log.userName}</td>
+                        <td className="px-4 py-3 text-gray-400 italic max-w-[150px] truncate" title={log.note}>
+                          {log.note || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                    {stockLogs.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
+                          Belum ada riwayat mutasi stok untuk produk ini.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );
