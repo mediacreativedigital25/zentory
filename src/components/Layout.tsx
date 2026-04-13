@@ -33,6 +33,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       roles: ['admin', 'staff', 'superadmin'],
       children: [
         { label: 'Sales Order', path: '/sales/order', permission: 'sales_order' },
+        { label: 'Sales POS', path: '/sales/pos', permission: 'sales_order' },
         { label: 'Sales Order Receive', path: '/sales/receive', permission: 'sales_receive' },
         { label: 'Customers', path: '/sales/customers', permission: 'sales_customers' },
       ]
@@ -101,7 +102,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (profile) {
-      if (['superadmin', 'admin', 'staff', 'customer'].includes(profile.role)) {
+      if (['superadmin', 'admin', 'staff', 'customer', 'kasir'].includes(profile.role)) {
         setRoleName(profile.role.charAt(0).toUpperCase() + profile.role.slice(1));
       } else if (profile.role) {
         // Custom role - fetch name if needed, or we can just use the ID for now
@@ -194,11 +195,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return item;
   });
 
+  const isKasir = profile?.role === 'kasir';
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
-        {isSidebarOpen && (
+        {isSidebarOpen && !isKasir && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -210,125 +213,156 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside 
-        className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 transform no-print ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
-      >
-        <div className="p-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-indigo-600">Zentory</h1>
-          <button 
-            onClick={() => setIsSidebarOpen(false)}
-            className="p-2 text-gray-400 hover:text-gray-600 lg:hidden"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+      {!isKasir && (
+        <aside 
+          className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 transform no-print ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0`}
+        >
+          <div className="p-6 flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-indigo-600">Zentory</h1>
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-2 text-gray-400 hover:text-gray-600 lg:hidden"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-          {filteredNav.map((item) => (
-            <div key={item.label}>
-              {item.children ? (
-                <div>
-                  <button
-                    onClick={() => toggleMenu(item.label)}
-                    className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                      item.children.some(c => location.pathname === c.path)
-                        ? 'text-indigo-700 bg-indigo-50'
+          <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
+            {filteredNav.map((item) => (
+              <div key={item.label}>
+                {item.children ? (
+                  <div>
+                    <button
+                      onClick={() => toggleMenu(item.label)}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                        item.children.some(c => location.pathname === c.path)
+                          ? 'text-indigo-700 bg-indigo-50'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <item.icon className="w-5 h-5 mr-3" />
+                        {item.label}
+                      </div>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${openMenus.includes(item.label) ? 'rotate-180' : ''}`} />
+                    </button>
+                    <AnimatePresence>
+                      {openMenus.includes(item.label) && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden pl-12 space-y-1 mt-1"
+                        >
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.path}
+                              to={child.path}
+                              onClick={() => setIsSidebarOpen(false)}
+                              className={`block px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                location.pathname === child.path
+                                  ? 'text-indigo-700 bg-indigo-50'
+                                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                              }`}
+                            >
+                              {child.label}
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <Link
+                    to={item.path!}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                      location.pathname === item.path
+                        ? 'bg-indigo-50 text-indigo-700'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
-                    <div className="flex items-center">
-                      <item.icon className="w-5 h-5 mr-3" />
-                      {item.label}
-                    </div>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${openMenus.includes(item.label) ? 'rotate-180' : ''}`} />
-                  </button>
-                  <AnimatePresence>
-                    {openMenus.includes(item.label) && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden pl-12 space-y-1 mt-1"
-                      >
-                        {item.children.map((child) => (
-                          <Link
-                            key={child.path}
-                            to={child.path}
-                            onClick={() => setIsSidebarOpen(false)}
-                            className={`block px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                              location.pathname === child.path
-                                ? 'text-indigo-700 bg-indigo-50'
-                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                            }`}
-                          >
-                            {child.label}
-                          </Link>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <Link
-                  to={item.path!}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                    location.pathname === item.path
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  {item.label}
-                </Link>
-              )}
-            </div>
-          ))}
-        </nav>
+                    <item.icon className="w-5 h-5 mr-3" />
+                    {item.label}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </nav>
 
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center mb-4 px-4">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
-              {profile?.displayName?.charAt(0) || profile?.email?.charAt(0)}
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center mb-4 px-4">
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
+                {profile?.displayName?.charAt(0) || profile?.email?.charAt(0)}
+              </div>
+              <div className="ml-3 overflow-hidden">
+                <p className="text-sm font-medium text-gray-900 truncate">{profile?.displayName || profile?.email || 'User'}</p>
+                <p className="text-xs text-gray-500 capitalize">{roleName || profile?.role || 'Loading...'}</p>
+              </div>
             </div>
-            <div className="ml-3 overflow-hidden">
-              <p className="text-sm font-medium text-gray-900 truncate">{profile?.displayName || profile?.email || 'User'}</p>
-              <p className="text-xs text-gray-500 capitalize">{roleName || profile?.role || 'Loading...'}</p>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              Logout
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <LogOut className="w-5 h-5 mr-3" />
-            Logout
-          </button>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+      <div className={`flex-1 flex flex-col min-w-0 ${isKasir ? 'pl-0' : 'lg:pl-64'}`}>
         {/* Mobile Header */}
-        <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between lg:hidden sticky top-0 z-30 no-print">
-          <button 
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <h1 className="text-xl font-bold text-indigo-600">Zentory</h1>
-          <div className="w-10" /> {/* Spacer for centering */}
-        </header>
+        {!isKasir && (
+          <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between lg:hidden sticky top-0 z-30 no-print">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <h1 className="text-xl font-bold text-indigo-600">Zentory</h1>
+            <div className="w-10" /> {/* Spacer for centering */}
+          </header>
+        )}
+
+        {/* Kasir Header */}
+        {isKasir && (
+          <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 no-print shadow-sm">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-black text-indigo-600 tracking-tighter">ZENTORY <span className="text-gray-400 font-medium text-sm ml-2 tracking-normal">POS TERMINAL</span></h1>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
+                  {profile?.displayName?.charAt(0) || profile?.email?.charAt(0)}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-gray-900">{profile?.displayName || profile?.email}</p>
+                  <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Kasir Aktif</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                Keluar
+              </button>
+            </div>
+          </header>
+        )}
 
         {/* Main Content */}
-        <main className="flex-1 bg-gray-50 p-4 sm:p-6 lg:p-8">
+        <main className={`flex-1 bg-gray-50 ${isKasir ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="max-w-7xl mx-auto"
+            className={isKasir ? 'w-full h-full' : 'max-w-7xl mx-auto'}
           >
             {children}
           </motion.div>

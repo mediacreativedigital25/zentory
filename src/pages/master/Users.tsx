@@ -145,7 +145,7 @@ export default function Users() {
   };
 
   const getRoleName = (roleId: string) => {
-    if (['superadmin', 'admin', 'staff', 'customer'].includes(roleId)) {
+    if (['superadmin', 'admin', 'staff', 'customer', 'kasir'].includes(roleId)) {
       return roleId.charAt(0).toUpperCase() + roleId.slice(1);
     }
     return roles.find(r => r.id === roleId)?.name || roleId;
@@ -197,6 +197,7 @@ export default function Users() {
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${
                       user.role === 'superadmin' ? 'bg-purple-50 text-purple-700 border-purple-100' :
                       user.role === 'admin' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                      user.role === 'kasir' ? 'bg-green-50 text-green-700 border-green-100' :
                       'bg-gray-50 text-gray-700 border-gray-100'
                     }`}>
                       {getRoleName(user.role)}
@@ -358,6 +359,7 @@ export default function Users() {
                       <optgroup label="System Roles">
                         <option value="admin">Admin</option>
                         <option value="staff">Staff</option>
+                        <option value="kasir">Kasir</option>
                         {profile?.role === 'superadmin' && <option value="superadmin">Superadmin</option>}
                       </optgroup>
                       <optgroup label="Custom Roles">

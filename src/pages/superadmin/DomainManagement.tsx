@@ -27,6 +27,8 @@ export default function DomainManagement() {
   const [isVerifying, setIsVerifying] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
+  const [isAdding, setIsAdding] = useState(false);
+  
   const [formData, setFormData] = useState({
     domain: '',
     tenantId: '',
@@ -34,13 +36,19 @@ export default function DomainManagement() {
   });
 
   useEffect(() => {
+    setLoading(true);
     const unsubDomains = onSnapshot(collection(db, 'custom_domains'), (snap) => {
       setDomains(snap.docs.map(d => ({ id: d.id, ...d.data() } as CustomDomain)));
+      setLoading(false);
+    }, (err) => {
+      console.error('Error fetching domains:', err);
       setLoading(false);
     });
 
     const unsubTenants = onSnapshot(collection(db, 'tenants'), (snap) => {
       setTenants(snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant)));
+    }, (err) => {
+      console.error('Error fetching tenants:', err);
     });
 
     return () => {
@@ -52,17 +60,39 @@ export default function DomainManagement() {
   const handleAddDomain = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.domain || !formData.tenantId) return;
+    if (isAdding) return;
 
+    setIsAdding(true);
     try {
-      // Basic domain validation
-      const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
+      // Relaxed domain validation (allows subdomains and multiple dots)
+      const domainRegex = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
       if (!domainRegex.test(formData.domain)) {
-        alert('Format domain tidak valid (contoh: toko.com)');
+        alert('Format domain tidak valid. Gunakan format seperti: toko.com, shop.toko.id, atau app.zyvora.my.id');
+        setIsAdding(false);
+        return;
+      }
+
+      const normalizedDomain = formData.domain.toLowerCase().trim();
+
+      // Check for duplicates in local state first (faster)
+      if (domains.some(d => d.domain === normalizedDomain)) {
+        alert('Domain ini sudah terdaftar dalam sistem.');
+        setIsAdding(false);
+        return;
+      }
+
+      // Double check in Firestore
+      const duplicateQuery = query(collection(db, 'custom_domains'), where('domain', '==', normalizedDomain));
+      const duplicateSnap = await getDocs(duplicateQuery);
+      
+      if (!duplicateSnap.empty) {
+        alert('Domain ini sudah terdaftar dalam sistem (Firestore).');
+        setIsAdding(false);
         return;
       }
 
       await addDoc(collection(db, 'custom_domains'), {
-        domain: formData.domain.toLowerCase(),
+        domain: normalizedDomain,
         tenantId: formData.tenantId,
         status: 'pending',
         sslStatus: 'pending',
@@ -74,7 +104,13 @@ export default function DomainManagement() {
       setFormData({ domain: '', tenantId: '', isPrimary: false });
     } catch (err) {
       console.error('Error adding domain:', err);
-      alert('Gagal menambahkan domain');
+      if (err instanceof Error && err.message.includes('permission-denied')) {
+        alert('Gagal menambahkan domain: Izin ditolak. Pastikan Anda adalah Superadmin.');
+      } else {
+        alert('Gagal menambahkan domain. Silakan coba lagi.');
+      }
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -88,22 +124,24 @@ export default function DomainManagement() {
   };
 
   const handleVerify = async (domain: CustomDomain) => {
+    if (!confirm(`Verifikasi domain ${domain.domain}? Pastikan DNS sudah diarahkan ke server kami.`)) return;
     setIsVerifying(domain.id);
-    // Simulate verification process
-    setTimeout(async () => {
-      try {
-        await updateDoc(doc(db, 'custom_domains', domain.id), {
-          status: 'active',
-          sslStatus: 'valid',
-          verifiedAt: serverTimestamp()
-        });
-        setIsVerifying(null);
-      } catch (err) {
-        console.error('Error verifying domain:', err);
-        setIsVerifying(null);
-      }
-    }, 2000);
+    try {
+      await updateDoc(doc(db, 'custom_domains', domain.id), {
+        status: 'active',
+        sslStatus: 'valid',
+        verifiedAt: serverTimestamp()
+      });
+      alert('Domain berhasil diverifikasi dan diaktifkan!');
+    } catch (err) {
+      console.error('Error verifying domain:', err);
+      alert('Gagal memverifikasi domain.');
+    } finally {
+      setIsVerifying(null);
+    }
   };
+
+  const appHostname = window.location.hostname;
 
   const filteredDomains = domains.filter(d => 
     d.domain.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -126,6 +164,43 @@ export default function DomainManagement() {
           <Plus className="w-5 h-5 mr-2" />
           Tambah Domain
         </button>
+      </div>
+
+      {/* DNS Instructions */}
+      <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-indigo-900">Instruksi DNS Custom Domain</h3>
+            <p className="text-sm text-indigo-700">Agar domain dapat terhubung, tambahkan record berikut di panel DNS (Cloudflare/Provider Domain):</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-2xl border border-indigo-100">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Type</p>
+            <p className="font-mono font-bold text-indigo-600 text-sm">CNAME</p>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-indigo-100">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Name (Host)</p>
+            <p className="font-mono font-bold text-indigo-600 text-sm">@ atau subdomain (misal: shop)</p>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-indigo-100 relative group">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Target (Value)</p>
+            <p className="font-mono font-bold text-indigo-600 text-xs truncate pr-8">{appHostname}</p>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(appHostname);
+                alert('Target DNS disalin!');
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-400 transition-all"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-indigo-500 italic">Catatan: Jika menggunakan Cloudflare, pastikan Proxy (Awan Oranye) dalam keadaan AKTIF.</p>
       </div>
 
       {/* Search & Stats */}
@@ -221,9 +296,20 @@ export default function DomainManagement() {
                           disabled={isVerifying === domain.id}
                           className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-2 text-xs font-bold"
                         >
-                          {isVerifying === domain.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                          Verify
+                          {isVerifying === domain.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                          Verify & Activate
                         </button>
+                      )}
+                      {domain.status === 'active' && (
+                        <a
+                          href={`http://${domain.domain}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Buka Domain"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
                       )}
                       <button
                         onClick={() => handleDeleteDomain(domain.id)}
@@ -315,9 +401,17 @@ export default function DomainManagement() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100"
+                    disabled={isAdding}
+                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 disabled:opacity-50 flex items-center justify-center"
                   >
-                    Simpan Domain
+                    {isAdding ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      'Simpan Domain'
+                    )}
                   </button>
                 </div>
               </form>

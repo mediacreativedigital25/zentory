@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, onSnapshot, runTransaction, Timestamp, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { Product, Customer, BankAccount, StockLog } from '../types';
-import { ShoppingCart, Search, Plus, Minus, Trash2, CreditCard, User, Tag, Briefcase, X, ListOrdered, Barcode, Landmark, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Product, Customer, BankAccount, StockLog, Tenant } from '../types';
+import { ShoppingCart, Search, Plus, Minus, Trash2, CreditCard, User, Tag, Briefcase, X, ListOrdered, Barcode, Landmark, AlertCircle, CheckCircle2, Printer, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
 import { logStockChange } from '../lib/stock-logger';
+import { getDoc } from 'firebase/firestore';
 
 export default function SalesOrder() {
   const { profile } = useAuth();
@@ -29,9 +30,30 @@ export default function SalesOrder() {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState('');
+  const [lastOrder, setLastOrder] = useState<any>(null);
+  const [printType, setPrintType] = useState<'invoice' | 'receipt' | null>(null);
+  const [tenantInfo, setTenantInfo] = useState<Tenant | null>(null);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const [isSettledToday, setIsSettledToday] = useState(false);
+
+  useEffect(() => {
+    if (profile?.tenantId) {
+      getDoc(doc(db, 'tenants', profile.tenantId)).then(snap => {
+        if (snap.exists()) {
+          setTenantInfo({ id: snap.id, ...snap.data() } as Tenant);
+        }
+      });
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    const handleAfterPrint = () => {
+      setPrintType(null);
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => window.removeEventListener('afterprint', handleAfterPrint);
+  }, []);
 
   useEffect(() => {
     if (!profile?.tenantId) return;
@@ -137,10 +159,11 @@ export default function SalesOrder() {
   };
 
   const addToCart = (product: Product) => {
-    if (orderType === 'manual' && product.stock <= 0) return;
+    const isService = product.type === 'service';
+    if (orderType === 'manual' && !isService && product.stock <= 0) return;
     const existing = cart.find(item => item.product.id === product.id);
     if (existing) {
-      if (orderType === 'manual' && existing.quantity >= product.stock) return;
+      if (orderType === 'manual' && !isService && existing.quantity >= product.stock) return;
       setCart(cart.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
       setCart([...cart, { product, quantity: 1 }]);
@@ -151,7 +174,8 @@ export default function SalesOrder() {
     setCart(cart.map(item => {
       if (item.product.id === productId) {
         const newQty = Math.max(0, item.quantity + delta);
-        if (orderType === 'manual' && newQty > item.product.stock) return item;
+        const isService = item.product.type === 'service';
+        if (orderType === 'manual' && !isService && newQty > item.product.stock) return item;
         return { ...item, quantity: newQty };
       }
       return item;
@@ -162,7 +186,8 @@ export default function SalesOrder() {
     setCart(cart.map(item => {
       if (item.product.id === productId) {
         const newQty = Math.max(0, value);
-        if (orderType === 'manual' && newQty > item.product.stock) {
+        const isService = item.product.type === 'service';
+        if (orderType === 'manual' && !isService && newQty > item.product.stock) {
           return { ...item, quantity: item.product.stock };
         }
         return { ...item, quantity: newQty };
@@ -255,13 +280,20 @@ export default function SalesOrder() {
                 
                 if (!pDoc.exists()) throw new Error(`Product ${item.product.name} not found`);
                 
-                const currentStock = pDoc.data().stock || 0;
-                if (currentStock < item.quantity) throw new Error(`Stok ${item.product.name} tidak mencukupi`);
+                const productData = pDoc.data();
+                const currentStock = productData.stock || 0;
+                const isService = productData.type === 'service';
                 
-                productUpdates.push({
-                  ref: productRef,
-                  newStock: currentStock - item.quantity
-                });
+                if (!isService && currentStock < item.quantity) {
+                  throw new Error(`Stok ${item.product.name} tidak mencukupi`);
+                }
+                
+                if (!isService) {
+                  productUpdates.push({
+                    ref: productRef,
+                    newStock: currentStock - item.quantity
+                  });
+                }
               }
             }
 
@@ -340,6 +372,20 @@ export default function SalesOrder() {
             }
           });
 
+          setLastOrder({
+            orderNumber,
+            customerName: customer?.name || 'Guest',
+            items: cart.map(item => ({
+              productId: item.product.id,
+              name: item.product.name,
+              quantity: item.quantity,
+              price: item.product.price
+            })),
+            totalAmount: total,
+            status: status,
+            type: orderType,
+            date: { seconds: Date.now() / 1000 }
+          });
           setLastOrderNumber(orderNumber);
           setShowSuccessModal(true);
           setIsCheckoutModalOpen(false);
@@ -357,8 +403,17 @@ export default function SalesOrder() {
     });
   };
 
+  const handlePrint = (type: 'invoice' | 'receipt') => {
+    setPrintType(type);
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  };
+
+  const isKasir = profile?.role === 'kasir';
+
   return (
-    <div className="flex flex-col lg:flex-row gap-6 lg:h-[calc(100vh-120px)] overflow-hidden lg:overflow-visible">
+    <div className={`flex flex-col lg:flex-row gap-6 ${isKasir ? 'h-[calc(100vh-73px)]' : 'lg:h-[calc(100vh-120px)]'} overflow-hidden lg:overflow-visible ${isKasir ? 'p-4' : ''}`}>
       <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px] lg:min-h-0">
         {isSettledToday && (
           <div className="p-4 bg-red-50 border-b border-red-100 flex items-center text-red-700 text-sm font-bold animate-pulse">
@@ -707,20 +762,38 @@ export default function SalesOrder() {
       {/* Success Modal */}
       <AnimatePresence>
         {showSuccessModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm no-print">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[650px] overflow-hidden text-center p-10"
+              className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[500px] overflow-hidden text-center p-10"
             >
               <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <ShoppingCart className="w-10 h-10" />
+                <CheckCircle2 className="w-10 h-10" />
               </div>
-              <h3 className="text-2xl font-black text-gray-900 mb-2">Pesanan Berhasil!</h3>
-              <p className="text-gray-500 font-medium mb-8">
-                Order <span className="text-indigo-600 font-bold">#{lastOrderNumber}</span> telah berhasil diproses dan stok telah diperbarui.
+              <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Pesanan Berhasil!</h3>
+              <p className="text-gray-500 font-medium mb-8 leading-relaxed">
+                Order <span className="text-indigo-600 font-black">#{lastOrderNumber}</span> telah berhasil diproses.
               </p>
+              
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                  onClick={() => handlePrint('invoice')}
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                >
+                  <FileText className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
+                  <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Faktur (A4)</span>
+                </button>
+                <button
+                  onClick={() => handlePrint('receipt')}
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                >
+                  <Printer className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
+                  <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Struk (80mm)</span>
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 gap-3">
                 <button
                   onClick={() => {
@@ -733,7 +806,7 @@ export default function SalesOrder() {
                 </button>
                 <button
                   onClick={() => setShowSuccessModal(false)}
-                  className="w-full py-4 bg-gray-50 text-gray-500 rounded-xl font-bold hover:bg-gray-100 transition-all"
+                  className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all"
                 >
                   Buat Pesanan Baru
                 </button>
@@ -742,6 +815,129 @@ export default function SalesOrder() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Print Templates */}
+      <div className={`${printType ? 'block' : 'hidden'} print:block print-section fixed inset-0 bg-white z-[9999] overflow-auto`}>
+        {lastOrder && (
+          <>
+            {printType === 'invoice' && (
+              <div className="p-10 text-black font-sans bg-white min-h-screen">
+                <div className="max-w-4xl mx-auto">
+                  <div className="flex justify-between items-start mb-10">
+                    <div>
+                      <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
+                      <p className="text-sm text-gray-500 max-w-xs">{tenantInfo?.settings?.description || 'Business Inventory & Sales Solutions'}</p>
+                    </div>
+                    <div className="text-right">
+                      <h2 className="text-3xl font-bold text-gray-900 uppercase tracking-tighter">INVOICE</h2>
+                      <p className="text-sm font-mono text-gray-500">#{lastOrder.orderNumber}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {lastOrder.date ? new Date(lastOrder.date.seconds * 1000).toLocaleDateString() : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-10 mb-10 border-y border-gray-100 py-6">
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Billed To</p>
+                      <p className="text-lg font-bold text-gray-900">{lastOrder.customerName}</p>
+                      <p className="text-sm text-gray-500 uppercase">{lastOrder.type} Order</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Status</p>
+                      <p className="text-lg font-bold text-indigo-600 uppercase">{lastOrder.status}</p>
+                    </div>
+                  </div>
+
+                  <table className="w-full mb-10">
+                    <thead>
+                      <tr className="border-b-2 border-gray-900 text-left text-xs font-bold uppercase tracking-wider">
+                        <th className="py-3">Description</th>
+                        <th className="py-3 text-center">Quantity</th>
+                        <th className="py-3 text-right">Unit Price</th>
+                        <th className="py-3 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {lastOrder.items.map((item: any, i: number) => (
+                        <tr key={i} className="text-sm">
+                          <td className="py-4 font-medium">{item.name}</td>
+                          <td className="py-4 text-center">{item.quantity}</td>
+                          <td className="py-4 text-right">Rp.{item.price.toLocaleString()}</td>
+                          <td className="py-4 text-right font-bold">Rp.{(item.price * item.quantity).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-900">
+                        <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Grand Total</td>
+                        <td className="py-6 text-right text-2xl font-black text-indigo-600">
+                          Rp.{lastOrder.totalAmount.toLocaleString()}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+
+                  <div className="mt-20 pt-10 border-t border-gray-100 text-center">
+                    <p className="text-sm font-bold text-gray-900">Thank you for your business!</p>
+                    <p className="text-xs text-gray-400 mt-1">Generated by Zentory POS System</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {printType === 'receipt' && (
+              <div className="p-4 text-black font-mono text-[10px] w-[80mm] mx-auto bg-white min-h-screen">
+                <div className="text-center mb-4">
+                  <h1 className="text-base font-bold uppercase">{tenantInfo?.name || 'ZENTORY'}</h1>
+                  <p className="text-[8px]">{tenantInfo?.settings?.description || 'Sales Receipt'}</p>
+                </div>
+                
+                <div className="border-t border-dashed border-gray-300 py-2 mb-2">
+                  <div className="flex justify-between">
+                    <span>Order:</span>
+                    <span>#{lastOrder.orderNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Date:</span>
+                    <span>{lastOrder.date ? new Date(lastOrder.date.seconds * 1000).toLocaleString() : ''}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Cust:</span>
+                    <span>{lastOrder.customerName}</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-dashed border-gray-300 py-2 mb-2">
+                  {lastOrder.items.map((item: any, i: number) => (
+                    <div key={i} className="mb-1">
+                      <div className="flex justify-between">
+                        <span>{item.name}</span>
+                      </div>
+                      <div className="flex justify-between pl-2">
+                        <span>{item.quantity} x {item.price.toLocaleString()}</span>
+                        <span>{(item.price * item.quantity).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-dashed border-gray-300 py-2 font-bold text-xs">
+                  <div className="flex justify-between">
+                    <span>TOTAL</span>
+                    <span>Rp.{lastOrder.totalAmount.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="text-center mt-6">
+                  <p>TERIMA KASIH</p>
+                  <p className="text-[8px] mt-1">Zentory POS System</p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

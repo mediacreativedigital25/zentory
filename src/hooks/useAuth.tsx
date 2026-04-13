@@ -25,6 +25,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let unsubscribeProfile: (() => void) | null = null;
     let unsubscribeRole: (() => void) | null = null;
 
+    // Inactivity Logout Logic
+    let inactivityTimeout: NodeJS.Timeout | null = null;
+    const INACTIVITY_LIMIT = 5 * 60 * 60 * 1000; // 5 Hours
+
+    const resetInactivityTimer = () => {
+      if (inactivityTimeout) clearTimeout(inactivityTimeout);
+      if (auth.currentUser) {
+        inactivityTimeout = setTimeout(() => {
+          signOut(auth);
+        }, INACTIVITY_LIMIT);
+      }
+    };
+
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+
     const handleOffline = () => {
       if (auth.currentUser) {
         const profileRef = doc(db, 'users', auth.currentUser.uid);
@@ -49,6 +64,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (user) {
+        // Start inactivity timer
+        resetInactivityTimer();
+        activityEvents.forEach(event => window.addEventListener(event, resetInactivityTimer));
+
         // Initial check and auto-upgrade
         const profileRef = doc(db, 'users', user.uid);
         
@@ -100,7 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setProfile({ uid: snap.id, ...data });
 
             // Fetch permissions if custom role
-            if (!['superadmin', 'admin', 'staff', 'customer'].includes(data.role)) {
+            if (!['superadmin', 'admin', 'staff', 'customer', 'kasir'].includes(data.role)) {
               if (unsubscribeRole) unsubscribeRole();
               unsubscribeRole = onSnapshot(doc(db, 'roles', data.role), (roleSnap) => {
                 if (roleSnap.exists()) {
@@ -124,6 +143,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoading(false);
         });
       } else {
+        // Cleanup inactivity timer if logged out
+        if (inactivityTimeout) clearTimeout(inactivityTimeout);
+        activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
+
         setProfile(null);
         setPermissions([]);
         setLoading(false);
@@ -134,6 +157,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeRole) unsubscribeRole();
+      if (inactivityTimeout) clearTimeout(inactivityTimeout);
+      activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
       window.removeEventListener('beforeunload', handleOffline);
     };
   }, []);

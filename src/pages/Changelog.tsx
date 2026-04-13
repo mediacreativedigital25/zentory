@@ -16,7 +16,9 @@ const changelogData = [
       'Implementasi Izin Pembayaran Tempo: Pengaturan izin kredit per pelanggan dengan tenggat waktu (Due Date) yang dapat disesuaikan.',
       'Otomatisasi Kalkulasi Jatuh Tempo: Sistem secara otomatis menghitung tanggal jatuh tempo saat transaksi kredit dilakukan.',
       'Integrasi Validasi Tempo pada POS & Sales Order: Tombol Tempo terkunci otomatis untuk pelanggan tanpa izin.',
-      'Peningkatan Audit Trail: Setiap mutasi stok kini mencatat referensi transaksi dan user yang bertanggung jawab secara real-time.'
+      'Peningkatan Audit Trail: Setiap mutasi stok kini mencatat referensi transaksi dan user yang bertanggung jawab secara real-time.',
+      'Role Baru: "Kasir" - Akses khusus modul penjualan dengan antarmuka Full-Size & Clean.',
+      'POS Terminal: Optimalisasi tampilan kasir untuk efisiensi transaksi cepat.'
     ]
   },
   {

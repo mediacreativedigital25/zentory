@@ -13,8 +13,7 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isAuthenticated() && (
         request.auth.token.email == "mediacreativedigital25@gmail.com" ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin')
+        (getUserData() != null && getUserData().role == 'superadmin')
       );
     }
     
@@ -25,26 +24,31 @@ service cloud.firestore {
     }
 
     function hasPermission(permission) {
-      return getUserData() != null && (
-        getUserData().role == 'superadmin' || 
-        getUserData().role == 'admin' ||
-        (exists(/databases/$(database)/documents/roles/$(getUserData().role)) && 
-         get(/databases/$(database)/documents/roles/$(getUserData().role)).data.permissions.hasAny([permission]))
+      let data = getUserData();
+      return data != null && (
+        data.role == 'superadmin' || 
+        data.role == 'admin' ||
+        (exists(/databases/$(database)/documents/roles/$(data.role)) && 
+         get(/databases/$(database)/documents/roles/$(data.role)).data.permissions.hasAny([permission]))
       );
     }
 
     function isTenantAdmin(tenantId) {
+      let data = getUserData();
       return isAuthenticated() && 
-             getUserData() != null &&
-             getUserData().tenantId == tenantId && 
-             (getUserData().role == 'admin' || hasPermission('tenant_settings'));
+             data != null &&
+             data.tenantId != null &&
+             data.tenantId == tenantId && 
+             (data.role == 'admin' || data.role == 'kasir' || hasPermission('tenant_settings'));
     }
     
     function isTenantStaff(tenantId) {
+      let data = getUserData();
       return isAuthenticated() && 
-             getUserData() != null &&
-             getUserData().tenantId == tenantId && 
-             getUserData().role != 'customer';
+             data != null &&
+             data.tenantId != null &&
+             data.tenantId == tenantId && 
+             data.role != 'customer';
     }
 
     // ===============================================================
@@ -56,7 +60,7 @@ service cloud.firestore {
         request.auth.uid == userId || 
         request.auth.token.email == "mediacreativedigital25@gmail.com" ||
         isSuperAdmin() || 
-        (resource.data.tenantId != null && isTenantStaff(resource.data.tenantId))
+        (resource != null && resource.data.tenantId != null && isTenantStaff(resource.data.tenantId))
       );
       allow create: if isAuthenticated() && (
         request.auth.uid == userId || 
@@ -68,13 +72,13 @@ service cloud.firestore {
         request.auth.uid == userId || 
         request.auth.token.email == "mediacreativedigital25@gmail.com" ||
         isSuperAdmin() || 
-        (resource.data.tenantId != null && isTenantAdmin(resource.data.tenantId))
+        (resource != null && resource.data.tenantId != null && isTenantAdmin(resource.data.tenantId))
       );
-      allow delete: if request.auth.token.email == "mediacreativedigital25@gmail.com" || isSuperAdmin() || (isAuthenticated() && resource.data.tenantId != null && isTenantAdmin(resource.data.tenantId));
+      allow delete: if request.auth.token.email == "mediacreativedigital25@gmail.com" || isSuperAdmin() || (isAuthenticated() && resource != null && resource.data.tenantId != null && isTenantAdmin(resource.data.tenantId));
     }
 
     match /roles/{roleId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
+      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)) || !exists(/databases/$(database)/documents/roles/$(roleId)));
       allow write: if isAuthenticated() && (isSuperAdmin() || (getUserData() != null && getUserData().tenantId == (request.method == 'create' ? request.resource.data.tenantId : resource.data.tenantId) && (getUserData().role == 'admin' || hasPermission('master_roles'))));
     }
 
@@ -86,32 +90,32 @@ service cloud.firestore {
     }
 
     match /products/{productId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
+      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
       allow create: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
       allow update: if isAuthenticated() && (
         isSuperAdmin() || 
-        isTenantStaff(resource.data.tenantId) ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock'])
+        (resource != null && isTenantStaff(resource.data.tenantId)) ||
+        (resource != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock']))
       );
-      allow delete: if isAuthenticated() && (isSuperAdmin() || isTenantAdmin(resource.data.tenantId));
+      allow delete: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantAdmin(resource.data.tenantId)));
     }
 
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
+      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
       allow create: if isAuthenticated() && (
         isSuperAdmin() || 
         isTenantStaff(request.resource.data.tenantId) ||
         (request.resource.data.type == 'sale' && request.resource.data.status == 'pending')
       );
-      allow update: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
+      allow update: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
       allow delete: if isSuperAdmin();
     }
 
     match /customers/{customerId} {
       allow read: if isAuthenticated() && (
-        (resource.data.uid == request.auth.uid) ||
+        (resource != null && resource.data.uid == request.auth.uid) ||
         isSuperAdmin() || 
-        isTenantStaff(resource.data.tenantId)
+        (resource != null && isTenantStaff(resource.data.tenantId))
       );
       allow create: if isAuthenticated() && (
         (request.resource.data.uid == request.auth.uid) ||
@@ -120,9 +124,9 @@ service cloud.firestore {
         isTenantStaff(request.resource.data.tenantId)
       );
       allow update: if isAuthenticated() && (
-        (resource.data.uid == request.auth.uid) ||
+        (resource != null && resource.data.uid == request.auth.uid) ||
         isSuperAdmin() || 
-        isTenantStaff(resource.data.tenantId)
+        (resource != null && isTenantStaff(resource.data.tenantId))
       );
     }
 
@@ -178,7 +182,7 @@ service cloud.firestore {
     }
 
     match /bank_accounts/{accountId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
+      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
       allow write: if isAuthenticated() && (isSuperAdmin() || isTenantAdmin(request.method == 'create' ? request.resource.data.tenantId : resource.data.tenantId));
     }
 
@@ -218,7 +222,7 @@ service cloud.firestore {
     }
 
     match /stock_logs/{logId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
+      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
       allow create: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
       allow update, delete: if isSuperAdmin();
     }

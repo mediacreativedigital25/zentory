@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { LogIn, Mail, Lock } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -17,8 +18,19 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Fetch profile to check role
+      const profileDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+      if (profileDoc.exists()) {
+        const profileData = profileDoc.data();
+        if (profileData.role === 'kasir') {
+          navigate('/sales/order');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

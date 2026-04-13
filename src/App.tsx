@@ -49,7 +49,12 @@ const ProtectedRoute = ({ children, allowedRoles, permission }: { children: Reac
   // Superadmin can access everything
   if (profile?.role === 'superadmin') return <Layout>{children}</Layout>;
   
-  const isSystemRole = ['admin', 'staff', 'customer', 'superadmin'].includes(profile?.role || '');
+  const isSystemRole = ['admin', 'staff', 'customer', 'superadmin', 'kasir'].includes(profile?.role || '');
+
+  // Redirect 'kasir' to sales order if they are on dashboard or other pages
+  if (profile?.role === 'kasir' && location.pathname !== '/sales/order' && location.pathname !== '/no-access') {
+    return <Navigate to="/sales/order" />;
+  }
 
   // Check roles and permissions
   if (profile) {
@@ -84,10 +89,43 @@ const ProtectedRoute = ({ children, allowedRoles, permission }: { children: Reac
 };
 
 export default function App() {
+  const [isCustomDomain, setIsCustomDomain] = React.useState(false);
+  const [checkingDomain, setCheckingDomain] = React.useState(true);
+
+  React.useEffect(() => {
+    const checkDomain = async () => {
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isAppDomain = hostname.includes('run.app') || hostname.includes('web.app') || hostname.includes('firebaseapp.com');
+
+      if (!isLocalhost && !isAppDomain) {
+        // This might be a custom domain
+        try {
+          const domainQuery = query(collection(db, 'custom_domains'), where('domain', '==', hostname), where('status', '==', 'active'));
+          const domainSnap = await getDocs(domainQuery);
+          if (!domainSnap.empty) {
+            setIsCustomDomain(true);
+          }
+        } catch (err) {
+          console.error('Error checking custom domain:', err);
+        }
+      }
+      setCheckingDomain(false);
+    };
+    checkDomain();
+  }, []);
+
+  if (checkingDomain) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* If on custom domain, the root is the catalog */}
+          {isCustomDomain && (
+            <Route path="/" element={<Catalog />} />
+          )}
+          
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/catalog/:tenantSlug" element={<Catalog />} />
@@ -135,19 +173,25 @@ export default function App() {
           } />
 
           <Route path="/sales/order" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order">
               <SalesOrder />
             </ProtectedRoute>
           } />
 
+          <Route path="/sales/pos" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order">
+              <Sales />
+            </ProtectedRoute>
+          } />
+
           <Route path="/sales/receive" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_receive">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_receive">
               <SalesOrderReceive />
             </ProtectedRoute>
           } />
 
           <Route path="/sales/customers" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_customers">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_customers">
               <Customers />
             </ProtectedRoute>
           } />

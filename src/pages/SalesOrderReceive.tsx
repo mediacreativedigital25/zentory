@@ -267,7 +267,10 @@ export default function SalesOrderReceive() {
               await runTransaction(db, async (transaction) => {
                 const pDoc = await transaction.get(productRef);
                 if (!pDoc.exists()) return;
-                const currentStock = pDoc.data().stock || 0;
+                const productData = pDoc.data();
+                if (productData.type === 'service') return;
+                
+                const currentStock = productData.stock || 0;
                 transaction.update(productRef, { stock: currentStock + item.quantity });
               });
             }
@@ -278,7 +281,10 @@ export default function SalesOrderReceive() {
               await runTransaction(db, async (transaction) => {
                 const pDoc = await transaction.get(productRef);
                 if (!pDoc.exists()) return;
-                const currentStock = pDoc.data().stock || 0;
+                const productData = pDoc.data();
+                if (productData.type === 'service') return;
+                
+                const currentStock = productData.stock || 0;
                 const newStock = Math.max(0, currentStock - item.quantity);
                 transaction.update(productRef, { stock: newStock });
               });

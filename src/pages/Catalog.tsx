@@ -256,6 +256,8 @@ export default function Catalog() {
 
       // Update stock for products
       for (const item of cart) {
+        if (item.product.type === 'service') continue;
+        
         const productRef = doc(db, 'products', item.product.id);
         await runTransaction(db, async (transaction) => {
           const pDoc = await transaction.get(productRef);
