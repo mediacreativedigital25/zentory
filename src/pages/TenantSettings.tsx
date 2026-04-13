@@ -3,7 +3,7 @@ import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Tenant } from '../types';
-import { Building2, Save, User, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2 } from 'lucide-react';
+import { Building2, Save, User, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
@@ -192,6 +192,45 @@ export default function TenantSettings() {
                   placeholder="Nomor NPWP"
                 />
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+              <ImageIcon className="w-5 h-5 mr-2 text-indigo-600" />
+              Konfigurasi Cloudinary (Penyimpanan Gambar)
+            </h3>
+          </div>
+          
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700">Cloud Name</label>
+              <input
+                type="text"
+                value={formData.cloudinaryCloudName || ''}
+                onChange={(e) => setFormData({ ...formData, cloudinaryCloudName: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                placeholder="Cloud Name dari Cloudinary"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700">Upload Preset</label>
+              <input
+                type="text"
+                value={formData.cloudinaryUploadPreset || ''}
+                onChange={(e) => setFormData({ ...formData, cloudinaryUploadPreset: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                placeholder="Unsigned Upload Preset"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-xs text-gray-500 italic">
+                * Cloudinary digunakan untuk menyimpan foto produk dan bukti transaksi. 
+                Dapatkan Cloud Name dan Upload Preset (Unsigned) dari dashboard Cloudinary Anda.
+              </p>
             </div>
           </div>
         </div>

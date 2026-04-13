@@ -166,41 +166,92 @@ export default function DomainManagement() {
         </button>
       </div>
 
-      {/* DNS Instructions */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-6 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center">
-            <ShieldCheck className="w-6 h-6" />
+      {/* DNS Instructions & Worker Guide */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-indigo-900">1. Konfigurasi DNS</h3>
+              <p className="text-sm text-indigo-700">Tambahkan record berikut di panel DNS (Cloudflare/Provider):</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-indigo-900">Instruksi DNS Custom Domain</h3>
-            <p className="text-sm text-indigo-700">Agar domain dapat terhubung, tambahkan record berikut di panel DNS (Cloudflare/Provider Domain):</p>
+          <div className="grid grid-cols-1 gap-3">
+            <div className="bg-white p-4 rounded-2xl border border-indigo-100">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Type</p>
+              <p className="font-mono font-bold text-indigo-600 text-sm">CNAME</p>
+            </div>
+            <div className="bg-white p-4 rounded-2xl border border-indigo-100">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Name (Host)</p>
+              <p className="font-mono font-bold text-indigo-600 text-sm">@ atau subdomain (misal: shop)</p>
+            </div>
+            <div className="bg-white p-4 rounded-2xl border border-indigo-100 relative group">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Target (Value)</p>
+              <p className="font-mono font-bold text-indigo-600 text-xs truncate pr-8">{appHostname}</p>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(appHostname);
+                  alert('Target DNS disalin!');
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-400 transition-all"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
+          <p className="text-xs text-indigo-500 italic">Catatan: Jika menggunakan Cloudflare, pastikan Proxy (Awan Oranye) AKTIF.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-indigo-100">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Type</p>
-            <p className="font-mono font-bold text-indigo-600 text-sm">CNAME</p>
+
+        <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-amber-600 text-white rounded-xl flex items-center justify-center">
+              <RefreshCw className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-amber-900">2. Setup Cloudflare Worker (Cukup 1x Saja)</h3>
+              <p className="text-sm text-amber-700">Gunakan Worker sebagai jembatan. Satu Worker bisa digunakan untuk banyak domain.</p>
+            </div>
           </div>
-          <div className="bg-white p-4 rounded-2xl border border-indigo-100">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Name (Host)</p>
-            <p className="font-mono font-bold text-indigo-600 text-sm">@ atau subdomain (misal: shop)</p>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-indigo-100 relative group">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Target (Value)</p>
-            <p className="font-mono font-bold text-indigo-600 text-xs truncate pr-8">{appHostname}</p>
+          <div className="bg-white p-4 rounded-2xl border border-amber-100 space-y-3">
+            <p className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md inline-block">TIPS: Jika sudah punya Worker proxy, cukup tambahkan domain baru di tab "Domains & Routes".</p>
+            <ol className="text-xs text-gray-600 space-y-2 list-decimal ml-4 font-medium">
+              <li>Buat Worker baru di Cloudflare (Start with Hello World).</li>
+              <li>Klik <b>Edit Code</b> dan masukkan script proxy Zentory.</li>
+              <li>Di tab <b>Settings &gt; Domains & Routes</b>, klik <b>Add Custom Domain</b>.</li>
+              <li>Masukkan domain (misal: shop.zyvora.my.id).</li>
+              <li><b>PENTING:</b> Hapus record CNAME lama di menu DNS sebelum add domain di Worker.</li>
+            </ol>
             <button 
               onClick={() => {
-                navigator.clipboard.writeText(appHostname);
-                alert('Target DNS disalin!');
+                const script = `export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const targetHost = "${appHostname}";
+    const targetUrl = \`https://\${targetHost}\`;
+    const proxyUrl = new URL(url.pathname + url.search, targetUrl);
+    const newHeaders = new Headers(request.headers);
+    newHeaders.set("Host", targetHost);
+    newHeaders.set("X-Forwarded-Host", url.hostname);
+    const response = await fetch(proxyUrl.toString(), {
+      method: request.method,
+      headers: newHeaders,
+      body: request.method !== 'GET' && request.method !== 'HEAD' ? await request.blob() : null,
+      redirect: 'follow'
+    });
+    return response;
+  }
+}`;
+                navigator.clipboard.writeText(script);
+                alert('Script Worker disalin!');
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-400 transition-all"
+              className="w-full py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 transition-all"
             >
-              <RefreshCw className="w-4 h-4" />
+              Salin Script Worker
             </button>
           </div>
         </div>
-        <p className="text-xs text-indigo-500 italic">Catatan: Jika menggunakan Cloudflare, pastikan Proxy (Awan Oranye) dalam keadaan AKTIF.</p>
       </div>
 
       {/* Search & Stats */}

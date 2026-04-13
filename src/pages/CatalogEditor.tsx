@@ -125,7 +125,6 @@ export default function CatalogEditor() {
                 <ImageUpload
                   value={formData.logoUrl}
                   onChange={(url) => setFormData({ ...formData, logoUrl: url })}
-                  folder="logos"
                   label="Logo Toko"
                 />
               </div>

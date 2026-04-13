@@ -44,6 +44,8 @@ export interface Tenant {
   email?: string;
   businessType?: string;
   taxId?: string; // NPWP
+  cloudinaryCloudName?: string;
+  cloudinaryUploadPreset?: string;
   cooperationStatus?: 'active' | 'pending' | 'ended' | 'trial';
   cooperationStartDate?: any;
   notes?: string;

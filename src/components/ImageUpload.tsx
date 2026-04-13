@@ -1,13 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { Upload, X, Image as ImageIcon, Loader2, AlertCircle } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { useAuth } from '../hooks/useAuth';
+import { Tenant } from '../types';
 
 interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
   label?: string;
   maxSizeMB?: number;
-  folder?: string;
   className?: string;
   compact?: boolean;
 }
@@ -17,16 +20,51 @@ export default function ImageUpload({
   onChange, 
   label = "Upload Foto", 
   maxSizeMB = 2,
-  folder = "zentory",
   className = "",
   compact = false
 }: ImageUploadProps) {
+  const folder = "zentory";
+  const { profile } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [config, setConfig] = useState<{ cloudName: string; uploadPreset: string } | null>(null);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  useEffect(() => {
+    const fetchConfig = async () => {
+      // Priority 1: Environment Variables
+      const envCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+      const envUploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+      if (envCloudName && envUploadPreset) {
+        setConfig({ cloudName: envCloudName, uploadPreset: envUploadPreset });
+        setIsConfigLoading(false);
+        return;
+      }
+
+      // Priority 2: Tenant Settings
+      if (profile?.tenantId) {
+        try {
+          const tenantDoc = await getDoc(doc(db, 'tenants', profile.tenantId));
+          if (tenantDoc.exists()) {
+            const tenantData = tenantDoc.data() as Tenant;
+            if (tenantData.cloudinaryCloudName && tenantData.cloudinaryUploadPreset) {
+              setConfig({ 
+                cloudName: tenantData.cloudinaryCloudName, 
+                uploadPreset: tenantData.cloudinaryUploadPreset 
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching Cloudinary config:', err);
+        }
+      }
+      setIsConfigLoading(false);
+    };
+
+    fetchConfig();
+  }, [profile?.tenantId]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,7 +74,7 @@ export default function ImageUpload({
     setError(null);
 
     // Check if Cloudinary is configured
-    if (!cloudName || !uploadPreset) {
+    if (!config?.cloudName || !config?.uploadPreset) {
       setError('Cloudinary belum dikonfigurasi di Settings');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
@@ -60,11 +98,11 @@ export default function ImageUpload({
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', uploadPreset);
+      formData.append('upload_preset', config.uploadPreset);
       formData.append('folder', folder);
 
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
         formData
       );
 
@@ -83,6 +121,14 @@ export default function ImageUpload({
     onChange('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  if (isConfigLoading) {
+    return (
+      <div className={`w-full ${compact ? 'h-12 w-12' : 'h-24'} rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center animate-pulse`}>
+        <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-1.5 ${className}`}>

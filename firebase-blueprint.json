@@ -306,6 +306,26 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["tenantId", "productId", "type", "quantity", "previousStock", "currentStock", "userId", "createdAt"]
+    },
+    "coupon": {
+      "title": "Coupon",
+      "description": "Discount coupons for sales.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "code": { "type": "string" },
+        "type": { "type": "string", "enum": ["percentage", "fixed"] },
+        "value": { "type": "number" },
+        "minPurchase": { "type": "number" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "category": { "type": "string", "description": "Category ID or 'all'" },
+        "usageLimit": { "type": "number" },
+        "usedCount": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "code", "type", "value", "startDate", "endDate", "isActive"]
     }
   },
   "firestore": {
@@ -380,6 +400,10 @@
     "/stock_logs/{logId}": {
       "schema": "stock_log",
       "description": "Stock mutation history"
+    },
+    "/coupons/{couponId}": {
+      "schema": "coupon",
+      "description": "Discount coupons"
     },
     "/customers/{customerId}": {
       "schema": "customer",

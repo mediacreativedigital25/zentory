@@ -861,7 +861,6 @@ export default function Products() {
                               <ImageUpload
                                 value={row.imageUrl}
                                 onChange={(url) => updateBulkRow(index, 'imageUrl', url)}
-                                folder="products"
                                 label=""
                                 compact={true}
                                 className="!space-y-0"
@@ -1081,7 +1080,6 @@ export default function Products() {
                     <ImageUpload
                       value={formData.imageUrl}
                       onChange={(url) => setFormData({ ...formData, imageUrl: url })}
-                      folder="products"
                       label="Foto Produk"
                     />
                   </div>

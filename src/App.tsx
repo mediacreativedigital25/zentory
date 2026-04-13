@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from './lib/firebase';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -17,6 +19,7 @@ import Categories from './pages/inventory/Categories';
 import Stock from './pages/inventory/Stock';
 import Warehouses from './pages/inventory/Warehouses';
 import Sales from './pages/Sales';
+import Coupons from './pages/Coupons';
 import Finance from './pages/Finance';
 import ClaimExpense from './pages/ClaimExpense';
 import FinancialReport from './pages/FinancialReport';
@@ -193,6 +196,12 @@ export default function App() {
           <Route path="/sales/customers" element={
             <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_customers">
               <Customers />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/sales/coupons" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order">
+              <Coupons />
             </ProtectedRoute>
           } />
 

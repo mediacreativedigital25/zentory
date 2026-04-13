@@ -661,7 +661,23 @@ export default function SalesOrderReceive() {
                       </tbody>
                       <tfoot className="bg-white border-t border-gray-200">
                         <tr>
-                          <td colSpan={3} className="px-4 py-4 text-right font-bold text-gray-500">Total Amount</td>
+                          <td colSpan={3} className="px-4 py-2 text-right font-bold text-gray-500">Subtotal :</td>
+                          <td className="px-4 py-2 text-right font-bold text-gray-900">
+                            Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discount || 0) ).toLocaleString()}
+                          </td>
+                        </tr>
+                        {(selectedOrder as any).discount > 0 && (
+                          <tr>
+                            <td colSpan={3} className="px-4 py-2 text-right font-bold text-green-600">
+                              Anda Hemat :
+                            </td>
+                            <td className="px-4 py-2 text-right font-bold text-green-600">
+                              - Rp.{((selectedOrder as any).discount || 0).toLocaleString()}
+                            </td>
+                          </tr>
+                        )}
+                        <tr>
+                          <td colSpan={3} className="px-4 py-4 text-right font-bold text-gray-500 uppercase tracking-wider">Total Amount:</td>
                           <td className="px-4 py-4 text-right font-extrabold text-indigo-600 text-lg">
                             Rp.{(selectedOrder.totalAmount || (selectedOrder as any).total || 0).toLocaleString()}
                           </td>
@@ -865,8 +881,24 @@ export default function SalesOrderReceive() {
                       ))}
                     </tbody>
                     <tfoot>
+                      <tr className="border-t border-gray-100">
+                        <td colSpan={3} className="py-2 text-right font-bold text-gray-500 uppercase tracking-widest text-[10px]">Subtotal :</td>
+                        <td className="py-2 text-right font-bold text-gray-900 text-sm">
+                          Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discount || 0) ).toLocaleString()}
+                        </td>
+                      </tr>
+                      {(selectedOrder as any).discount > 0 && (
+                        <tr>
+                          <td colSpan={3} className="py-2 text-right font-bold text-green-600 uppercase tracking-widest text-[10px]">
+                            Anda Hemat :
+                          </td>
+                          <td className="py-2 text-right font-bold text-green-600 text-sm">
+                            - Rp.{((selectedOrder as any).discount || 0).toLocaleString()}
+                          </td>
+                        </tr>
+                      )}
                       <tr className="border-t-2 border-gray-900">
-                        <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Grand Total</td>
+                        <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Total Amount:</td>
                         <td className="py-6 text-right text-2xl font-black text-indigo-600">
                           Rp.{(selectedOrder.totalAmount || (selectedOrder as any).total || 0).toLocaleString()}
                         </td>
@@ -919,8 +951,18 @@ export default function SalesOrderReceive() {
                 </div>
 
                 <div className="border-t border-dashed border-gray-300 py-2 font-bold text-xs">
-                  <div className="flex justify-between">
-                    <span>TOTAL</span>
+                  <div className="flex justify-between text-[8px] font-normal">
+                    <span>Subtotal :</span>
+                    <span>Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discount || 0) ).toLocaleString()}</span>
+                  </div>
+                  {(selectedOrder as any).discount > 0 && (
+                    <div className="flex justify-between text-[8px] font-normal text-gray-600">
+                      <span>Anda Hemat :</span>
+                      <span>- Rp.{((selectedOrder as any).discount || 0).toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between mt-1 pt-1 border-t border-dashed border-gray-200">
+                    <span>Total Amount:</span>
                     <span>Rp.{(selectedOrder.totalAmount || (selectedOrder as any).total || 0).toLocaleString()}</span>
                   </div>
                 </div>

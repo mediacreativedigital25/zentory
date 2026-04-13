@@ -603,7 +603,6 @@ export default function ClaimExpense() {
                         <ImageUpload
                           value={item.receiptUrl}
                           onChange={(url) => updateItem(index, 'receiptUrl', url)}
-                          folder="receipts"
                           label="Upload Nota"
                         />
                       </div>

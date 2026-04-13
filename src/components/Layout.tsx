@@ -35,6 +35,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Sales Order', path: '/sales/order', permission: 'sales_order' },
         { label: 'Sales POS', path: '/sales/pos', permission: 'sales_order' },
         { label: 'Sales Order Receive', path: '/sales/receive', permission: 'sales_receive' },
+        { label: 'Kupon', path: '/sales/coupons', permission: 'sales_order' },
         { label: 'Customers', path: '/sales/customers', permission: 'sales_customers' },
       ]
     },

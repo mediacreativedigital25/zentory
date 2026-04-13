@@ -259,28 +259,20 @@ export default function SuperAdmin() {
           }
         }
 
-        await updateDoc(requestRef, { 
-          status: 'approved',
-          resolvedBy: profile?.uid,
-          resolvedAt: serverTimestamp()
-        });
+        await deleteDoc(requestRef);
         setConfirmConfig({
           isOpen: true,
           title: 'Berhasil',
-          message: 'Permintaan telah disetujui.',
+          message: 'Permintaan telah disetujui dan dihapus.',
           onConfirm: () => setConfirmConfig(null),
           showCancel: false
         });
       } else {
-        await updateDoc(requestRef, { 
-          status: 'rejected',
-          resolvedBy: profile?.uid,
-          resolvedAt: serverTimestamp()
-        });
+        await deleteDoc(requestRef);
         setConfirmConfig({
           isOpen: true,
           title: 'Berhasil',
-          message: 'Permintaan telah ditolak.',
+          message: 'Permintaan telah ditolak dan dihapus.',
           onConfirm: () => setConfirmConfig(null),
           showCancel: false
         });
@@ -299,6 +291,34 @@ export default function SuperAdmin() {
         handleFirestoreError(err, OperationType.UPDATE, `approval_requests/${request.id}`, auth, profile);
       }
     }
+  };
+
+  const handleDeleteAllApprovals = async () => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'HAPUS SEMUA APPROVAL',
+      message: 'Apakah Anda yakin ingin menghapus SEMUA daftar permintaan persetujuan? Tindakan ini tidak dapat dibatalkan.',
+      onConfirm: async () => {
+        setConfirmConfig(null);
+        try {
+          const batch = writeBatch(db);
+          approvals.forEach(req => {
+            batch.delete(doc(db, 'approval_requests', req.id));
+          });
+          await batch.commit();
+          setConfirmConfig({
+            isOpen: true,
+            title: 'Berhasil',
+            message: 'Semua daftar persetujuan telah dihapus.',
+            onConfirm: () => setConfirmConfig(null),
+            showCancel: false
+          });
+        } catch (err) {
+          console.error(err);
+          handleFirestoreError(err, OperationType.DELETE, 'approval_requests_batch', auth, profile);
+        }
+      }
+    });
   };
 
   const handleSaveTenantDetails = async () => {
@@ -592,9 +612,20 @@ export default function SuperAdmin() {
         </div>
       ) : activeTab === 'approvals' ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <h3 className="text-lg font-semibold">Approval Requests</h3>
-            <p className="text-sm text-gray-500">Manage requests to revert cancelled transactions.</p>
+          <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold">Approval Requests</h3>
+              <p className="text-sm text-gray-500">Manage requests to revert cancelled transactions.</p>
+            </div>
+            {approvals.length > 0 && (
+              <button
+                onClick={handleDeleteAllApprovals}
+                className="flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Hapus Semua List
+              </button>
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
