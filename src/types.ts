@@ -1,4 +1,5 @@
 export type UserRole = 'superadmin' | 'admin' | 'staff' | 'customer' | 'kasir';
+export type SubscriptionPlan = 'free' | 'starter' | 'lite' | 'pro' | 'business';
 
 export interface Role {
   id: string;
@@ -28,7 +29,15 @@ export interface Tenant {
   slug: string;
   code?: string;
   ownerId: string;
-  subscription: 'free' | 'pro' | 'enterprise';
+  subscription: SubscriptionPlan;
+  subscriptionStatus?: 'active' | 'expired' | 'trial';
+  plan?: SubscriptionPlan; // Use this as primary, fallback to subscription
+  features?: string[]; // List of enabled feature keys for this specific tenant
+  limits?: {
+    maxProducts?: number;
+    maxTransactionsPerMonth?: number;
+    maxUsers?: number;
+  };
   createdAt: any;
   settings?: {
     logoUrl?: string;
@@ -118,6 +127,7 @@ export interface Customer {
   id: string;
   tenantId: string;
   name: string;
+  code?: string;
   email: string;
   phone: string;
   address: string;
@@ -252,6 +262,7 @@ export interface Supplier {
   email?: string;
   phone?: string;
   address?: string;
+  paymentTerm?: number; // In days
   createdAt: any;
 }
 
@@ -314,4 +325,25 @@ export interface PurchaseInvoice {
   dueDate: any;
   date: any;
   status: 'unpaid' | 'partial' | 'paid';
+}
+
+export interface StockOpname {
+  id: string;
+  tenantId: string;
+  date: any;
+  period: 'Harian' | 'Mingguan' | 'Bulanan';
+  category: string;
+  warehouseId: string;
+  warehouseName: string;
+  remark: string;
+  createdBy: string;
+  createdByName?: string;
+  items: {
+    productId: string;
+    productName: string;
+    sku: string;
+    systemStock: number;
+    physicalStock?: number;
+    difference?: number;
+  }[];
 }

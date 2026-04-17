@@ -54,12 +54,31 @@ export default function ImageUpload({
                 cloudName: tenantData.cloudinaryCloudName, 
                 uploadPreset: tenantData.cloudinaryUploadPreset 
               });
+              setIsConfigLoading(false);
+              return;
             }
           }
         } catch (err) {
-          console.error('Error fetching Cloudinary config:', err);
+          console.error('Error fetching Tenant Cloudinary config:', err);
         }
       }
+
+      // Priority 3: Global System Settings
+      try {
+        const systemDoc = await getDoc(doc(db, 'system', 'config'));
+        if (systemDoc.exists()) {
+          const systemData = systemDoc.data();
+          if (systemData.cloudinaryCloudName && systemData.cloudinaryUploadPreset) {
+            setConfig({ 
+              cloudName: systemData.cloudinaryCloudName, 
+              uploadPreset: systemData.cloudinaryUploadPreset 
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching Global Cloudinary config:', err);
+      }
+
       setIsConfigLoading(false);
     };
 

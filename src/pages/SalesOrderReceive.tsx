@@ -3,7 +3,7 @@ import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, 
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Order, ApprovalRequest, Tenant, BankAccount } from '../types';
-import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark, DollarSign } from 'lucide-react';
+import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth } from '../lib/firebase';
 import ConfirmModal from '../components/ConfirmModal';
@@ -80,6 +80,8 @@ export default function SalesOrderReceive() {
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     const handleAfterPrint = () => {
@@ -163,6 +165,10 @@ export default function SalesOrderReceive() {
     };
   }, [profile]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, search, rowsPerPage]);
+
   const filteredOrders = orders.filter(o => {
     const matchesFilter = filter === 'all' || o.type === filter;
     const matchesSearch = 
@@ -171,6 +177,12 @@ export default function SalesOrderReceive() {
       o.id.toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+
+  const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
   const getBadgeColor = (type: string) => {
     switch (type) {
@@ -448,16 +460,31 @@ export default function SalesOrderReceive() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex-1 flex gap-2 overflow-x-auto pb-2 sm:pb-0">
-          {(['all', 'manual', 'catalog', 'service'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setFilter(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all ${filter === t ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+        <div className="flex-1 flex items-center gap-4 overflow-x-auto pb-2 sm:pb-0">
+          <div className="flex gap-2">
+            {(['all', 'manual', 'catalog', 'service'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setFilter(t)}
+                className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all ${filter === t ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+              >
+                {t.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <div className="h-8 w-px bg-gray-200 hidden sm:block" />
+          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+            <span className="font-bold uppercase tracking-widest">Show:</span>
+            <select 
+              value={rowsPerPage} 
+              onChange={(e) => setRowsPerPage(Number(e.target.value))}
+              className="bg-transparent font-bold text-indigo-600 outline-none cursor-pointer"
             >
-              {t.toUpperCase()}
-            </button>
-          ))}
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -488,7 +515,7 @@ export default function SalesOrderReceive() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredOrders.map((order) => (
+              {paginatedOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                   {profile?.role === 'superadmin' && (
                     <td className="px-6 py-4">
@@ -552,6 +579,60 @@ export default function SalesOrderReceive() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination */}
+        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between bg-gray-50/50 gap-4">
+          <p className="text-xs text-gray-500">
+            Showing <span className="font-bold text-gray-900">{Math.min(filteredOrders.length, (currentPage - 1) * rowsPerPage + 1)}</span> to <span className="font-bold text-gray-900">{Math.min(filteredOrders.length, currentPage * rowsPerPage)}</span> of <span className="font-bold text-gray-900">{filteredOrders.length}</span> orders
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === page 
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                          : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  (page === currentPage - 2 && page > 1) || 
+                  (page === currentPage + 2 && page < totalPages)
+                ) {
+                  return <span key={page} className="text-gray-400">...</span>;
+                }
+                return null;
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
         {filteredOrders.length === 0 && !loading && (
           <div className="text-center py-20">
             <ShoppingBag className="w-16 h-16 text-gray-200 mx-auto mb-4" />

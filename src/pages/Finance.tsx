@@ -3,7 +3,7 @@ import { collection, query, where, addDoc, serverTimestamp, orderBy, onSnapshot,
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Transaction, Tenant } from '../types';
-import { Wallet, TrendingUp, TrendingDown, Plus, Search, Filter, ArrowUpRight, ArrowDownRight, Calendar } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Plus, Search, Filter, ArrowUpRight, ArrowDownRight, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Finance() {
@@ -20,6 +20,8 @@ export default function Finance() {
   });
 
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     if (!profile) return;
@@ -74,6 +76,23 @@ export default function Finance() {
   const totalSales = transactions.filter(t => t.type === 'sale' && t.status !== 'cancelled').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
   const totalExpenses = transactions.filter(t => t.type === 'expense' && t.status !== 'cancelled').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
   const balance = totalSales - totalExpenses;
+
+  const filteredTransactions = transactions.filter(t => 
+    t.description?.toLowerCase().includes(search.toLowerCase()) || 
+    t.category?.toLowerCase().includes(search.toLowerCase()) ||
+    t.id?.toLowerCase().includes(search.toLowerCase()) ||
+    t.transactionNumber?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredTransactions.length / rowsPerPage);
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, rowsPerPage]);
 
   return (
     <div className="space-y-8">
@@ -139,7 +158,21 @@ export default function Finance() {
       {/* Transaction History */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h3 className="text-lg font-semibold">Transaction History</h3>
+          <div className="flex items-center gap-4">
+            <h3 className="text-lg font-semibold">Transaction History</h3>
+            <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200">
+              <span>Show:</span>
+              <select 
+                value={rowsPerPage} 
+                onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                className="bg-transparent font-bold text-gray-900 outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -172,13 +205,7 @@ export default function Finance() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {transactions
-                .filter(t => 
-                  t.description?.toLowerCase().includes(search.toLowerCase()) || 
-                  t.category?.toLowerCase().includes(search.toLowerCase()) ||
-                  t.id?.toLowerCase().includes(search.toLowerCase())
-                )
-                .map((t) => (
+              {paginatedTransactions.map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                   {profile?.role === 'superadmin' && (
                     <td className="px-6 py-4">
@@ -226,6 +253,60 @@ export default function Finance() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <p className="text-xs text-gray-500">
+            Showing <span className="font-bold text-gray-900">{Math.min(filteredTransactions.length, (currentPage - 1) * rowsPerPage + 1)}</span> to <span className="font-bold text-gray-900">{Math.min(filteredTransactions.length, currentPage * rowsPerPage)}</span> of <span className="font-bold text-gray-900">{filteredTransactions.length}</span> transactions
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                // Show only current, first, last, and pages around current
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === page 
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                          : 'text-gray-500 hover:bg-white border border-transparent hover:border-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  (page === currentPage - 2 && page > 1) || 
+                  (page === currentPage + 2 && page < totalPages)
+                ) {
+                  return <span key={page} className="text-gray-400">...</span>;
+                }
+                return null;
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 

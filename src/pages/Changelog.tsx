@@ -1,8 +1,46 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { History, CheckCircle2, Rocket, Shield, Layout, ShoppingCart, UserCheck, Wallet, Truck, Barcode } from 'lucide-react';
+import { History, CheckCircle2, Rocket, Shield, Layout, ShoppingCart, UserCheck, Wallet, Truck, Barcode, BarChart3 } from 'lucide-react';
 
 const changelogData = [
+  {
+    date: '15 April 2026',
+    version: 'v2.2.0',
+    title: 'Manajemen Invoice & Pelacakan Piutang',
+    icon: Wallet,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    changes: [
+      'Peluncuran Modul "Finance/Invoice": Pelacakan tagihan pelanggan yang belum lunas (Piutang).',
+      'Fitur "Kode Pelanggan": Penambahan identitas unik untuk setiap pelanggan guna mempermudah pencarian.',
+      'Sistem Pembayaran Parsial: Dukungan untuk mencatat cicilan pembayaran pada invoice yang sedang berjalan.',
+      'Visualisasi Jatuh Tempo: Indikator warna untuk invoice yang mendekati atau sudah melewati batas waktu pembayaran.',
+      'Integrasi Transaksi Finansial: Setiap pembayaran invoice otomatis tercatat dalam arus kas (Transactions).',
+      'Detail Invoice Komprehensif: Tampilan rincian item pesanan, riwayat pembayaran, dan sisa tagihan dalam satu modal.',
+      'Optimasi List Produk: Tampilan mode list dengan thumbnail gambar kecil untuk efisiensi navigasi stok.'
+    ]
+  },
+  {
+    date: '14 April 2026',
+    version: 'v2.1.0',
+    title: 'Analisis Inventaris & Optimasi Data',
+    icon: BarChart3,
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50',
+    changes: [
+      'Peluncuran Modul "Inventory Report": Analisis pergerakan produk (Fast Moving, Slow Moving, Dead Stock).',
+      'Visualisasi Data Inventaris: Integrasi grafik Pie Chart dan Bar Chart untuk komposisi stok dan produk terlaris.',
+      'Implementasi Sistem Pagination Global: Navigasi halaman pada semua tabel utama (Finance, Sales, Products, Customers, Suppliers).',
+      'Fitur "Rows Per Page": Pengguna dapat memilih tampilan 10, 25, atau 50 data per halaman.',
+      'Field "Jatuh Tempo" Supplier: Penambahan fitur pengingat tenggat waktu pembayaran pada modul Supplier.',
+      'Peningkatan Keamanan Role: Penambahan izin akses "inventory_report" pada sistem manajemen role.',
+      'Optimasi Filter & Search: Reset otomatis halaman ke nomor 1 saat melakukan pencarian atau perubahan filter.',
+      'Rekomendasi Strategi Stok: Sistem memberikan saran otomatis berdasarkan kategori pergerakan produk.',
+      'Keamanan Sesi: Implementasi Alert "Sesi Berakhir" otomatis jika tidak ada aktivitas selama 5 jam.',
+      'Export Stock Opname: Fitur cetak laporan stok opname per kategori dalam format PDF dan Excel (XLSX).',
+      'Modul Stock Opname: Fitur perencanaan pemeriksaan stok fisik (Stock Planning) dengan filter periode dan kategori, serta riwayat pemeriksaan.'
+    ]
+  },
   {
     date: '12 April 2026',
     version: 'v2.0.0',

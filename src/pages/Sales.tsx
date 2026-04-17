@@ -204,9 +204,9 @@ export default function Sales() {
   const isKasir = profile?.role === 'kasir';
 
   return (
-    <div className={`flex flex-col lg:flex-row gap-6 ${isKasir ? 'h-[calc(100vh-73px)]' : 'h-[calc(100vh-120px)]'} ${isKasir ? 'p-0 sm:p-4' : ''} relative`}>
+    <div className={`flex flex-col md:flex-row gap-4 md:gap-6 ${isKasir ? 'h-[calc(100vh-73px)]' : 'h-[calc(100vh-120px)]'} ${isKasir ? 'p-0 sm:p-4' : ''} relative`}>
       {/* Mobile Tab Navigation */}
-      <div className="lg:hidden flex border-b border-gray-200 bg-white sticky top-0 z-20">
+      <div className="md:hidden flex border-b border-gray-200 bg-white sticky top-0 z-20">
         <button
           onClick={() => setActiveTab('products')}
           className={`flex-1 py-4 text-sm font-bold transition-all ${activeTab === 'products' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50' : 'text-gray-400'}`}
@@ -227,8 +227,8 @@ export default function Sales() {
       </div>
 
       {/* POS Terminal / Product List */}
-      <div className={`flex-1 flex flex-col bg-white lg:rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${activeTab === 'products' ? 'flex' : 'hidden lg:flex'}`}>
-        <div className="p-4 sm:p-6 border-b border-gray-100">
+      <div className={`flex-1 flex flex-col bg-white md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${activeTab === 'products' ? 'flex' : 'hidden md:flex'}`}>
+        <div className="p-3 sm:p-4 md:p-6 border-b border-gray-100">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -241,8 +241,8 @@ export default function Sales() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
             {filteredProducts.map((product) => (
               <button
                 key={product.id}
@@ -268,10 +268,10 @@ export default function Sales() {
                     </div>
                   )}
                 </div>
-                <h4 className="text-xs sm:text-sm font-bold text-gray-900 truncate">{product.name}</h4>
+                <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 truncate leading-tight">{product.name}</h4>
                 <div className="flex justify-between items-center mt-1 sm:mt-2">
-                  <p className="text-indigo-600 font-extrabold text-xs sm:text-sm">Rp.{(product.price || 0).toLocaleString()}</p>
-                  <p className="text-[9px] sm:text-[10px] text-gray-400">{product.stock} stok</p>
+                  <p className="text-indigo-600 font-extrabold text-[10px] sm:text-xs md:text-sm">Rp.{(product.price || 0).toLocaleString()}</p>
+                  <p className="text-[8px] sm:text-[9px] md:text-[10px] text-gray-400">{product.stock} stok</p>
                 </div>
               </button>
             ))}
@@ -280,9 +280,9 @@ export default function Sales() {
       </div>
 
       {/* Cart / Checkout */}
-      <div className={`w-full lg:w-96 flex flex-col bg-white lg:rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${activeTab === 'cart' ? 'flex' : 'hidden lg:flex'}`}>
-        <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-lg font-bold flex items-center">
+      <div className={`w-full md:w-72 lg:w-80 xl:w-96 flex flex-col bg-white md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${activeTab === 'cart' ? 'flex' : 'hidden md:flex'}`}>
+        <div className="p-3 sm:p-4 md:p-6 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-base md:text-lg font-bold flex items-center">
             <ShoppingCart className="w-5 h-5 mr-2 text-indigo-600" />
             Pesanan Aktif
           </h3>
@@ -290,7 +290,7 @@ export default function Sales() {
             <select
               value={selectedCustomer}
               onChange={(e) => setSelectedCustomer(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 max-w-[120px]"
+              className="text-[10px] md:text-xs border border-gray-200 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 max-w-[100px] md:max-w-[120px]"
             >
               <option value="">Pelanggan Umum</option>
               {customers.map(c => (
@@ -300,44 +300,44 @@ export default function Sales() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
           {cart.map((item) => (
-            <div key={item.product.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-xl">
-              <div className="flex-1 min-w-0 mr-4">
-                <p className="text-sm font-bold text-gray-900 truncate">{item.product.name}</p>
-                <p className="text-xs text-gray-500 font-medium">Rp.{(item.product.price || 0).toLocaleString()} x {item.quantity}</p>
+            <div key={item.product.id} className="flex items-center justify-between bg-gray-50 p-2 md:p-3 rounded-xl">
+              <div className="flex-1 min-w-0 mr-2 md:mr-4">
+                <p className="text-xs md:text-sm font-bold text-gray-900 truncate">{item.product.name}</p>
+                <p className="text-[10px] md:text-xs text-gray-500 font-medium">Rp.{(item.product.price || 0).toLocaleString()} x {item.quantity}</p>
               </div>
-              <div className="flex items-center space-x-2">
-                <button onClick={() => updateQuantity(item.product.id, -1)} className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Minus className="w-4 h-4" />
+              <div className="flex items-center space-x-1 md:space-x-2">
+                <button onClick={() => updateQuantity(item.product.id, -1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Minus className="w-3 h-3 md:w-4 md:h-4" />
                 </button>
-                <span className="text-sm font-black w-6 text-center">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.product.id, 1)} className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Plus className="w-4 h-4" />
+                <span className="text-xs md:text-sm font-black w-4 md:w-6 text-center">{item.quantity}</span>
+                <button onClick={() => updateQuantity(item.product.id, 1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Plus className="w-3 h-3 md:w-4 md:h-4" />
                 </button>
-                <button onClick={() => updateQuantity(item.product.id, -item.quantity)} className="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2">
-                  <Trash2 className="w-4 h-4" />
+                <button onClick={() => updateQuantity(item.product.id, -item.quantity)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-1 md:ml-2">
+                  <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                 </button>
               </div>
             </div>
           ))}
           {cart.length === 0 && (
-            <div className="text-center py-20">
-              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShoppingCart className="w-10 h-10 text-gray-200" />
+            <div className="text-center py-10 md:py-20">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShoppingCart className="w-8 h-8 md:w-10 md:h-10 text-gray-200" />
               </div>
-              <p className="text-gray-400 font-medium">Keranjang masih kosong</p>
+              <p className="text-xs md:text-gray-400 font-medium">Keranjang masih kosong</p>
             </div>
           )}
         </div>
 
-        <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-100 space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
+        <div className="p-3 sm:p-4 md:p-6 bg-gray-50 border-t border-gray-100 space-y-3 md:space-y-4">
+          <div className="space-y-1 md:space-y-2">
+            <div className="flex justify-between text-[10px] md:text-sm text-gray-600">
               <span>Subtotal</span>
               <span className="font-bold">Rp.{(total || 0).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-xl font-black text-gray-900 pt-2 border-t border-gray-200">
+            <div className="flex justify-between text-base md:text-xl font-black text-gray-900 pt-2 border-t border-gray-200">
               <span>Total</span>
               <span className="text-indigo-600">Rp.{(total || 0).toLocaleString()}</span>
             </div>
@@ -346,11 +346,11 @@ export default function Sales() {
           <button
             onClick={() => setIsCheckoutModalOpen(true)}
             disabled={cart.length === 0 || isProcessing}
-            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-xl shadow-indigo-100 active:scale-95"
+            className="w-full bg-indigo-600 text-white py-3 md:py-4 rounded-2xl font-black text-base md:text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-xl shadow-indigo-100 active:scale-95"
           >
             {isProcessing ? 'Memproses...' : (
               <>
-                <CreditCard className="w-6 h-6 mr-2" />
+                <CreditCard className="w-5 h-5 md:w-6 md:h-6 mr-2" />
                 BAYAR SEKARANG
               </>
             )}
@@ -362,7 +362,7 @@ export default function Sales() {
       {activeTab === 'products' && cart.length > 0 && (
         <button
           onClick={() => setActiveTab('cart')}
-          className="lg:hidden fixed bottom-6 right-6 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-30 animate-bounce border-4 border-white"
+          className="md:hidden fixed bottom-6 right-6 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-30 animate-bounce border-4 border-white"
         >
           <ShoppingCart className="w-6 h-6" />
           <span className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
@@ -381,46 +381,46 @@ export default function Sales() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col"
             >
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
-                <h3 className="text-xl font-bold flex items-center">
-                  <CreditCard className="w-6 h-6 mr-2" />
+              <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
+                <h3 className="text-lg md:text-xl font-bold flex items-center">
+                  <CreditCard className="w-5 h-5 md:w-6 md:h-6 mr-2" />
                   Pembayaran
                 </h3>
                 <button
                   onClick={() => setIsCheckoutModalOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  className="p-1.5 md:p-2 hover:bg-white/10 rounded-xl transition-colors"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               </div>
 
-              <div className="p-6 space-y-6">
-                <div className="space-y-3">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Metode Pembayaran</label>
-                  <div className="flex gap-3">
+              <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+                <div className="space-y-2 md:space-y-3">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Metode Pembayaran</label>
+                  <div className="flex gap-2 md:gap-3">
                     <button
                       onClick={() => setPaymentMethodType('tunai')}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethodType === 'tunai' ? 'bg-green-50 text-green-600 border-green-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-2 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-1 md:gap-2 ${paymentMethodType === 'tunai' ? 'bg-green-50 text-green-600 border-green-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
-                      <Landmark className="w-6 h-6" />
+                      <Landmark className="w-5 h-5 md:w-6 md:h-6" />
                       Tunai
                     </button>
                     <button
                       onClick={() => setPaymentMethodType('transfer')}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethodType === 'transfer' ? 'bg-blue-50 text-blue-600 border-blue-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-2 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-1 md:gap-2 ${paymentMethodType === 'transfer' ? 'bg-blue-50 text-blue-600 border-blue-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
-                      <CreditCard className="w-6 h-6" />
+                      <CreditCard className="w-5 h-5 md:w-6 md:h-6" />
                       Transfer
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Tipe Transaksi</label>
-                  <div className="flex gap-3">
+                <div className="space-y-2 md:space-y-3">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tipe Transaksi</label>
+                  <div className="flex gap-2 md:gap-3">
                     <button
                       onClick={() => setPaymentType('cash')}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'cash' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-2 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'cash' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
                       Lunas
                     </button>
@@ -431,7 +431,7 @@ export default function Sales() {
                         }
                       }}
                       disabled={!canUseTempo}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'credit' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'} ${!canUseTempo ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`flex-1 py-2 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'credit' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'} ${!canUseTempo ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       Tempo
                     </button>

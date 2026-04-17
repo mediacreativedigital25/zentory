@@ -3,15 +3,20 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { LayoutDashboard, Package, ShoppingCart, Wallet, Store, LogOut, Settings, Users, ChevronDown, UserRound, Menu, X, History, BookOpen, Calculator, Truck, CheckCircle2, Globe, Building2 } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Wallet, Store, LogOut, Settings, Users, ChevronDown, UserRound, Menu, X, History, BookOpen, Calculator, Truck, CheckCircle2, Globe, Building2, Lock, Zap, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { usePermissions } from '../hooks/usePermissions';
+import UpgradePrompt from './Subscription/UpgradePrompt';
+import { PLANS } from '../constants/plans';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { profile, permissions: userPermissions } = useAuth();
+  const { hasFeature, plan } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState<{ isOpen: boolean; feature: string } | null>(null);
 
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => 
@@ -48,6 +53,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Kategori', path: '/inventory/categories', permission: 'inventory_categories' },
         { label: 'Stock', path: '/inventory/stock', permission: 'inventory_stock' },
         { label: 'Gudang', path: '/inventory/warehouses', permission: 'inventory_warehouses' },
+        { label: 'Report Inventory', path: '/inventory/report', permission: 'inventory_report' },
+        { label: 'Stock Opname', path: '/inventory/stock-opname', permission: 'inventory_stock_opname' },
       ]
     },
     { 
@@ -67,6 +74,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: Wallet, 
       roles: ['admin', 'staff', 'superadmin'],
       children: [
+        { label: 'Invoice', path: '/finance/invoices', permission: 'finance_invoices' },
         { label: 'Akun Bank', path: '/finance/bank-accounts', permission: 'finance_bank_accounts' },
         { label: 'Claim Expense', path: '/finance/claim', permission: 'finance_claim' },
         { label: 'Amal', path: '/finance/charity', permission: 'finance_charity' },
@@ -86,14 +94,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     },
     { label: 'Catalog Editor', icon: Store, path: '/catalog-editor', roles: ['admin', 'superadmin'], permission: 'catalog_editor' },
     { label: 'Profil Bisnis', icon: Building2, path: '/settings/business', roles: ['admin'], permission: 'tenant_settings' },
+    { label: 'Paket & Upgrade', icon: Zap, path: '/pricing', roles: ['admin', 'superadmin'] },
+    { 
+      label: 'Layanan', 
+      icon: ShieldCheck, 
+      roles: ['admin'],
+      children: [
+        { label: 'Invoice', path: '/layanan/invoice' },
+        { label: 'Layanan Saya', path: '/layanan/saya' },
+      ]
+    },
     { label: 'Changelog', icon: History, path: '/changelog', roles: ['admin', 'staff', 'superadmin'], permission: 'changelog' },
     { label: 'Panduan', icon: BookOpen, path: '/guide', roles: ['admin', 'staff', 'superadmin'], permission: 'guide' },
     { 
       label: 'Superadmin', 
-      icon: Users, 
+      icon: ShieldCheck, 
       roles: ['superadmin'],
       children: [
-        { label: 'Dashboard', path: '/superadmin' },
+        { label: 'Dashboard', path: '/superadmin/dashboard' },
+        { label: 'Invoice', path: '/superadmin/invoices' },
+        { label: 'Service Tenant', path: '/superadmin/services' },
+        { label: 'Tenant', path: '/superadmin/tenants' },
+        { label: 'Approvals', path: '/superadmin/approvals' },
+        { label: 'Users', path: '/superadmin/users' },
+        { label: 'Reset Data', path: '/superadmin/reset' },
+        { label: 'Roadmaps', path: '/superadmin/roadmap' },
+        { label: 'Global Setting', path: '/superadmin/settings' },
         { label: 'Domain Management', path: '/superadmin/domains' },
       ]
     },
@@ -127,69 +153,49 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (!profile) return false;
     if (profile.role === 'superadmin') return true;
     
+    // 1. Check Role Restriction on the item itself first
+    if (item.roles && !item.roles.includes(profile.role)) {
+      return false;
+    }
+
+    // 2. Check Feature Gating (Subscription)
+    if (item.permission && !hasFeature(item.permission)) {
+      return false;
+    }
+
+    // 3. If it has children, check if any child is accessible
+    if (item.children) {
+      return item.children.some((child: any) => hasPermission(child));
+    }
+
     const isSystemRole = ['admin', 'staff'].includes(profile.role);
 
-    // Check custom role permissions
+    // 4. Check custom role permissions
     if (!isSystemRole) {
-      if (item.children) {
-        // For parent items, show if any child is allowed
-        return item.children.some((child: any) => {
-          if (child.permission) return userPermissions.includes(child.permission);
-          if (child.roles) return !child.roles.includes('superadmin');
-          if (item.roles) return !item.roles.includes('superadmin');
-          return true;
-        });
-      }
-      
       if (item.permission) {
         return userPermissions.includes(item.permission);
       }
-      
-      // If no permission key, check roles
-      if (item.roles) {
-        // Custom roles are not superadmin, so if it's superadmin-only, deny
-        return !item.roles.includes('superadmin');
-      }
-      
       return true;
     }
 
-    // System roles (admin, staff)
-    if (item.children) {
-      return item.children.some((child: any) => {
-        const allowedRoles = child.roles || item.roles;
-        return !allowedRoles || allowedRoles.includes(profile.role);
-      });
-    }
-    
-    return !item.roles || item.roles.includes(profile.role);
+    // 5. System roles (admin, staff) - already checked roles at step 1
+    return true;
   };
 
-  const filteredNav = navItems.filter(hasPermission).map(item => {
+  const filteredNav = navItems.filter(item => {
+    if (profile?.role === 'superadmin') return true;
+    
+    // Always show these basic items
+    if (['Dashboard', 'Changelog', 'Panduan', 'Profil Bisnis'].includes(item.label)) return true;
+
+    return hasPermission(item);
+  }).map(item => {
     if (item.children) {
       return {
         ...item,
         children: item.children.filter((child: any) => {
           if (profile?.role === 'superadmin') return true;
-          
-          const isSystemRole = ['admin', 'staff'].includes(profile?.role || '');
-          if (isSystemRole) {
-            const allowedRoles = child.roles || item.roles;
-            return !allowedRoles || allowedRoles.includes(profile?.role || '');
-          }
-          
-          // For custom roles, check permission key
-          if (child.permission) {
-            return userPermissions.includes(child.permission);
-          }
-          
-          // If no permission key, check roles
-          const allowedRoles = child.roles || item.roles;
-          if (allowedRoles) {
-            return !allowedRoles.includes('superadmin');
-          }
-          
-          return true;
+          return hasPermission(child);
         })
       };
     }
@@ -298,9 +304,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
                 {profile?.displayName?.charAt(0) || profile?.email?.charAt(0)}
               </div>
-              <div className="ml-3 overflow-hidden">
+              <div className="ml-3 overflow-hidden flex-1">
                 <p className="text-sm font-medium text-gray-900 truncate">{profile?.displayName || profile?.email || 'User'}</p>
-                <p className="text-xs text-gray-500 capitalize">{roleName || profile?.role || 'Loading...'}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-gray-500 capitalize">{roleName || profile?.role || 'Loading...'}</p>
+                  {plan && (
+                    <Link to="/pricing" className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter ${PLANS[plan]?.color || 'bg-gray-100 text-gray-600'}`}>
+                      {PLANS[plan]?.name}
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
             <button
@@ -369,6 +382,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </motion.div>
         </main>
       </div>
+
+      <AnimatePresence>
+        {showUpgradeModal?.isOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <UpgradePrompt 
+                featureName={showUpgradeModal.feature} 
+                requiredPlan="lite" 
+                onClose={() => setShowUpgradeModal(null)} 
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

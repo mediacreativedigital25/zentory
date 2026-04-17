@@ -3,7 +3,7 @@ import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'fireba
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Transaction, BankAccount } from '../types';
-import { Wallet, TrendingUp, TrendingDown, Calendar, Filter, Download, FileText, PieChart, BarChart3, Landmark } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Calendar, Filter, Download, FileText, PieChart, BarChart3, Landmark, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 enum OperationType {
@@ -39,6 +39,8 @@ export default function FinancialReport() {
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('monthly');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     if (!profile?.tenantId) return;
@@ -89,6 +91,10 @@ export default function FinancialReport() {
     };
   }, [profile, filter]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, rowsPerPage]);
+
   const totalSales = transactions
     .filter(t => t.type === 'sale' && t.status !== 'cancelled')
     .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
@@ -98,6 +104,12 @@ export default function FinancialReport() {
     .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
     
   const balance = totalSales - totalExpenses;
+
+  const totalPages = Math.ceil(transactions.length / rowsPerPage);
+  const paginatedTransactions = transactions.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
   const bankAccountBalances = bankAccounts.map(bank => {
     const bankTransactions = transactions.filter(t => t.bankAccountId === bank.id && t.status !== 'cancelled');
@@ -235,11 +247,25 @@ export default function FinancialReport() {
 
       {/* Detailed Report Table */}
       <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <h3 className="text-lg font-black text-gray-900 flex items-center">
-            <FileText className="w-5 h-5 mr-2 text-indigo-600" />
-            Rincian Transaksi ({filter === 'daily' ? 'Hari Ini' : filter === 'weekly' ? 'Minggu Ini' : filter === 'monthly' ? 'Bulan Ini' : 'Tahun Ini'})
-          </h3>
+        <div className="p-8 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
+          <div className="flex items-center gap-4">
+            <h3 className="text-lg font-black text-gray-900 flex items-center">
+              <FileText className="w-5 h-5 mr-2 text-indigo-600" />
+              Rincian Transaksi ({filter === 'daily' ? 'Hari Ini' : filter === 'weekly' ? 'Minggu Ini' : filter === 'monthly' ? 'Bulan Ini' : 'Tahun Ini'})
+            </h3>
+            <div className="flex items-center gap-2 text-[10px] text-gray-500 bg-white px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">
+              <span className="font-black uppercase tracking-widest">Tampilkan:</span>
+              <select 
+                value={rowsPerPage} 
+                onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                className="bg-transparent font-black text-indigo-600 outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
           <span className="px-4 py-1 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">
             {transactions.length} Transaksi
           </span>
@@ -260,7 +286,7 @@ export default function FinancialReport() {
                 <tr><td colSpan={5} className="px-8 py-12 text-center text-gray-400 font-bold">Memuat data...</td></tr>
               ) : transactions.length === 0 ? (
                 <tr><td colSpan={5} className="px-8 py-12 text-center text-gray-400 font-bold">Tidak ada transaksi ditemukan untuk periode ini.</td></tr>
-              ) : transactions.map((t) => (
+              ) : paginatedTransactions.map((t) => (
                 <tr key={t.id} className="group hover:bg-indigo-50/30 transition-colors">
                   <td className="px-8 py-6">
                     <div className="flex items-center">
@@ -312,6 +338,59 @@ export default function FinancialReport() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="p-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between bg-gray-50/30 gap-4">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Menampilkan <span className="text-indigo-600">{Math.min(transactions.length, (currentPage - 1) * rowsPerPage + 1)}</span> - <span className="text-indigo-600">{Math.min(transactions.length, currentPage * rowsPerPage)}</span> dari <span className="text-indigo-600">{transactions.length}</span> Transaksi
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 rounded-2xl text-[10px] font-black transition-all ${
+                        currentPage === page 
+                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
+                          : 'bg-white text-gray-400 hover:text-gray-600 border border-gray-100 shadow-sm'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (
+                  (page === currentPage - 2 && page > 1) || 
+                  (page === currentPage + 2 && page < totalPages)
+                ) {
+                  return <span key={page} className="text-gray-400 font-black">...</span>;
+                }
+                return null;
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

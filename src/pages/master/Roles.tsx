@@ -16,6 +16,8 @@ const FEATURES = [
   { id: 'inventory_categories', label: 'Inventory: Kategori' },
   { id: 'inventory_stock', label: 'Inventory: Stock' },
   { id: 'inventory_warehouses', label: 'Inventory: Gudang' },
+  { id: 'inventory_report', label: 'Inventory: Report Inventory' },
+  { id: 'inventory_stock_opname', label: 'Inventory: Stock Opname' },
   { id: 'finance_claim', label: 'Finance: Claim Expense' },
   { id: 'finance_bank_accounts', label: 'Finance: Akun Bank' },
   { id: 'finance_charity', label: 'Finance: Amal' },

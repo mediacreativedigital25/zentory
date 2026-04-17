@@ -3,7 +3,7 @@ import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTime
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Product, Category, Warehouse, StockLog } from '../../types';
-import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon, RefreshCw, Upload, Camera, Printer, Wand2, History } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon, RefreshCw, Upload, Camera, Printer, Wand2, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
 import ImageUpload from '../../components/ImageUpload';
@@ -49,6 +49,10 @@ export default function Products() {
     start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyRowsPerPage, setHistoryRowsPerPage] = useState(10);
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -130,6 +134,14 @@ export default function Products() {
       unsubGlobalLogs();
     };
   }, [profile, selectedProductForHistory, activeTab, dateRange]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [rowsPerPage]);
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historySearch, dateRange, historyRowsPerPage]);
 
   const generateServiceSKU = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -380,6 +392,23 @@ export default function Products() {
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading Products...</div>;
 
+  const totalPages = Math.ceil(products.length / rowsPerPage);
+  const paginatedProducts = products.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  const filteredHistory = globalStockLogs.filter(log => 
+    log.productName?.toLowerCase().includes(historySearch.toLowerCase()) ||
+    log.productId?.toLowerCase().includes(historySearch.toLowerCase())
+  );
+
+  const totalHistoryPages = Math.ceil(filteredHistory.length / historyRowsPerPage);
+  const paginatedHistory = filteredHistory.slice(
+    (historyPage - 1) * historyRowsPerPage,
+    historyPage * historyRowsPerPage
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end">
@@ -466,6 +495,20 @@ export default function Products() {
 
       {activeTab === 'products' ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
+            <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
+              <span>Show:</span>
+              <select 
+                value={rowsPerPage} 
+                onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                className="bg-transparent font-bold text-gray-900 outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -495,7 +538,7 @@ export default function Products() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {products.map((product) => (
+              {paginatedProducts.map((product) => (
                 <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${selectedProducts.includes(product.id) ? 'bg-indigo-50/30' : ''}`}>
                   <td className="px-6 py-4">
                     <input 
@@ -507,7 +550,7 @@ export default function Products() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 mr-3 overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 mr-3 overflow-hidden border border-gray-100">
                         <img
                           src={product.imageUrl || `https://picsum.photos/seed/${product.id}/100/100`}
                           alt={product.name}
@@ -585,6 +628,53 @@ export default function Products() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <p className="text-xs text-gray-500">
+            Showing <span className="font-bold text-gray-900">{Math.min(products.length, (currentPage - 1) * rowsPerPage + 1)}</span> to <span className="font-bold text-gray-900">{Math.min(products.length, currentPage * rowsPerPage)}</span> of <span className="font-bold text-gray-900">{products.length}</span> products
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === page 
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                          : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if ((page === currentPage - 2 && page > 1) || (page === currentPage + 2 && page < totalPages)) {
+                  return <span key={page} className="text-gray-400">...</span>;
+                }
+                return null;
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
         {products.length === 0 && (
           <div className="text-center py-12">
             <Package className="w-12 h-12 text-gray-200 mx-auto mb-4" />
@@ -641,6 +731,20 @@ export default function Products() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
+            <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
+              <span>Show:</span>
+              <select 
+                value={historyRowsPerPage} 
+                onChange={(e) => setHistoryRowsPerPage(Number(e.target.value))}
+                className="bg-transparent font-bold text-gray-900 outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-gray-50 text-gray-500 text-[10px] uppercase tracking-wider">
@@ -657,12 +761,7 @@ export default function Products() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {globalStockLogs
-                  .filter(log => 
-                    log.productName?.toLowerCase().includes(historySearch.toLowerCase()) ||
-                    log.productId?.toLowerCase().includes(historySearch.toLowerCase())
-                  )
-                  .map((log) => (
+                {paginatedHistory.map((log) => (
                   <tr key={log.id} className="text-xs hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
                       {log.createdAt ? new Date(log.createdAt.seconds * 1000).toLocaleString('id-ID', {
@@ -713,6 +812,52 @@ export default function Products() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* History Pagination */}
+        <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <p className="text-xs text-gray-500">
+            Showing <span className="font-bold text-gray-900">{Math.min(filteredHistory.length, (historyPage - 1) * historyRowsPerPage + 1)}</span> to <span className="font-bold text-gray-900">{Math.min(filteredHistory.length, historyPage * historyRowsPerPage)}</span> of <span className="font-bold text-gray-900">{filteredHistory.length}</span> logs
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setHistoryPage(prev => Math.max(1, prev - 1))}
+              disabled={historyPage === 1}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalHistoryPages)].map((_, i) => {
+                const page = i + 1;
+                if (page === 1 || page === totalHistoryPages || (page >= historyPage - 1 && page <= historyPage + 1)) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setHistoryPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        historyPage === page 
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                          : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if ((page === historyPage - 2 && page > 1) || (page === historyPage + 2 && page < totalHistoryPages)) {
+                  return <span key={page} className="text-gray-400">...</span>;
+                }
+                return null;
+              })}
+            </div>
+            <button
+              onClick={() => setHistoryPage(prev => Math.min(totalHistoryPages, prev + 1))}
+              disabled={historyPage === totalHistoryPages || totalHistoryPages === 0}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>

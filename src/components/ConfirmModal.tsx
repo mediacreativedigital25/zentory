@@ -11,6 +11,7 @@ interface ConfirmModalProps {
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'info' | 'warning';
+  showCancel?: boolean;
 }
 
 export default function ConfirmModal({
@@ -21,7 +22,8 @@ export default function ConfirmModal({
   onCancel,
   confirmText = 'Ya, Lanjutkan',
   cancelText = 'Batal',
-  type = 'info'
+  type = 'info',
+  showCancel = true
 }: ConfirmModalProps) {
   return (
     <AnimatePresence>
@@ -45,15 +47,17 @@ export default function ConfirmModal({
               </div>
               <p className="text-gray-600 mb-8">{message}</p>
               <div className="flex space-x-3">
-                <button
-                  onClick={onCancel}
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors"
-                >
-                  {cancelText}
-                </button>
+                {showCancel && (
+                  <button
+                    onClick={onCancel}
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                  >
+                    {cancelText}
+                  </button>
+                )}
                 <button
                   onClick={onConfirm}
-                  className={`flex-1 px-4 py-3 rounded-xl text-white font-bold transition-all shadow-lg ${
+                  className={`${showCancel ? 'flex-1' : 'w-full'} px-4 py-3 rounded-xl text-white font-bold transition-all shadow-lg ${
                     type === 'danger' ? 'bg-red-600 hover:bg-red-700 shadow-red-200' : 
                     type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700 shadow-yellow-200' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
                   }`}

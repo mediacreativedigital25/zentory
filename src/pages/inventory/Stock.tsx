@@ -2,16 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
-import { Product } from '../../types';
-import { Search, Filter, Package, ArrowRight, AlertCircle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Product, Category } from '../../types';
+import { Search, Filter, Package, ArrowRight, AlertCircle, Printer, FileText, FileSpreadsheet } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 export default function Stock() {
   const { profile } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'available' | 'out'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -28,7 +34,19 @@ export default function Stock() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Fetch categories for filtering
+    const catQ = profile.role === 'superadmin'
+      ? collection(db, 'categories')
+      : query(collection(db, 'categories'), where('tenantId', '==', profile.tenantId));
+    
+    const unsubscribeCat = onSnapshot(catQ, (snap) => {
+      setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeCat();
+    };
   }, [profile]);
 
   const filteredProducts = products.filter(p => {
@@ -37,19 +55,97 @@ export default function Stock() {
     
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
     const matchesStock = stockFilter === 'all' ? true : stockFilter === 'available' ? p.stock > 0 : p.stock <= 0;
-    return matchesSearch && matchesStock;
+    const matchesCategory = selectedCategory === 'all' ? true : p.category === selectedCategory;
+    return matchesSearch && matchesStock && matchesCategory;
   });
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(30, 41, 59); // Slate 800
+    doc.setFont('helvetica', 'bold');
+    doc.text('LAPORAN STOK PRODUK', 105, 25, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // Slate 500
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Tanggal Cetak: ${dateStr}`, 105, 32, { align: 'center' });
+
+    // Horizontal Line
+    doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.line(14, 40, 196, 40);
+
+    const tableData = filteredProducts.map(p => [
+      p.name,
+      p.sku,
+      p.category,
+      p.stock.toString(),
+      '', // Physical QTY placeholder
+      ''  // Total placeholder
+    ]);
+
+    autoTable(doc, {
+      startY: 48,
+      head: [['PRODUK', 'SKU', 'KATEGORI', 'QTY SISTEM', 'QTY FISIK', 'SELISIH']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [79, 70, 229], // Indigo 600
+        textColor: 255, 
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'center'
+      },
+      styles: { 
+        fontSize: 8,
+        cellPadding: 4
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold' },
+        3: { halign: 'center', fontStyle: 'bold' },
+        4: { halign: 'center' },
+        5: { halign: 'center' }
+      }
+    });
+
+    doc.save(`Laporan_Stok_${now.getTime()}.pdf`);
+    setIsPrintModalOpen(false);
+  };
+
+  const handleExportExcel = () => {
+    const date = new Date().toLocaleDateString('id-ID');
+    const data = filteredProducts.map(p => ({
+      'Produk': p.name,
+      'SKU': p.sku,
+      'Kategori': p.category,
+      'QTY System': p.stock,
+      'QTY FISIK (Manual)': '',
+      'Total (Manual)': ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Stock Opname');
+    XLSX.writeFile(wb, `Stock_Opname_${date.replace(/\//g, '-')}.xlsx`);
+    setIsPrintModalOpen(false);
+  };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading Stock Data...</div>;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Stock Produk</h2>
-        <p className="text-gray-500">Pantau ketersediaan stok produk Anda di semua gudang.</p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Stock Produk</h2>
+          <p className="text-gray-500">Pantau ketersediaan stok produk Anda di semua gudang.</p>
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col lg:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -60,7 +156,17 @@ export default function Stock() {
             className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 font-medium"
+          >
+            <option value="all">Semua Kategori</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
           <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200">
             <button
               onClick={() => setStockFilter('all')}
@@ -84,62 +190,136 @@ export default function Stock() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
-          <motion.div
-            key={product.id}
-            layout
-            className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col"
-          >
-            <div className="aspect-video bg-gray-50 relative overflow-hidden">
-              <img
-                src={product.imageUrl || `https://picsum.photos/seed/${product.id}/400/225`}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute top-2 right-2">
-                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold shadow-sm ${
-                  product.stock > 10 ? 'bg-green-500 text-white' : 
-                  product.stock > 0 ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white'
-                }`}>
-                  {product.stock} UNIT
-                </span>
-              </div>
-            </div>
-            <div className="p-4 flex-1 flex flex-col">
-              <div className="flex-1">
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">{product.category}</p>
-                <h3 className="font-bold text-gray-900 line-clamp-1">{product.name}</h3>
-                <p className="text-xs text-gray-500 font-mono mt-1">SKU: {product.sku}</p>
-              </div>
-              
-              <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-gray-400 uppercase font-bold">Harga Jual</p>
-                  <p className="text-sm font-bold text-indigo-600">Rp.{(product.price || 0).toLocaleString()}</p>
-                </div>
-                {product.stock <= 5 && product.stock > 0 && (
-                  <div className="flex items-center text-yellow-600 text-[10px] font-bold animate-pulse">
-                    <AlertCircle className="w-3 h-3 mr-1" /> STOK MENIPIS
-                  </div>
-                )}
-                {product.stock <= 0 && (
-                  <div className="flex items-center text-red-600 text-[10px] font-bold">
-                    <AlertCircle className="w-3 h-3 mr-1" /> STOK HABIS
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        ))}
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Produk</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kategori</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Stok</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Harga Jual</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredProducts.map((product) => (
+                <tr key={product.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                        <img
+                          src={product.imageUrl || `https://picsum.photos/seed/${product.id}/100/100`}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-sm">{product.name}</h3>
+                        <p className="text-xs text-gray-500 font-mono">SKU: {product.sku}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      {product.category}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm ${
+                        product.stock > 10 ? 'bg-green-500 text-white' : 
+                        product.stock > 0 ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white'
+                      }`}>
+                        {product.stock} UNIT
+                      </span>
+                      {product.stock <= 5 && product.stock > 0 && (
+                        <span className="text-[9px] font-black text-yellow-600 animate-pulse uppercase tracking-tighter">Stok Menipis</span>
+                      )}
+                      {product.stock <= 0 && (
+                        <span className="text-[9px] font-black text-red-600 uppercase tracking-tighter">Stok Habis</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <p className="text-sm font-black text-indigo-600">Rp.{(product.price || 0).toLocaleString()}</p>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {filteredProducts.length === 0 && (
-          <div className="col-span-full text-center py-20 bg-white rounded-2xl border border-gray-100">
+          <div className="text-center py-20">
             <Package className="w-16 h-16 text-gray-100 mx-auto mb-4" />
             <p className="text-gray-500 text-lg font-medium">Tidak ada produk yang sesuai dengan filter Anda.</p>
           </div>
         )}
       </div>
+
+      {/* Print Modal */}
+      <AnimatePresence>
+        {isPrintModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
+                <h3 className="text-xl font-bold">Export Stock Opname</h3>
+                <button onClick={() => setIsPrintModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
+                  <Printer className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-8 space-y-6">
+                <div className="text-center">
+                  <p className="text-gray-500 mb-6">Pilih format file untuk laporan stock opname Anda. Laporan akan difilter berdasarkan kategori yang sedang dipilih.</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={handleExportPDF}
+                      className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-gray-100 hover:border-indigo-600 hover:bg-indigo-50 transition-all group"
+                    >
+                      <FileText className="w-10 h-10 text-red-500 mb-3 group-hover:scale-110 transition-transform" />
+                      <span className="font-bold text-gray-900">PDF Document</span>
+                    </button>
+                    <button
+                      onClick={handleExportExcel}
+                      className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-gray-100 hover:border-green-600 hover:bg-green-50 transition-all group"
+                    >
+                      <FileSpreadsheet className="w-10 h-10 text-green-500 mb-3 group-hover:scale-110 transition-transform" />
+                      <span className="font-bold text-gray-900">Excel Sheet</span>
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Informasi Laporan</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Total Produk:</span>
+                      <span className="font-bold text-gray-900">{filteredProducts.length} Item</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Filter Kategori:</span>
+                      <span className="font-bold text-indigo-600">{selectedCategory === 'all' ? 'Semua' : selectedCategory}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => setIsPrintModalOpen(false)}
+                  className="px-6 py-2 text-gray-600 font-bold hover:text-gray-900"
+                >
+                  Batal
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

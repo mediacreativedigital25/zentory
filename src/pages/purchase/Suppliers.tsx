@@ -3,7 +3,7 @@ import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTime
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Supplier } from '../../types';
-import { Plus, Search, Edit2, Trash2, Truck, X, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Truck, X, Phone, Mail, MapPin, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
 
@@ -19,8 +19,12 @@ export default function Suppliers() {
     email: '',
     phone: '',
     address: '',
+    paymentTerm: '',
   });
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; type?: 'danger' | 'info' | 'warning' } | null>(null);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     if (!profile?.tenantId) return;
@@ -37,23 +41,43 @@ export default function Suppliers() {
     return () => unsubscribe();
   }, [profile]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, rowsPerPage]);
+
+  const filteredSuppliers = suppliers.filter(s => 
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.contactName?.toLowerCase().includes(search.toLowerCase()) ||
+    s.phone?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredSuppliers.length / rowsPerPage);
+  const paginatedSuppliers = filteredSuppliers.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.tenantId) return;
 
     try {
       if (editingSupplier) {
-        await updateDoc(doc(db, 'suppliers', editingSupplier.id), formData);
+        await updateDoc(doc(db, 'suppliers', editingSupplier.id), {
+          ...formData,
+          paymentTerm: formData.paymentTerm ? Number(formData.paymentTerm) : null
+        });
       } else {
         await addDoc(collection(db, 'suppliers'), {
           ...formData,
+          paymentTerm: formData.paymentTerm ? Number(formData.paymentTerm) : null,
           tenantId: profile.tenantId,
           createdAt: serverTimestamp(),
         });
       }
       setIsModalOpen(false);
       setEditingSupplier(null);
-      setFormData({ name: '', contactName: '', email: '', phone: '', address: '' });
+      setFormData({ name: '', contactName: '', email: '', phone: '', address: '', paymentTerm: '' });
     } catch (err) {
       console.error(err);
       alert('Failed to save supplier.');
@@ -81,6 +105,7 @@ export default function Suppliers() {
       email: supplier.email || '',
       phone: supplier.phone || '',
       address: supplier.address || '',
+      paymentTerm: supplier.paymentTerm?.toString() || '',
     });
     setIsModalOpen(true);
   };
@@ -89,22 +114,47 @@ export default function Suppliers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Supplier</h2>
           <p className="text-gray-500">Kelola daftar vendor dan supplier Anda.</p>
         </div>
-        <button
-          onClick={() => { setEditingSupplier(null); setFormData({ name: '', contactName: '', email: '', phone: '', address: '' }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+        <div className="flex gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari supplier..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            />
+          </div>
+          <button
+            onClick={() => { setEditingSupplier(null); setFormData({ name: '', contactName: '', email: '', phone: '', address: '', paymentTerm: '' }); setIsModalOpen(true); }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors whitespace-nowrap"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Tambah Supplier
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-xs text-gray-500 bg-white p-2 rounded-lg border border-gray-100 w-fit">
+        <span className="font-bold uppercase tracking-widest">Tampilkan:</span>
+        <select 
+          value={rowsPerPage} 
+          onChange={(e) => setRowsPerPage(Number(e.target.value))}
+          className="bg-transparent font-bold text-indigo-600 outline-none cursor-pointer"
         >
-          <Plus className="w-5 h-5 mr-2" />
-          Tambah Supplier
-        </button>
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+        </select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {suppliers.map((supplier) => (
+        {paginatedSuppliers.map((supplier) => (
           <motion.div
             key={supplier.id}
             layout
@@ -130,6 +180,12 @@ export default function Suppliers() {
             </div>
 
             <div className="space-y-2 pt-2">
+              {supplier.paymentTerm && (
+                <div className="flex items-center text-sm font-bold text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Termin: {supplier.paymentTerm} Hari
+                </div>
+              )}
               {supplier.phone && (
                 <div className="flex items-center text-sm text-gray-600">
                   <Phone className="w-4 h-4 mr-2 text-gray-400" />
@@ -153,7 +209,55 @@ export default function Suppliers() {
         ))}
       </div>
 
-      {suppliers.length === 0 && (
+      {/* Pagination */}
+      {filteredSuppliers.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 gap-4">
+          <p className="text-xs text-gray-500">
+            Menampilkan <span className="font-bold text-gray-900">{Math.min(filteredSuppliers.length, (currentPage - 1) * rowsPerPage + 1)}</span> sampai <span className="font-bold text-gray-900">{Math.min(filteredSuppliers.length, currentPage * rowsPerPage)}</span> dari <span className="font-bold text-gray-900">{filteredSuppliers.length}</span> supplier
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === page 
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                          : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if ((page === currentPage - 2 && page > 1) || (page === currentPage + 2 && page < totalPages)) {
+                  return <span key={page} className="text-gray-400">...</span>;
+                }
+                return null;
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {filteredSuppliers.length === 0 && (
         <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
           <Truck className="w-16 h-16 text-gray-100 mx-auto mb-4" />
           <p className="text-gray-500">Belum ada supplier yang terdaftar.</p>
@@ -224,6 +328,20 @@ export default function Suppliers() {
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Termin Pembayaran (Hari)</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="number"
+                      value={formData.paymentTerm}
+                      onChange={(e) => setFormData({ ...formData, paymentTerm: e.target.value })}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Contoh: 30"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">* Jumlah hari jangka waktu pembayaran (TOP) ke supplier ini.</p>
                 </div>
                 <div className="pt-4 flex space-x-3">
                   <button

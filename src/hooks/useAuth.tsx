@@ -2,23 +2,36 @@ import React, { useState, useEffect, createContext, useContext, useRef } from 'r
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { UserProfile } from '../types';
+import { UserProfile, Tenant } from '../types';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
+  tenant: Tenant | null;
   permissions: string[];
   loading: boolean;
+  isSessionExpired: boolean;
+  setIsSessionExpired: (val: boolean) => void;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, profile: null, permissions: [], loading: true });
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  profile: null, 
+  tenant: null,
+  permissions: [], 
+  loading: true,
+  isSessionExpired: false,
+  setIsSessionExpired: () => {}
+});
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
   const initialForceLogoutAt = useRef<any>(undefined);
 
   useEffect(() => {
@@ -31,9 +44,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const resetInactivityTimer = () => {
       if (inactivityTimeout) clearTimeout(inactivityTimeout);
-      if (auth.currentUser) {
+      if (auth.currentUser && !isSessionExpired) {
         inactivityTimeout = setTimeout(() => {
-          signOut(auth);
+          setIsSessionExpired(true);
         }, INACTIVITY_LIMIT);
       }
     };
@@ -62,6 +75,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         unsubscribeRole();
         unsubscribeRole = null;
       }
+      
+      // Cleanup tenant listener
+      let unsubscribeTenant: (() => void) | null = null;
 
       if (user) {
         // Start inactivity timer
@@ -118,6 +134,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             setProfile({ uid: snap.id, ...data });
 
+            // Fetch Tenant Data
+            if (data.tenantId) {
+              if (unsubscribeTenant) unsubscribeTenant();
+              unsubscribeTenant = onSnapshot(doc(db, 'tenants', data.tenantId), (tenantSnap) => {
+                if (tenantSnap.exists()) {
+                  setTenant({ id: tenantSnap.id, ...tenantSnap.data() } as Tenant);
+                } else {
+                  setTenant(null);
+                }
+              });
+            } else {
+              setTenant(null);
+            }
+
             // Fetch permissions if custom role
             if (!['superadmin', 'admin', 'staff', 'customer', 'kasir'].includes(data.role)) {
               if (unsubscribeRole) unsubscribeRole();
@@ -164,8 +194,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profile, permissions, loading }}>
+    <AuthContext.Provider value={{ user, profile, tenant, permissions, loading, isSessionExpired, setIsSessionExpired }}>
       {children}
+      
+      {/* Session Expired Alert */}
+      {isSessionExpired && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
+            <div className="p-10 text-center">
+              <div className="w-24 h-24 bg-red-50 rounded-[2rem] flex items-center justify-center text-red-600 mx-auto mb-8 animate-bounce">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Sesi Berakhir</h3>
+              <p className="text-gray-500 font-medium leading-relaxed mb-10">
+                Anda telah tidak aktif selama lebih dari 5 jam. Demi keamanan, sesi Anda telah berakhir. Silakan login kembali.
+              </p>
+              <button
+                onClick={() => {
+                  setIsSessionExpired(false);
+                  signOut(auth);
+                }}
+                className="w-full bg-indigo-600 text-white py-5 rounded-[1.5rem] font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-[0.98]"
+              >
+                LOGIN KEMBALI
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };

@@ -230,6 +230,7 @@ export default function TenantSettings() {
               <p className="text-xs text-gray-500 italic">
                 * Cloudinary digunakan untuk menyimpan foto produk dan bukti transaksi. 
                 Dapatkan Cloud Name dan Upload Preset (Unsigned) dari dashboard Cloudinary Anda.
+                Jika dikosongkan, sistem akan menggunakan pengaturan default dari Super Admin.
               </p>
             </div>
           </div>

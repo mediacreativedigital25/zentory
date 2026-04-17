@@ -3,7 +3,7 @@ import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTime
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Customer } from '../types';
-import { Plus, Search, Edit2, Trash2, UserRound, Mail, Phone, MapPin, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, UserRound, Mail, Phone, MapPin, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -16,6 +16,7 @@ export default function Customers() {
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; type?: 'danger' | 'info' | 'warning' } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
+    code: '',
     email: '',
     phone: '',
     address: '',
@@ -24,6 +25,8 @@ export default function Customers() {
     tempoLimitDays: 30,
   });
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     if (!profile?.tenantId) return;
@@ -40,10 +43,21 @@ export default function Customers() {
     return () => unsubscribe();
   }, [profile]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, rowsPerPage]);
+
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(search.toLowerCase()) ||
+    (c.code && c.code.toLowerCase().includes(search.toLowerCase())) ||
     c.email.toLowerCase().includes(search.toLowerCase()) ||
     c.phone.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredCustomers.length / rowsPerPage);
+  const paginatedCustomers = filteredCustomers.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +89,7 @@ export default function Customers() {
           }
           setIsModalOpen(false);
           setEditingCustomer(null);
-          setFormData({ name: '', email: '', phone: '', address: '', type: 'umum', allowTempo: false, tempoLimitDays: 30 });
+          setFormData({ name: '', code: '', email: '', phone: '', address: '', type: 'umum', allowTempo: false, tempoLimitDays: 30 });
         } catch (err) {
           console.error(err);
         }
@@ -112,8 +126,8 @@ export default function Customers() {
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="relative">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -123,10 +137,22 @@ export default function Customers() {
             className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+          <span className="font-bold uppercase tracking-widest">Show:</span>
+          <select 
+            value={rowsPerPage} 
+            onChange={(e) => setRowsPerPage(Number(e.target.value))}
+            className="bg-transparent font-bold text-indigo-600 outline-none cursor-pointer"
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCustomers.map((customer) => (
+        {paginatedCustomers.map((customer) => (
           <motion.div
             key={customer.id}
             layout
@@ -143,6 +169,11 @@ export default function Customers() {
                   }`}>
                     {customer.type || 'umum'}
                   </span>
+                  {customer.code && (
+                    <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-black uppercase bg-blue-100 text-blue-700">
+                      {customer.code}
+                    </span>
+                  )}
                   {customer.allowTempo && (
                     <div className="flex flex-col gap-1 ml-1">
                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-orange-100 text-orange-700">
@@ -160,6 +191,7 @@ export default function Customers() {
                   setEditingCustomer(customer); 
                   setFormData({
                     name: customer.name,
+                    code: customer.code || '',
                     email: customer.email,
                     phone: customer.phone,
                     address: customer.address,
@@ -195,6 +227,54 @@ export default function Customers() {
         ))}
       </div>
 
+      {/* Pagination */}
+      {filteredCustomers.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 gap-4">
+          <p className="text-xs text-gray-500">
+            Showing <span className="font-bold text-gray-900">{Math.min(filteredCustomers.length, (currentPage - 1) * rowsPerPage + 1)}</span> to <span className="font-bold text-gray-900">{Math.min(filteredCustomers.length, currentPage * rowsPerPage)}</span> of <span className="font-bold text-gray-900">{filteredCustomers.length}</span> customers
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                        currentPage === page 
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                          : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if ((page === currentPage - 2 && page > 1) || (page === currentPage + 2 && page < totalPages)) {
+                  return <span key={page} className="text-gray-400">...</span>;
+                }
+                return null;
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -211,15 +291,27 @@ export default function Customers() {
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Code</label>
+                    <input
+                      type="text"
+                      value={formData.code}
+                      onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                      placeholder="e.g. CUST001"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>

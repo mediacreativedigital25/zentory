@@ -326,6 +326,44 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["tenantId", "code", "type", "value", "startDate", "endDate", "isActive"]
+    },
+    "finance_invoice": {
+      "title": "Finance Invoice",
+      "description": "Subscription invoices for tenants.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "tenantName": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "planId": { "type": "string" },
+        "planName": { "type": "string" },
+        "amount": { "type": "number" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "paid", "cancelled"] },
+        "paymentMethod": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "userId", "planId", "total", "status", "invoiceNumber"]
+    },
+    "system_service": {
+      "title": "System Service",
+      "description": "Available services and packages in the system.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "features": { "type": "array" },
+        "isEnabled": { "type": "boolean" },
+        "type": { "type": "string", "enum": ["subscription", "addon"] },
+        "icon": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "type", "isEnabled"]
     }
   },
   "firestore": {
@@ -408,6 +446,14 @@
     "/customers/{customerId}": {
       "schema": "customer",
       "description": "Customer records"
+    },
+    "/finance_invoices/{invoiceId}": {
+      "schema": "finance_invoice",
+      "description": "Subscription invoices"
+    },
+    "/system_services/{serviceId}": {
+      "schema": "system_service",
+      "description": "System service catalog"
     }
   }
 }

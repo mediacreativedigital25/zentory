@@ -9,6 +9,15 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import SuperAdmin from './pages/SuperAdmin';
+import SuperAdminDashboard from './pages/superadmin/Dashboard';
+import SuperAdminInvoices from './pages/superadmin/Invoices';
+import SuperAdminTenants from './pages/superadmin/Tenants';
+import SuperAdminApprovals from './pages/superadmin/Approvals';
+import SuperAdminUsers from './pages/superadmin/Users';
+import SuperAdminResetData from './pages/superadmin/ResetData';
+import SuperAdminRoadmaps from './pages/superadmin/Roadmaps';
+import SuperAdminGlobalSettings from './pages/superadmin/GlobalSettings';
+import SuperAdminServiceTenant from './pages/superadmin/ServiceTenant';
 import DomainManagement from './pages/superadmin/DomainManagement';
 import Catalog from './pages/Catalog';
 import SalesOrder from './pages/SalesOrder';
@@ -18,6 +27,9 @@ import Products from './pages/inventory/Products';
 import Categories from './pages/inventory/Categories';
 import Stock from './pages/inventory/Stock';
 import Warehouses from './pages/inventory/Warehouses';
+import InventoryReport from './pages/inventory/InventoryReport';
+import StockOpname from './pages/inventory/StockOpname';
+import Invoices from './pages/finance/Invoices';
 import Sales from './pages/Sales';
 import Coupons from './pages/Coupons';
 import Finance from './pages/Finance';
@@ -41,6 +53,10 @@ import CustomerDashboard from './pages/CustomerDashboard';
 import CustomerAuth from './pages/CustomerAuth';
 import Changelog from './pages/Changelog';
 import Guide from './pages/Guide';
+import Pricing from './pages/Pricing';
+import LayananInvoice from './pages/LayananInvoice';
+import LayananSaya from './pages/LayananSaya';
+import Checkout from './pages/Checkout';
 import NoAccess from './pages/NoAccess';
 
 const ProtectedRoute = ({ children, allowedRoles, permission }: { children: React.ReactNode; allowedRoles?: string[]; permission?: string }) => {
@@ -175,6 +191,18 @@ export default function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/inventory/report" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_report">
+              <InventoryReport />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/inventory/stock-opname" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_stock_opname">
+              <StockOpname />
+            </ProtectedRoute>
+          } />
+
           <Route path="/sales/order" element={
             <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order">
               <SalesOrder />
@@ -214,6 +242,12 @@ export default function App() {
           <Route path="/finance/claim" element={
             <ProtectedRoute allowedRoles={['admin', 'staff']} permission="finance_claim">
               <ClaimExpense />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/finance/invoices" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="finance_invoices">
+              <Invoices />
             </ProtectedRoute>
           } />
 
@@ -304,6 +338,60 @@ export default function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/superadmin/dashboard" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/invoices" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminInvoices />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/services" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminServiceTenant />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/tenants" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminTenants />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/approvals" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminApprovals />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/users" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminUsers />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/reset" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminResetData />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/roadmap" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminRoadmaps />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/settings" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminGlobalSettings />
+            </ProtectedRoute>
+          } />
+
           <Route path="/superadmin/domains" element={
             <ProtectedRoute allowedRoles={['superadmin']}>
               <DomainManagement />
@@ -319,6 +407,30 @@ export default function App() {
           <Route path="/guide" element={
             <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']}>
               <Guide />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/pricing" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']}>
+              <Pricing />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/layanan/invoice" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <LayananInvoice />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/layanan/saya" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <LayananSaya />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/checkout" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']}>
+              <Checkout />
             </ProtectedRoute>
           } />
 
