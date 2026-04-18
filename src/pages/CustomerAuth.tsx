@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, getDoc } from 'firebase/firestore';
 import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
 import { LogIn, UserPlus, Mail, Lock, User, MapPin, ArrowLeft } from 'lucide-react';
@@ -41,7 +41,19 @@ export default function CustomerAuth() {
 
     try {
       if (mode === 'login') {
-        await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        const userCred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        
+        // Check if user belongs to this tenant
+        const userDoc = await getDoc(doc(db, 'users', userCred.user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.role !== 'superadmin' && userData.tenantId !== tenant?.id) {
+            await auth.signOut();
+            setError('Akun Anda tidak terdaftar di toko ini. Silakan gunakan email lain atau daftar akun baru.');
+            setLoading(false);
+            return;
+          }
+        }
       } else {
         // Register
         const userCred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);

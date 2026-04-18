@@ -2,278 +2,302 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    function isAuthenticated() {
-      return request.auth != null;
+    // -------------------------------------------------------------------------
+    // 1. Primitive Definitions & Helpers
+    // -------------------------------------------------------------------------
+    
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
     }
     
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isEmailVerified() { return request.auth.token.email_verified == true; }
+    
+    // User profile lookup
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    
+    // Super Admin: hardcoded email or role 'superadmin'
     function isSuperAdmin() {
-      return isAuthenticated() && (
-        (request.auth.token.email == "mediacreativedigital25@gmail.com" && request.auth.token.email_verified == true) ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin')
+      return isSignedIn() && (
+        (request.auth.token.email == "mediacreativedigital25@gmail.com" && isEmailVerified()) ||
+        (userExists() && getUserData().role == 'superadmin')
       );
     }
 
-    function hasPermission(permission) {
-      return isAuthenticated() && (
-        isSuperAdmin() ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
-      );
+    // Tenant Isolation Helpers
+    function getTenantId() {
+      return getUserData().tenantId;
     }
-
+    
     function isTenantAdmin(tenantId) {
-      return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId && 
-             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || 
-              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'kasir' || 
-              hasPermission('tenant_settings'));
+      return isSignedIn() && userExists() && 
+             getUserData().tenantId == tenantId && 
+             getUserData().role == 'admin';
     }
     
     function isTenantStaff(tenantId) {
-      return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == tenantId && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role != 'customer';
+      return isSignedIn() && userExists() && 
+             getUserData().tenantId == tenantId && 
+             (getUserData().role == 'admin' || getUserData().role == 'staff' || getUserData().role == 'kasir');
     }
 
-    match /users/{userId} {
-      allow read: if isAuthenticated() && (
-        request.auth.uid == userId || 
-        isSuperAdmin() || 
-        (resource != null && resource.data.tenantId != null && isTenantStaff(resource.data.tenantId))
-      );
-      allow create: if isAuthenticated() && (
-        request.auth.uid == userId || 
-        isSuperAdmin() || 
-        (request.resource.data.tenantId != null && isTenantAdmin(request.resource.data.tenantId))
-      );
-      allow update: if isAuthenticated() && (
-        request.auth.uid == userId || 
-        isSuperAdmin() || 
-        (resource != null && resource.data.tenantId != null && isTenantAdmin(resource.data.tenantId))
-      );
-      allow delete: if isSuperAdmin() || (isAuthenticated() && resource != null && resource.data.tenantId != null && isTenantAdmin(resource.data.tenantId));
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    match /roles/{roleId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)) || !exists(/databases/$(database)/documents/roles/$(roleId)));
-      allow write: if isAuthenticated() && (
-        isSuperAdmin() || (
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
-            (request.method == 'create' && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == request.resource.data.tenantId) ||
-            (request.method != 'create' && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == resource.data.tenantId)
-          ) && (
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || 
-            hasPermission('master_roles')
-          )
-        )
-      );
-    }
-
+    // -------------------------------------------------------------------------
+    // 2. Tenants
+    // -------------------------------------------------------------------------
+    
     match /tenants/{tenantId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      // Blanket read removed to prevent discovery. Only staff/superadmin can read.
+      allow read: if isSuperAdmin() || (isSignedIn() && userExists() && getTenantId() == tenantId);
+      allow create: if isSignedIn() && isEmailVerified() && incoming().ownerId == request.auth.uid;
       allow update: if isSuperAdmin() || isTenantAdmin(tenantId);
       allow delete: if isSuperAdmin();
     }
 
+    // -------------------------------------------------------------------------
+    // 3. User Profiles
+    // -------------------------------------------------------------------------
+    
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.email is string && data.email.size() <= 256 &&
+               data.role in ['superadmin', 'admin', 'staff', 'kasir', 'customer'] &&
+               (data.tenantId == null || isValidId(data.tenantId));
+      }
+
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isSuperAdmin() || 
+        (userExists() && existing().tenantId != null && existing().tenantId == getTenantId())
+      );
+      
+      allow create: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isSuperAdmin() || 
+        (incoming().tenantId != null && isTenantAdmin(incoming().tenantId))
+      );
+      
+      allow update: if isSignedIn() && (
+        isSuperAdmin() || 
+        // Users can update their own displayName and presence, but NOT role or tenantId
+        (request.auth.uid == userId && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'lastLoginAt', 'isOnline', 'lastLogoutAt', 'forceLogoutAt'])) ||
+        // Tenant admins can update roles within their tenant
+        (existing().tenantId != null && isTenantAdmin(existing().tenantId) && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['role', 'displayName']))
+      );
+      
+      allow delete: if isSuperAdmin() || (isSignedIn() && existing().tenantId != null && isTenantAdmin(existing().tenantId));
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. Products & Categories
+    // -------------------------------------------------------------------------
+    
     match /products/{productId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
-      allow update: if isAuthenticated() && (
-        isSuperAdmin() || 
-        (resource != null && isTenantStaff(resource.data.tenantId)) ||
-        (resource != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock']))
-      );
-      allow delete: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantAdmin(resource.data.tenantId)));
-    }
+      function isValidProduct(data) {
+        return data.tenantId is string && isValidId(data.tenantId) &&
+               data.name is string && data.name.size() <= 200 &&
+               data.price is number && data.price >= 0;
+      }
 
-    match /transactions/{transactionId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
-      allow create: if isAuthenticated() && (
-        isSuperAdmin() || 
-        isTenantStaff(request.resource.data.tenantId) ||
-        (request.resource.data.type == 'sale' && request.resource.data.status == 'pending')
+      // Public reads removed for security. Only staff or customer of that tenant can read.
+      allow read: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      
+      allow create: if (isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId))) && isValidProduct(incoming());
+      
+      allow update: if isSuperAdmin() || (
+        isSignedIn() && resource.data.tenantId == getTenantId() && (
+          isTenantStaff(resource.data.tenantId) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['stock'])
+        ) && isValidProduct(incoming())
       );
-      allow update: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
-      allow delete: if isSuperAdmin();
-    }
-
-    match /customers/{customerId} {
-      allow read: if isAuthenticated() && (
-        (resource != null && resource.data.uid == request.auth.uid) ||
-        isSuperAdmin() || 
-        (resource != null && isTenantStaff(resource.data.tenantId))
-      );
-      allow create: if isAuthenticated() && (
-        (request.resource.data.uid == request.auth.uid) ||
-        (request.resource.data.email == request.auth.token.email) ||
-        isSuperAdmin() || 
-        isTenantStaff(request.resource.data.tenantId)
-      );
-      allow update: if isAuthenticated() && (
-        (resource != null && resource.data.uid == request.auth.uid) ||
-        isSuperAdmin() || 
-        (resource != null && isTenantStaff(resource.data.tenantId))
-      );
+      
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /categories/{categoryId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow write: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
     }
 
-    match /warehouses/{warehouseId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow write: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
+    // -------------------------------------------------------------------------
+    // 5. Transactions & Orders
+    // -------------------------------------------------------------------------
+    
+    match /transactions/{transactionId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
+      allow delete: if isSuperAdmin();
     }
 
     match /orders/{orderId} {
-      allow read: if isAuthenticated() && (
-        isSuperAdmin() || 
+      allow read, list: if isSuperAdmin() || (isSignedIn() && (
         isTenantStaff(resource.data.tenantId) || 
-        (resource.data.userId == request.auth.uid)
-      );
-      allow create: if isAuthenticated() && (
-        isSuperAdmin() || 
-        isTenantStaff(request.resource.data.tenantId) || 
-        (request.resource.data.userId == request.auth.uid)
-      );
-      allow update: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
+        resource.data.userId == request.auth.uid
+      ));
+      allow create: if isSuperAdmin() || (isSignedIn() && (
+        isTenantStaff(incoming().tenantId) || 
+        incoming().userId == request.auth.uid
+      ));
+      allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
       allow delete: if isSuperAdmin();
     }
 
-    match /approval_requests/{requestId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow create: if isAuthenticated() && isTenantStaff(request.resource.data.tenantId);
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
-    }
-
-    match /dailyClosings/{closingId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow create: if isAuthenticated() && isTenantStaff(request.resource.data.tenantId);
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
-    }
-
-    match /expenseRules/{ruleId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow write: if isAuthenticated() && (isSuperAdmin() || isTenantAdmin(request.resource.data.tenantId));
-    }
-
-    match /charityRecords/{charityId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow create: if isAuthenticated() && isTenantStaff(request.resource.data.tenantId);
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
-    }
-
+    // -------------------------------------------------------------------------
+    // 6. Finance & Inventory Tools
+    // -------------------------------------------------------------------------
+    
     match /bank_accounts/{accountId} {
-      allow read: if true;
-      allow write: if isAuthenticated() && (
-        isSuperAdmin() || (
-          (request.method == 'create' && isTenantAdmin(request.resource.data.tenantId)) ||
-          (request.method != 'create' && isTenantAdmin(resource.data.tenantId))
+      allow read: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (
+        isSignedIn() && (
+          (request.method == 'create' && isTenantAdmin(incoming().tenantId)) ||
+          (request.method != 'create' && isTenantAdmin(existing().tenantId))
         )
       );
     }
 
+    match /warehouses/{warehouseId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+    }
+
+    match /stock_logs/{logId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update, delete: if isSuperAdmin();
+    }
+
+    match /stock_opnames/{opnameId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(existing().tenantId));
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. Purchasing
+    // -------------------------------------------------------------------------
+    
     match /suppliers/{supplierId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow write: if isAuthenticated() && (
-        isSuperAdmin() || 
-        ((request.method == 'create' && isTenantAdmin(request.resource.data.tenantId)) || (request.method != 'create' && isTenantAdmin(resource.data.tenantId))) || 
-        hasPermission('purchase_suppliers')
-      );
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(incoming().tenantId));
     }
 
     match /purchase_requests/{prId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow write: if isAuthenticated() && (
-        isSuperAdmin() || 
-        ((request.method == 'create' && isTenantStaff(request.resource.data.tenantId)) || (request.method != 'create' && isTenantStaff(resource.data.tenantId))) || 
-        hasPermission('purchase_requests')
-      );
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
     }
 
     match /purchase_orders/{poId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow write: if isAuthenticated() && (
-        isSuperAdmin() || 
-        ((request.method == 'create' && isTenantStaff(request.resource.data.tenantId)) || (request.method != 'create' && isTenantStaff(resource.data.tenantId))) || 
-        hasPermission('purchase_orders')
-      );
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
     }
 
     match /goods_receipts/{grId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow write: if isAuthenticated() && (
-        isSuperAdmin() || 
-        ((request.method == 'create' && isTenantStaff(request.resource.data.tenantId)) || (request.method != 'create' && isTenantStaff(resource.data.tenantId))) || 
-        hasPermission('purchase_goods_receipts')
-      );
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
     }
 
     match /purchase_invoices/{piId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow write: if isAuthenticated() && (
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+    }
+
+    // -------------------------------------------------------------------------
+    // 8. Daily Closings & Misc
+    // -------------------------------------------------------------------------
+    
+    match /dailyClosings/{closingId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update, delete: if isSuperAdmin();
+    }
+
+    match /expenseRules/{ruleId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(incoming().tenantId));
+    }
+
+    match /approval_requests/{requestId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update, delete: if isSuperAdmin();
+    }
+
+    match /charityRecords/{charityId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update, delete: if isSuperAdmin();
+    }
+
+    match /coupons/{couponId} {
+      allow read, list: if true; // Coupons are often public or shared via code
+      allow create, delete: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update: if isSuperAdmin() || (isSignedIn() && (
+        isTenantStaff(existing().tenantId) ||
+        (incoming().diff(existing()).affectedKeys().hasOnly(['usedCount']) && 
+         incoming().usedCount == existing().usedCount + 1)
+      ));
+    }
+
+    match /customers/{customerId} {
+      allow read, list: if isSignedIn() && (
         isSuperAdmin() || 
-        ((request.method == 'create' && isTenantStaff(request.resource.data.tenantId)) || (request.method != 'create' && isTenantStaff(resource.data.tenantId))) || 
-        hasPermission('purchase_invoices')
+        (resource.data.uid == request.auth.uid) ||
+        (userExists() && resource.data.tenantId == getTenantId())
+      );
+      allow create: if isSignedIn() && (
+        isSuperAdmin() || 
+        (incoming().uid == request.auth.uid) ||
+        isTenantStaff(incoming().tenantId)
+      );
+      allow update: if isSignedIn() && (
+        isSuperAdmin() || 
+        (resource.data.uid == request.auth.uid) ||
+        (userExists() && resource.data.tenantId == getTenantId())
       );
     }
 
+    match /finance_invoices/{invoiceId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create, update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow delete: if isSuperAdmin();
+    }
+
+    match /roles/{roleId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(incoming().tenantId));
+    }
+
+    // System configurations
     match /custom_domains/{domainId} {
       allow read: if true;
       allow write: if isSuperAdmin();
     }
 
-    match /system_roadmap/{itemId} {
-      allow read: if isAuthenticated();
+    match /system_services/{serviceId} {
+      allow read: if isSignedIn();
       allow write: if isSuperAdmin();
     }
 
     match /system/{configId} {
-      allow read: if isAuthenticated();
+      allow read: if isSignedIn();
       allow write: if isSuperAdmin();
-    }
-
-    match /stock_logs/{logId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
-      allow create: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
-      allow update, delete: if isSuperAdmin();
-    }
-
-    match /finance_invoices/{invoiceId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
-      allow create: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
-      allow update: if isAuthenticated() && (isSuperAdmin() || (resource != null && isTenantStaff(resource.data.tenantId)));
-      allow delete: if isSuperAdmin();
-    }
-
-    match /system_services/{serviceId} {
-      allow read: if isAuthenticated();
-      allow write: if isSuperAdmin();
-    }
-
-    match /coupons/{couponId} {
-      allow read: if true;
-      allow update: if isAuthenticated() && (
-        isSuperAdmin() || 
-        isTenantStaff(resource.data.tenantId) ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) && 
-         request.resource.data.usedCount == resource.data.usedCount + 1)
-      );
-      allow create, delete: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
-    }
-
-    match /stock_opnames/{opnameId} {
-      allow read: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(resource.data.tenantId));
-      allow create: if isAuthenticated() && (isSuperAdmin() || isTenantStaff(request.resource.data.tenantId));
-      allow update, delete: if isSuperAdmin() || (isAuthenticated() && isTenantAdmin(resource.data.tenantId));
     }
   }
 }

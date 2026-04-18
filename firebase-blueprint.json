@@ -348,6 +348,41 @@
       },
       "required": ["tenantId", "userId", "planId", "total", "status", "invoiceNumber"]
     },
+    "role": {
+      "title": "Role",
+      "description": "Custom user role permissions.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "permissions": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "name"]
+    },
+    "stock_opname": {
+      "title": "Stock Opname",
+      "description": "Stock count verification.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "items": { "type": "array" }
+      },
+      "required": ["tenantId", "date", "userId"]
+    },
+    "charity_record": {
+      "title": "Charity Record",
+      "description": "Records of charity donations.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "amount", "date"]
+    },
     "system_service": {
       "title": "System Service",
       "description": "Available services and packages in the system.",
@@ -450,6 +485,18 @@
     "/finance_invoices/{invoiceId}": {
       "schema": "finance_invoice",
       "description": "Subscription invoices"
+    },
+    "/roles/{roleId}": {
+      "schema": "role",
+      "description": "Custom user role permissions"
+    },
+    "/stock_opnames/{opnameId}": {
+      "schema": "stock_opname",
+      "description": "Stock count verification"
+    },
+    "/charityRecords/{charityId}": {
+      "schema": "charity_record",
+      "description": "Records of charity donations"
     },
     "/system_services/{serviceId}": {
       "schema": "system_service",
