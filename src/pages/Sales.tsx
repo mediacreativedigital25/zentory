@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, addDoc, serverTimestamp, increment, doc, updateDoc, onSnapshot, Timestamp, getDoc } from 'firebase/firestore';
+import { collection, query, where, addDoc, serverTimestamp, increment, doc, updateDoc, onSnapshot, Timestamp, getDoc, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Product, Transaction, StockLog, Customer, BankAccount, Tenant } from '../types';
@@ -10,7 +10,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { logStockChange } from '../lib/stock-logger';
 
 export default function Sales() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -31,14 +31,15 @@ export default function Sales() {
   const [tenantInfo, setTenantInfo] = useState<Tenant | null>(null);
 
   useEffect(() => {
-    if (profile?.tenantId) {
-      getDoc(doc(db, 'tenants', profile.tenantId)).then(snap => {
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (targetTenantId) {
+      getDoc(doc(db, 'tenants', targetTenantId)).then(snap => {
         if (snap.exists()) {
           setTenantInfo({ id: snap.id, ...snap.data() } as Tenant);
         }
       });
     }
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   useEffect(() => {
     const handleAfterPrint = () => {
@@ -49,11 +50,21 @@ export default function Sales() {
   }, []);
 
   useEffect(() => {
-    if (!profile?.tenantId) return;
+    if (!profile) return;
+    const targetTenantId = domainTenantId || profile.tenantId;
+    if (!targetTenantId && profile.role !== 'superadmin') return;
     
-    const pQuery = query(collection(db, 'products'), where('tenantId', '==', profile.tenantId));
-    const cQuery = query(collection(db, 'customers'), where('tenantId', '==', profile.tenantId));
-    const bQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId));
+    const pQuery = (profile.role === 'superadmin' && !domainTenantId)
+      ? collection(db, 'products')
+      : query(collection(db, 'products'), where('tenantId', '==', targetTenantId));
+    
+    const cQuery = (profile.role === 'superadmin' && !domainTenantId)
+      ? collection(db, 'customers')
+      : query(collection(db, 'customers'), where('tenantId', '==', targetTenantId));
+    
+    const bQuery = (profile.role === 'superadmin' && !domainTenantId)
+      ? collection(db, 'bank_accounts')
+      : query(collection(db, 'bank_accounts'), where('tenantId', '==', targetTenantId));
 
     const unsubProducts = onSnapshot(pQuery, (snap) => {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
@@ -79,7 +90,7 @@ export default function Sales() {
       unsubCustomers();
       unsubBanks();
     };
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   const currentCustomer = customers.find(c => c.id === selectedCustomer);
   const canUseTempo = currentCustomer?.type === 'langganan' && currentCustomer?.allowTempo;
@@ -114,7 +125,45 @@ export default function Sales() {
     if (cart.length === 0 || isProcessing) return;
 
     setIsProcessing(true);
+    const targetTenantId = domainTenantId || profile?.tenantId;
     try {
+      let transactionNumber = '';
+
+      // Generate number PYYYYMM000001 for all POS transactions
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const prefix = `P${year}${month}`;
+      
+      try {
+        const q = query(
+          collection(db, 'orders'),
+          where('tenantId', '==', targetTenantId),
+          where('orderNumber', '>=', prefix),
+          where('orderNumber', '<=', prefix + '\uf8ff'),
+          orderBy('orderNumber', 'desc'),
+          limit(1)
+        );
+        
+        const snap = await getDocs(q);
+        let nextIndex = 1;
+        
+        if (!snap.empty) {
+          const lastNum = snap.docs[0].data().orderNumber;
+          const lastIndexStr = lastNum.replace(prefix, '');
+          const lastIndex = parseInt(lastIndexStr, 10);
+          if (!isNaN(lastIndex)) {
+            nextIndex = lastIndex + 1;
+          }
+        }
+        
+        transactionNumber = `${prefix}${String(nextIndex).padStart(6, '0')}`;
+      } catch (queryErr) {
+        console.warn('Numbering query failed (possibly missing index), falling back to random:', queryErr);
+        // Fallback if query fails (e.g. missing index)
+        transactionNumber = `${prefix}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      }
+
       // Calculate Due Date if credit
       let dueDate = null;
       if (paymentType === 'credit' && currentCustomer?.allowTempo) {
@@ -124,10 +173,42 @@ export default function Sales() {
         dueDate = Timestamp.fromDate(date);
       }
 
-      // 1. Create transaction
+      const status = paymentType === 'cash' ? 'completed' : 'pending';
+
+      // 1. Create Order (to ensure it shows in Sales Order Receive)
+      const orderData = {
+        tenantId: targetTenantId,
+        orderNumber: transactionNumber,
+        customerName: currentCustomer?.name || 'Guest',
+        customerEmail: currentCustomer?.email || 'guest@example.com',
+        customerAddress: currentCustomer?.address || '-',
+        items: cart.map(item => ({
+          productId: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          hpp: item.product.hpp || 0,
+          quantity: item.quantity,
+          total: item.product.price * item.quantity
+        })),
+        totalAmount: total,
+        paidAmount: paymentType === 'cash' ? total : 0,
+        paymentStatus: paymentType === 'cash' ? 'paid' : 'unpaid',
+        type: 'pos', // Set to pos so it's clearly identified as POS transaction
+        status,
+        date: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        userId: profile?.uid,
+        paymentMethod: selectedBankAccountId || null,
+        customerId: selectedCustomer || null,
+      };
+
+      const orderRef = await addDoc(collection(db, 'orders'), orderData);
+
+      // 2. Create transaction (as the ledger record)
       const transData = {
-        tenantId: profile?.tenantId,
+        tenantId: targetTenantId,
         type: 'sale',
+        category: 'Sales POS',
         amount: total,
         items: cart.map(item => ({
           productId: item.product.id,
@@ -137,18 +218,19 @@ export default function Sales() {
         })),
         date: serverTimestamp(),
         dueDate,
-        status: paymentType === 'cash' ? 'completed' : 'pending',
+        status,
         paymentType,
         paymentMethod: selectedBankAccountId,
         customerId: selectedCustomer || null,
         customerName: currentCustomer?.name || 'Guest',
         userId: profile?.uid,
-        transactionNumber: 'SALE-' + Math.random().toString(36).substr(2, 5).toUpperCase()
+        transactionNumber,
+        orderId: orderRef.id
       };
 
       const transRef = await addDoc(collection(db, 'transactions'), transData);
 
-      // 2. Update stock
+      // 3. Update stock
       for (const item of cart) {
         const isService = item.product.type === 'service';
         
@@ -158,7 +240,7 @@ export default function Sales() {
           });
 
           await logStockChange(
-            profile?.tenantId!,
+            targetTenantId!,
             item.product.id,
             item.product.name,
             'SALE',
@@ -167,8 +249,8 @@ export default function Sales() {
             item.product.stock - item.quantity,
             profile?.uid!,
             profile?.displayName || 'System',
-            { id: transRef.id, number: transData.transactionNumber },
-            'Sales transaction'
+            { id: transRef.id, number: transactionNumber },
+            'Sales transaction POS'
           );
         }
       }

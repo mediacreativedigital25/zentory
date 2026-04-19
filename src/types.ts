@@ -31,6 +31,8 @@ export interface Tenant {
   ownerId: string;
   subscription: SubscriptionPlan;
   subscriptionStatus?: 'active' | 'expired' | 'trial';
+  subscriptionStartDate?: any;
+  subscriptionEndDate?: any;
   plan?: SubscriptionPlan; // Use this as primary, fallback to subscription
   features?: string[]; // List of enabled feature keys for this specific tenant
   limits?: {
@@ -58,6 +60,8 @@ export interface Tenant {
   cooperationStatus?: 'active' | 'pending' | 'ended' | 'trial';
   cooperationStartDate?: any;
   notes?: string;
+  billingCycle?: string;
+  lastPaymentMethod?: string;
 }
 
 export interface CustomDomain {
@@ -143,7 +147,7 @@ export interface Order {
   tenantId: string;
   customerId?: string;
   customerName?: string;
-  type: 'manual' | 'catalog' | 'service';
+  type: 'manual' | 'catalog' | 'service' | 'pos';
   items: { productId: string; name: string; quantity: number; price: number; hpp: number }[];
   totalAmount: number;
   paidAmount?: number;
@@ -212,8 +216,9 @@ export interface DailyClosing {
 export interface CharityRecord {
   id: string;
   tenantId: string;
-  dailyClosingId: string;
-  dailyNumber: string;
+  charityNumber?: string; // CE202604000001
+  dailyClosingId?: string;
+  dailyNumber?: string;
   date: any;
   totalProfit: number; // Gross Profit from daily closing
   charityAmount: number; // 2.5% of totalProfit

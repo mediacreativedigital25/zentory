@@ -87,21 +87,28 @@ export default function LayananSaya() {
                     <Calendar className="w-4 h-4 text-indigo-600" />
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Masa Berlaku</span>
                   </div>
-                  <p className="text-lg font-black text-gray-900">Selamanya</p>
+                  <p className="text-lg font-black text-gray-900">
+                    {currentPlanId === 'free' ? 'Selamanya' : 
+                     tenant?.subscriptionEndDate ? new Date(tenant.subscriptionEndDate.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                  </p>
                 </div>
                 <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
                   <div className="flex items-center gap-3 mb-2">
                     <Clock className="w-4 h-4 text-indigo-600" />
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Siklus Tagihan</span>
                   </div>
-                  <p className="text-lg font-black text-gray-900">Bulanan</p>
+                  <p className="text-lg font-black text-gray-900">
+                    {currentPlanId === 'free' ? 'Gratis' : (tenant?.billingCycle || '30 Hari')}
+                  </p>
                 </div>
                 <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
                   <div className="flex items-center gap-3 mb-2">
                     <CreditCard className="w-4 h-4 text-indigo-600" />
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Metode Bayar</span>
                   </div>
-                  <p className="text-lg font-black text-gray-900">Manual Transfer</p>
+                  <p className="text-lg font-black text-gray-900">
+                    {currentPlanId === 'free' ? 'N/A' : (tenant?.lastPaymentMethod || 'Manual Transfer')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -132,28 +139,34 @@ export default function LayananSaya() {
               <div>
                 <div className="flex justify-between text-xs font-bold mb-2">
                   <span className="text-gray-400 uppercase tracking-widest">Produk</span>
-                  <span className="text-gray-900">Unlimited</span>
+                  <span className="text-gray-900">
+                    {currentPlan?.limits.maxProducts >= 1000000 ? 'Unlimited' : `${currentPlan?.limits.maxProducts.toLocaleString()} Produk`}
+                  </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: '10%' }}></div>
+                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits.maxProducts >= 1000000 ? '100%' : '10%' }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs font-bold mb-2">
                   <span className="text-gray-400 uppercase tracking-widest">Transaksi</span>
-                  <span className="text-gray-900">Unlimited</span>
+                  <span className="text-gray-900">
+                    {currentPlan?.limits.maxTransactionsPerMonth >= 1000000 ? 'Unlimited' : `${currentPlan?.limits.maxTransactionsPerMonth.toLocaleString()} / bln`}
+                  </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: '5%' }}></div>
+                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits.maxTransactionsPerMonth >= 1000000 ? '100%' : '5%' }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs font-bold mb-2">
                   <span className="text-gray-400 uppercase tracking-widest">User Staff</span>
-                  <span className="text-gray-900">Unlimited</span>
+                  <span className="text-gray-900">
+                    {currentPlan?.limits.maxUsers >= 100 ? 'Enterprise' : `${currentPlan?.limits.maxUsers} User`}
+                  </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: '20%' }}></div>
+                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits.maxUsers >= 100 ? '100%' : '20%' }}></div>
                 </div>
               </div>
             </div>

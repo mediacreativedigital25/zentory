@@ -28,7 +28,17 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { tenant, profile } = useAuth();
   const planId = searchParams.get('plan') as SubscriptionPlan || 'lite';
+  const durationParam = parseInt(searchParams.get('duration') || '30');
   const planInfo = PLANS[planId];
+  
+  const currentPricing = planInfo?.pricing.find(p => p.duration === durationParam) || planInfo?.pricing[0];
+  const selectedAmount = currentPricing?.price || 0;
+  const selectedPriceDisplay = currentPricing?.priceDisplay || 'Rp 0';
+
+  // Calculate Expiry Preview
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + durationParam);
+  const expiryDateStr = expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'qris' | 'tripay'>('bank');
   const [globalSettings, setGlobalSettings] = useState<any>(null);
@@ -109,8 +119,9 @@ export default function Checkout() {
         userEmail: profile.email,
         planId: planId,
         planName: planInfo.name,
-        amount: parseInt(planInfo.price.replace(/[^0-9]/g, '')),
-        total: parseInt(planInfo.price.replace(/[^0-9]/g, '')),
+        duration: durationParam,
+        amount: selectedAmount,
+        total: selectedAmount,
         status: 'pending',
         paymentMethod: paymentMethod,
         invoiceNumber: invoiceNumber,
@@ -390,16 +401,19 @@ export default function Checkout() {
                   </div>
                   <div>
                     <p className="text-sm font-black text-gray-900">{planInfo.name}</p>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase">Langganan 1 Bulan</p>
+                    <div className="flex flex-col">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Langganan {durationParam} Hari</p>
+                      <p className="text-[9px] text-indigo-600 font-black uppercase">Hingga {expiryDateStr}</p>
+                    </div>
                   </div>
                 </div>
-                <p className="font-black text-gray-900">{planInfo.price}</p>
+                <p className="font-black text-gray-900">{selectedPriceDisplay}</p>
               </div>
 
               <div className="space-y-3 px-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 font-medium">Subtotal</span>
-                  <span className="text-gray-900 font-bold">{planInfo.price}</span>
+                  <span className="text-gray-900 font-bold">{selectedPriceDisplay}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 font-medium">Biaya Layanan</span>
@@ -408,7 +422,7 @@ export default function Checkout() {
                 <div className="pt-4 border-t border-gray-100 flex justify-between items-end">
                   <div>
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Bayar</p>
-                    <p className="text-2xl font-black text-indigo-600">{planInfo.price}</p>
+                    <p className="text-2xl font-black text-indigo-600">{selectedPriceDisplay}</p>
                   </div>
                 </div>
               </div>

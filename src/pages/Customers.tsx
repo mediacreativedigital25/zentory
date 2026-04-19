@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../components/ConfirmModal';
 
 export default function Customers() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,9 +29,14 @@ export default function Customers() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
-    if (!profile?.tenantId) return;
+    if (!profile) return;
+    const targetTenantId = domainTenantId || profile.tenantId;
+    if (!targetTenantId && profile.role !== 'superadmin') return;
     
-    const q = query(collection(db, 'customers'), where('tenantId', '==', profile.tenantId));
+    const q = (profile.role === 'superadmin' && !domainTenantId)
+      ? collection(db, 'customers')
+      : query(collection(db, 'customers'), where('tenantId', '==', targetTenantId));
+    
     const unsubscribe = onSnapshot(q, (snap) => {
       setCustomers(snap.docs.map(d => ({ id: d.id, ...d.data() } as Customer)));
       setLoading(false);
@@ -41,7 +46,7 @@ export default function Customers() {
     });
 
     return () => unsubscribe();
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -62,7 +67,8 @@ export default function Customers() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.tenantId) return;
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId) return;
 
     setConfirmConfig({
       isOpen: true,
@@ -83,7 +89,7 @@ export default function Customers() {
           } else {
             await addDoc(collection(db, 'customers'), {
               ...data,
-              tenantId: profile.tenantId,
+              tenantId: targetTenantId,
               createdAt: serverTimestamp(),
             });
           }

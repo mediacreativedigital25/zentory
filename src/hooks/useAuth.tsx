@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   tenant: Tenant | null;
+  domainTenantId: string | null;
   permissions: string[];
   loading: boolean;
   isSessionExpired: boolean;
@@ -19,13 +20,14 @@ const AuthContext = createContext<AuthContextType>({
   user: null, 
   profile: null, 
   tenant: null,
+  domainTenantId: null,
   permissions: [], 
   loading: true,
   isSessionExpired: false,
   setIsSessionExpired: () => {}
 });
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children, domainTenantId }: { children: React.ReactNode; domainTenantId: string | null }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -37,6 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
     let unsubscribeRole: (() => void) | null = null;
+    let unsubscribeTenant: (() => void) | null = null;
 
     // Inactivity Logout Logic
     let inactivityTimeout: NodeJS.Timeout | null = null;
@@ -135,9 +138,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setProfile({ uid: snap.id, ...data });
 
             // Fetch Tenant Data
-            if (data.tenantId) {
+            // If we are on a custom domain, force use of domainTenantId for context
+            // unless the user is a superadmin visiting NO specific domain (not possible if domainTenantId is set)
+            const targetTenantId = domainTenantId || data.tenantId;
+
+            if (targetTenantId) {
               if (unsubscribeTenant) unsubscribeTenant();
-              unsubscribeTenant = onSnapshot(doc(db, 'tenants', data.tenantId), (tenantSnap) => {
+              unsubscribeTenant = onSnapshot(doc(db, 'tenants', targetTenantId), (tenantSnap) => {
                 if (tenantSnap.exists()) {
                   setTenant({ id: tenantSnap.id, ...tenantSnap.data() } as Tenant);
                 } else {
@@ -178,6 +185,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
 
         setProfile(null);
+        setTenant(null);
         setPermissions([]);
         setLoading(false);
       }
@@ -187,14 +195,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeRole) unsubscribeRole();
+      if (unsubscribeTenant) unsubscribeTenant();
       if (inactivityTimeout) clearTimeout(inactivityTimeout);
       activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
       window.removeEventListener('beforeunload', handleOffline);
     };
-  }, []);
+  }, [domainTenantId]);
 
   return (
-    <AuthContext.Provider value={{ user, profile, tenant, permissions, loading, isSessionExpired, setIsSessionExpired }}>
+    <AuthContext.Provider value={{ user, profile, tenant, domainTenantId, permissions, loading, isSessionExpired, setIsSessionExpired }}>
       {children}
       
       {/* Session Expired Alert */}

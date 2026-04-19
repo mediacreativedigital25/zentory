@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
 
 export default function Warehouses() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,9 +23,11 @@ export default function Warehouses() {
   useEffect(() => {
     if (!profile) return;
 
-    const q = profile.role === 'superadmin'
+    const targetTenantId = domainTenantId || profile.tenantId;
+
+    const q = (profile.role === 'superadmin' && !domainTenantId)
       ? collection(db, 'warehouses')
-      : query(collection(db, 'warehouses'), where('tenantId', '==', profile.tenantId));
+      : query(collection(db, 'warehouses'), where('tenantId', '==', targetTenantId));
       
     const unsubscribe = onSnapshot(q, (snap) => {
       setWarehouses(snap.docs.map(d => ({ id: d.id, ...d.data() } as Warehouse)));
@@ -36,11 +38,12 @@ export default function Warehouses() {
     });
 
     return () => unsubscribe();
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.tenantId) return;
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId) return;
 
     setConfirmConfig({
       isOpen: true,
@@ -54,7 +57,7 @@ export default function Warehouses() {
           } else {
             await addDoc(collection(db, 'warehouses'), {
               ...formData,
-              tenantId: profile.tenantId,
+              tenantId: targetTenantId,
               createdAt: serverTimestamp(),
             });
           }

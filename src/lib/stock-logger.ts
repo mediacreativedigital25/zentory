@@ -16,7 +16,7 @@ export const logStockChange = async (
   note?: string
 ) => {
   try {
-    const logData: Omit<StockLog, 'id'> = {
+    const logData: any = {
       tenantId,
       productId,
       productName,
@@ -24,13 +24,14 @@ export const logStockChange = async (
       quantity,
       previousStock,
       currentStock,
-      referenceId: reference?.id,
-      referenceNumber: reference?.number,
-      note,
       userId,
       userName,
       createdAt: serverTimestamp(),
     };
+
+    if (note) logData.note = note;
+    if (reference?.id) logData.referenceId = reference.id;
+    if (reference?.number) logData.referenceNumber = reference.number;
 
     await addDoc(collection(db, 'stock_logs'), logData);
   } catch (error) {

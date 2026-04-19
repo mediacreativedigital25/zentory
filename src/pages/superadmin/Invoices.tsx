@@ -6,6 +6,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { auth } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
 import ConfirmModal from '../../components/ConfirmModal';
+import { PLANS } from '../../constants/plans';
+import { SubscriptionPlan } from '../../types';
 
 export default function SuperAdminInvoices() {
   const { profile } = useAuth();
@@ -60,10 +62,35 @@ export default function SuperAdminInvoices() {
       // If PAID, also update the tenant plan
       if (newStatus === 'paid' && invoice.tenantId && invoice.planId) {
         const tenantRef = doc(db, 'tenants', invoice.tenantId);
+        const currentTenant = tenants.find(t => t.id === invoice.tenantId);
+        
+        const durationInDays = invoice.duration || 30; // Default 30 if not set
+        let newEndDate = new Date();
+        
+        // If current subscription is still active, add to the current end date
+        if (currentTenant?.subscriptionEndDate && currentTenant.subscriptionStatus === 'active') {
+          const currentEnd = new Date(currentTenant.subscriptionEndDate.seconds * 1000);
+          if (currentEnd > new Date()) {
+            newEndDate = new Date(currentEnd.getTime());
+          }
+        }
+        
+        newEndDate.setDate(newEndDate.getDate() + durationInDays);
+
+        const planDef = PLANS[invoice.planId as SubscriptionPlan];
+
         await updateDoc(tenantRef, {
           plan: invoice.planId,
           subscription: invoice.planId,
           subscriptionStatus: 'active',
+          subscriptionStartDate: serverTimestamp(),
+          subscriptionEndDate: newEndDate,
+          features: planDef?.features || [],
+          limits: planDef?.limits || {},
+          billingCycle: `${durationInDays} Hari`,
+          lastPaymentMethod: invoice.paymentMethod === 'bank' ? 'Transfer Bank' : 
+                            invoice.paymentMethod === 'qris' ? 'QRIS Manual' : 
+                            invoice.paymentMethod === 'tripay' ? 'Otomatis (TriPay)' : invoice.paymentMethod || 'Manual',
           updatedAt: serverTimestamp(),
         });
       }

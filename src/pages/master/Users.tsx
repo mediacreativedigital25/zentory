@@ -12,7 +12,7 @@ import ConfirmModal from '../../components/ConfirmModal';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
 
 export default function Users() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -32,9 +32,9 @@ export default function Users() {
     if (!profile) return;
 
     // Fetch Roles
-    const rolesQ = profile.role === 'superadmin' 
+    const rolesQ = (profile.role === 'superadmin' && !domainTenantId)
       ? query(collection(db, 'roles'))
-      : query(collection(db, 'roles'), where('tenantId', '==', profile.tenantId));
+      : query(collection(db, 'roles'), where('tenantId', '==', domainTenantId || profile.tenantId));
     
     const unsubRoles = onSnapshot(rolesQ, (snap) => {
       setRoles(snap.docs.map(d => ({ id: d.id, ...d.data() } as Role)));
@@ -50,10 +50,11 @@ export default function Users() {
     }
 
     // Fetch Users
-    const usersQ = profile.role === 'superadmin'
+    const targetTenantId = domainTenantId || profile.tenantId;
+    const usersQ = (profile.role === 'superadmin' && !domainTenantId)
       ? query(collection(db, 'users'))
-      : profile.tenantId 
-        ? query(collection(db, 'users'), where('tenantId', '==', profile.tenantId))
+      : targetTenantId 
+        ? query(collection(db, 'users'), where('tenantId', '==', targetTenantId))
         : null;
 
     if (!usersQ) {
@@ -82,7 +83,9 @@ export default function Users() {
     if (!profile) return;
 
     try {
-      const targetTenantId = profile.role === 'superadmin' ? formData.tenantId : profile.tenantId;
+      const targetTenantId = (profile.role === 'superadmin' && !domainTenantId) 
+        ? formData.tenantId 
+        : (domainTenantId || profile.tenantId);
       
       if (editingUser) {
         await updateDoc(doc(db, 'users', editingUser.uid), {

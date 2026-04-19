@@ -38,7 +38,7 @@ const FEATURES = [
 ];
 
 export default function Roles() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,12 +50,19 @@ export default function Roles() {
   });
 
   useEffect(() => {
-    if (!profile?.tenantId) return;
+    if (!profile) return;
 
-    const q = query(
-      collection(db, 'roles'),
-      where('tenantId', '==', profile.tenantId)
-    );
+    // Determine target tenant ID: domain if present, otherwise user's tenant
+    const targetTenantId = domainTenantId || profile.tenantId;
+
+    if (!targetTenantId && profile.role !== 'superadmin') {
+      setLoading(false);
+      return;
+    }
+
+    const q = (profile.role === 'superadmin' && !domainTenantId)
+      ? query(collection(db, 'roles'))
+      : query(collection(db, 'roles'), where('tenantId', '==', targetTenantId));
 
     const unsubscribe = onSnapshot(q, (snap) => {
       setRoles(snap.docs.map(d => ({ id: d.id, ...d.data() } as Role)));
@@ -66,11 +73,13 @@ export default function Roles() {
     });
 
     return () => unsubscribe();
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.tenantId) return;
+    if (!profile) return;
+    const targetTenantId = domainTenantId || profile.tenantId;
+    if (!targetTenantId && profile.role !== 'superadmin') return;
 
     try {
       if (editingRole) {
@@ -81,7 +90,7 @@ export default function Roles() {
         });
       } else {
         await addDoc(collection(db, 'roles'), {
-          tenantId: profile.tenantId,
+          tenantId: targetTenantId,
           name: formData.name,
           permissions: formData.permissions,
           createdAt: serverTimestamp()

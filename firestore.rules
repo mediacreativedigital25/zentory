@@ -55,12 +55,11 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // 2. Tenants
+    // 2. Tenants (Publicly browsable for catalogs, but only staff/superadmin can list all)
     // -------------------------------------------------------------------------
     
     match /tenants/{tenantId} {
-      // Blanket read removed to prevent discovery. Only staff/superadmin can read.
-      allow read: if isSuperAdmin() || (isSignedIn() && userExists() && getTenantId() == tenantId);
+      allow read: if true; // Catalogs need to find the tenant by slug/id
       allow create: if isSignedIn() && isEmailVerified() && incoming().ownerId == request.auth.uid;
       allow update: if isSuperAdmin() || isTenantAdmin(tenantId);
       allow delete: if isSuperAdmin();
@@ -71,12 +70,6 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     
     match /users/{userId} {
-      function isValidUser(data) {
-        return data.email is string && data.email.size() <= 256 &&
-               data.role in ['superadmin', 'admin', 'staff', 'kasir', 'customer'] &&
-               (data.tenantId == null || isValidId(data.tenantId));
-      }
-
       allow read: if isSignedIn() && (
         request.auth.uid == userId || 
         isSuperAdmin() || 
@@ -93,7 +86,7 @@ service cloud.firestore {
         isSuperAdmin() || 
         // Users can update their own displayName and presence, but NOT role or tenantId
         (request.auth.uid == userId && 
-         incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'lastLoginAt', 'isOnline', 'lastLogoutAt', 'forceLogoutAt'])) ||
+         incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'lastLoginAt', 'isOnline', 'lastLogoutAt', 'forceLogoutAt', 'address'])) ||
         // Tenant admins can update roles within their tenant
         (existing().tenantId != null && isTenantAdmin(existing().tenantId) && 
          incoming().diff(existing()).affectedKeys().hasOnly(['role', 'displayName']))
@@ -103,50 +96,42 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // 4. Products & Categories
+    // 4. Products & Categories (Public for Catalogs)
     // -------------------------------------------------------------------------
     
     match /products/{productId} {
-      function isValidProduct(data) {
-        return data.tenantId is string && isValidId(data.tenantId) &&
-               data.name is string && data.name.size() <= 200 &&
-               data.price is number && data.price >= 0;
-      }
-
-      // Public reads removed for security. Only staff or customer of that tenant can read.
-      allow read: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
-      allow list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
-      
-      allow create: if (isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId))) && isValidProduct(incoming());
-      
+      allow read, list: if true; 
+      allow create: if (isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId)));
       allow update: if isSuperAdmin() || (
         isSignedIn() && resource.data.tenantId == getTenantId() && (
           isTenantStaff(resource.data.tenantId) ||
           incoming().diff(existing()).affectedKeys().hasOnly(['stock'])
-        ) && isValidProduct(incoming())
+        )
       );
-      
       allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /categories/{categoryId} {
-      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow read, list: if true;
       allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
     }
 
     // -------------------------------------------------------------------------
-    // 5. Transactions & Orders
+    // 5. Transactions & Orders (Private)
     // -------------------------------------------------------------------------
     
     match /transactions/{transactionId} {
       allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
-      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow create: if isSuperAdmin() || (isSignedIn() && (
+        isTenantStaff(incoming().tenantId) || 
+        (incoming().type == 'sale' && incoming().status == 'pending')
+      ));
       allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
       allow delete: if isSuperAdmin();
     }
 
     match /orders/{orderId} {
-      allow read, list: if isSuperAdmin() || (isSignedIn() && (
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && (
         isTenantStaff(resource.data.tenantId) || 
         resource.data.userId == request.auth.uid
       ));
@@ -163,7 +148,7 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     
     match /bank_accounts/{accountId} {
-      allow read: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow read, list: if true; // Public payment methods in catalog
       allow write: if isSuperAdmin() || (
         isSignedIn() && (
           (request.method == 'create' && isTenantAdmin(incoming().tenantId)) ||
@@ -242,11 +227,12 @@ service cloud.firestore {
     match /charityRecords/{charityId} {
       allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
       allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
-      allow update, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
+      allow delete: if isSuperAdmin();
     }
 
     match /coupons/{couponId} {
-      allow read, list: if true; // Coupons are often public or shared via code
+      allow read, list: if true; 
       allow create, delete: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
       allow update: if isSuperAdmin() || (isSignedIn() && (
         isTenantStaff(existing().tenantId) ||

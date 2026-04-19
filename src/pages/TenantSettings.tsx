@@ -3,7 +3,7 @@ import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Tenant } from '../types';
-import { Building2, Save, User, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Building2, Save, User, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Image as ImageIcon, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
@@ -76,6 +76,41 @@ export default function TenantSettings() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-indigo-600" />
+              Status Langganan
+            </h3>
+          </div>
+          
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Paket Aktif</p>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-black text-gray-900 uppercase">{tenant?.plan || tenant?.subscription || 'FREE'}</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                  tenant?.subscriptionStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  {tenant?.subscriptionStatus || 'TRIAL'}
+                </span>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Masa Aktif Hingga</p>
+              <p className={`text-lg font-black ${
+                tenant?.subscriptionEndDate && new Date(tenant.subscriptionEndDate.seconds * 1000) < new Date()
+                  ? 'text-red-600'
+                  : 'text-indigo-600'
+              }`}>
+                {tenant?.subscriptionEndDate 
+                  ? new Date(tenant.subscriptionEndDate.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                  : 'Tanpa Batas (FREE)'}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">

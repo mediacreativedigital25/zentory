@@ -169,6 +169,7 @@ export default function SuperAdminTenants() {
                 <th className="px-6 py-4 font-medium">Code</th>
                 <th className="px-6 py-4 font-medium">Slug</th>
                 <th className="px-6 py-4 font-medium">Subscription</th>
+                <th className="px-6 py-4 font-medium">Expiry Date</th>
                 <th className="px-6 py-4 font-medium">Created At</th>
                 <th className="px-6 py-4 font-medium">Actions</th>
               </tr>
@@ -206,6 +207,19 @@ export default function SuperAdminTenants() {
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-6 py-4">
+                      {tenant.subscriptionEndDate ? (
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
+                          new Date(tenant.subscriptionEndDate.seconds * 1000) < new Date() 
+                            ? 'bg-red-100 text-red-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {new Date(tenant.subscriptionEndDate.seconds * 1000).toLocaleDateString('id-ID')}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-gray-400 capitalize">No limit</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {tenant.createdAt ? new Date(tenant.createdAt?.seconds * 1000).toLocaleDateString() : '-'}
@@ -306,6 +320,63 @@ export default function SuperAdminTenants() {
                             {selectedTenantForDetail.address || 'Belum diatur'}
                           </p>
                         )}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Masa Aktif</label>
+                        {isEditingTenant ? (
+                          <input
+                            type="date"
+                            value={tenantFormData.subscriptionEndDate ? 
+                              new Date(tenantFormData.subscriptionEndDate.seconds ? tenantFormData.subscriptionEndDate.seconds * 1000 : tenantFormData.subscriptionEndDate).toISOString().split('T')[0] : 
+                              ''
+                            }
+                            onChange={(e) => setTenantFormData({ 
+                              ...tenantFormData, 
+                              subscriptionEndDate: e.target.value ? new Date(e.target.value) : null 
+                            })}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        ) : (
+                          <p className={`font-black text-sm ${
+                            selectedTenantForDetail.subscriptionEndDate && new Date(selectedTenantForDetail.subscriptionEndDate.seconds * 1000) < new Date()
+                              ? 'text-red-600'
+                              : 'text-indigo-600'
+                          }`}>
+                            {selectedTenantForDetail.subscriptionEndDate 
+                              ? new Date(selectedTenantForDetail.subscriptionEndDate.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                              : 'Tanpa Batas'}
+                          </p>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Siklus</label>
+                          {isEditingTenant ? (
+                            <input
+                              type="text"
+                              value={tenantFormData.billingCycle || ''}
+                              placeholder="e.g. 30 Hari"
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, billingCycle: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          ) : (
+                            <p className="text-gray-900 font-medium">{selectedTenantForDetail.billingCycle || '-'}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Metode Bayar</label>
+                          {isEditingTenant ? (
+                            <input
+                              type="text"
+                              value={tenantFormData.lastPaymentMethod || ''}
+                              placeholder="e.g. QRIS"
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, lastPaymentMethod: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          ) : (
+                            <p className="text-gray-900 font-medium">{selectedTenantForDetail.lastPaymentMethod || '-'}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

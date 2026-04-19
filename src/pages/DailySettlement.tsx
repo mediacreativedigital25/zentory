@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, Timestamp, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, Timestamp, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Transaction, DailyClosing as DailyClosingType, ApprovalRequest, Tenant } from '../types';
@@ -32,7 +32,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 export default function DailySettlement() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [closings, setClosings] = useState<DailyClosingType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,9 +45,13 @@ export default function DailySettlement() {
   const [pendingRequest, setPendingRequest] = useState<ApprovalRequest | null>(null);
   const [tenantInfo, setTenantInfo] = useState<Tenant | null>(null);
   const [isCharityConfirmOpen, setIsCharityConfirmOpen] = useState(false);
+  const [todayCharity, setTodayCharity] = useState<any>(null);
+  const [isProcessingCharity, setIsProcessingCharity] = useState(false);
 
   const fetchTodayData = async () => {
-    if (!profile?.tenantId) return;
+    if (!profile) return;
+    const targetTenantId = domainTenantId || profile.tenantId;
+    if (!targetTenantId && profile.role !== 'superadmin') return;
 
     try {
       // Get start and end of today
@@ -59,63 +63,95 @@ export default function DailySettlement() {
       endOfDay.setHours(23, 59, 59, 999);
       const endTimestamp = Timestamp.fromDate(endOfDay);
 
-      // Check if already settled for today
-      const settledQ = query(
-        collection(db, 'dailyClosings'),
-        where('tenantId', '==', profile.tenantId),
-        where('date', '>=', startTimestamp),
-        where('date', '<=', endTimestamp),
-        limit(1)
-      );
-      const settledSnap = await getDocs(settledQ);
-      setIsAlreadySettled(!settledSnap.empty);
-      if (!settledSnap.empty) {
-        setCurrentClosing({ id: settledSnap.docs[0].id, ...settledSnap.docs[0].data() } as DailyClosingType);
-      } else {
-        setCurrentClosing(null);
+      if (targetTenantId) {
+        // Check if already settled for today
+        const settledQ = query(
+          collection(db, 'dailyClosings'),
+          where('tenantId', '==', targetTenantId),
+          where('date', '>=', startTimestamp),
+          where('date', '<=', endTimestamp),
+          limit(1)
+        );
+        const settledSnap = await getDocs(settledQ);
+        setIsAlreadySettled(!settledSnap.empty);
+        if (!settledSnap.empty) {
+          setCurrentClosing({ id: settledSnap.docs[0].id, ...settledSnap.docs[0].data() } as DailyClosingType);
+        } else {
+          setCurrentClosing(null);
+        }
+
+        // Check if today's charity already processed
+        const charityQ = query(
+          collection(db, 'charityRecords'),
+          where('tenantId', '==', targetTenantId),
+          where('date', '>=', startTimestamp),
+          where('date', '<=', endTimestamp),
+          limit(1)
+        );
+        const charitySnap = await getDocs(charityQ);
+        setTodayCharity(!charitySnap.empty ? { id: charitySnap.docs[0].id, ...charitySnap.docs[0].data() } : null);
+
+        // Check for pending open requests
+        const requestQ = query(
+          collection(db, 'approval_requests'),
+          where('tenantId', '==', targetTenantId),
+          where('type', '==', 'daily_settlement_open'),
+          where('status', '==', 'pending'),
+          where('closingDate', '>=', startTimestamp),
+          where('closingDate', '<=', endTimestamp),
+          limit(1)
+        );
+        const requestSnap = await getDocs(requestQ);
+        setPendingRequest(!requestSnap.empty ? { id: requestSnap.docs[0].id, ...requestSnap.docs[0].data() } as ApprovalRequest : null);
+
+        // Fetch tenant info
+        const tSnap = await getDoc(doc(db, 'tenants', targetTenantId));
+        if (tSnap.exists()) {
+          setTenantInfo({ id: tSnap.id, ...tSnap.data() } as Tenant);
+        }
+
+        // Fetch today's transactions
+        const q = query(
+          collection(db, 'transactions'),
+          where('tenantId', '==', targetTenantId),
+          where('date', '>=', startTimestamp),
+          where('date', '<=', endTimestamp),
+          where('status', '==', 'completed')
+        );
+
+        const snap = await getDocs(q);
+        const transData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+        setTransactions(transData);
+
+        // Fetch recent closings
+        const closingQ = query(
+          collection(db, 'dailyClosings'),
+          where('tenantId', '==', targetTenantId),
+          orderBy('createdAt', 'desc'),
+          limit(10)
+        );
+        const closingSnap = await getDocs(closingQ);
+        setClosings(closingSnap.docs.map(d => ({ id: d.id, ...d.data() } as DailyClosingType)));
+      } else if (profile.role === 'superadmin' && !domainTenantId) {
+        // Superadmin on default domain sees everything for history, but settlement is per tenant usually.
+        // For now, let's just fetch everything for them to see.
+        const q = query(
+          collection(db, 'transactions'),
+          where('date', '>=', startTimestamp),
+          where('date', '<=', endTimestamp),
+          where('status', '==', 'completed')
+        );
+        const snap = await getDocs(q);
+        setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
+
+        const closingQ = query(
+          collection(db, 'dailyClosings'),
+          orderBy('createdAt', 'desc'),
+          limit(10)
+        );
+        const closingSnap = await getDocs(closingQ);
+        setClosings(closingSnap.docs.map(d => ({ id: d.id, ...d.data() } as DailyClosingType)));
       }
-
-      // Check for pending open requests
-      const requestQ = query(
-        collection(db, 'approval_requests'),
-        where('tenantId', '==', profile.tenantId),
-        where('type', '==', 'daily_settlement_open'),
-        where('status', '==', 'pending'),
-        where('closingDate', '>=', startTimestamp),
-        where('closingDate', '<=', endTimestamp),
-        limit(1)
-      );
-      const requestSnap = await getDocs(requestQ);
-      setPendingRequest(!requestSnap.empty ? { id: requestSnap.docs[0].id, ...requestSnap.docs[0].data() } as ApprovalRequest : null);
-
-      // Fetch tenant info
-      const tSnap = await getDoc(doc(db, 'tenants', profile.tenantId));
-      if (tSnap.exists()) {
-        setTenantInfo({ id: tSnap.id, ...tSnap.data() } as Tenant);
-      }
-
-      // Fetch today's transactions
-      const q = query(
-        collection(db, 'transactions'),
-        where('tenantId', '==', profile.tenantId),
-        where('date', '>=', startTimestamp),
-        where('date', '<=', endTimestamp),
-        where('status', '==', 'completed')
-      );
-
-      const snap = await getDocs(q);
-      const transData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
-      setTransactions(transData);
-
-      // Fetch recent closings
-      const closingQ = query(
-        collection(db, 'dailyClosings'),
-        where('tenantId', '==', profile.tenantId),
-        orderBy('createdAt', 'desc'),
-        limit(10)
-      );
-      const closingSnap = await getDocs(closingQ);
-      setClosings(closingSnap.docs.map(d => ({ id: d.id, ...d.data() } as DailyClosingType)));
 
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, 'dailyClosings/transactions');
@@ -126,7 +162,7 @@ export default function DailySettlement() {
 
   useEffect(() => {
     fetchTodayData();
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   // Calculations
   const salesTransactions = transactions.filter(t => t.type === 'sale');
@@ -147,8 +183,85 @@ export default function DailySettlement() {
 
   const status = netProfit > 0 ? 'UNTUNG' : netProfit < 0 ? 'RUGI' : 'IMPAS';
 
+  const handleProcessCharity = async () => {
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId || netProfit <= 0) {
+      alert('Laba bersih harus lebih dari 0 untuk menghitung amal.');
+      return;
+    }
+
+    if (todayCharity) {
+      alert('Amal hari ini sudah dicatat.');
+      return;
+    }
+
+    setIsProcessingCharity(true);
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const prefix = `CE${year}${month}`;
+      
+      // Generate sequential CE number
+      const qNum = query(
+        collection(db, 'charityRecords'),
+        where('tenantId', '==', targetTenantId),
+        where('charityNumber', '>=', prefix),
+        where('charityNumber', '<=', prefix + '\uf8ff'),
+        orderBy('charityNumber', 'desc'),
+        limit(1)
+      );
+      const snapNum = await getDocs(qNum);
+      let nextIndex = 1;
+      if (!snapNum.empty) {
+        const lastNum = snapNum.docs[0].data().charityNumber;
+        const lastIndex = parseInt(lastNum.replace(prefix, ''), 10);
+        if (!isNaN(lastIndex)) nextIndex = lastIndex + 1;
+      }
+      const charityNumber = `${prefix}${String(nextIndex).padStart(6, '0')}`;
+
+      // 1. Create Charity Record
+      const charityRef = await addDoc(collection(db, 'charityRecords'), {
+        tenantId: targetTenantId,
+        charityNumber,
+        date: serverTimestamp(),
+        totalProfit: grossProfit, // Store gross profit as reference
+        netProfit, // Store net profit as reference
+        charityAmount,
+        netProfitAfterCharity: netProfit - charityAmount,
+        transactionCount,
+        status: 'saved',
+        createdAt: serverTimestamp()
+      });
+
+      // 2. Create Expense Transaction
+      const dateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      await addDoc(collection(db, 'transactions'), {
+        tenantId: targetTenantId,
+        type: 'expense',
+        amount: charityAmount,
+        category: 'Amal',
+        activity: 'Operasional',
+        description: `Amal 2.5% tgl ${dateStr} (Ref: ${charityNumber})`,
+        date: serverTimestamp(),
+        status: 'completed',
+        userId: profile?.uid,
+        isAutoGenerated: true,
+        createdAt: serverTimestamp()
+      });
+
+      alert('Berhasil mencatat amal hari ini. Anda masih dapat melakukan transaksi sebelum settlement final.');
+      fetchTodayData();
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'charityRecords');
+    } finally {
+      setIsProcessingCharity(false);
+    }
+  };
+
   const handleDoClosing = async (isCharityEnabled: boolean = false) => {
-    if (!profile?.tenantId || (transactionCount === 0 && totalExpenses === 0)) {
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId || (transactionCount === 0 && totalExpenses === 0)) {
       alert('Tidak ada aktivitas keuangan untuk ditutup hari ini.');
       return;
     }
@@ -163,15 +276,19 @@ export default function DailySettlement() {
       const today = new Date();
       const dateStr = today.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-      // 1. Save Daily Closing Record
+       // 1. Save Daily Closing Record
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
       
-      // Generate DS number (Simplified for now, ideally needs a counter)
-      const dsNumber = `DS${year}${month}${String(closings.length + 1).padStart(6, '0')}`;
+      // Generate DS number
+      const qDS = query(collection(db, 'dailyClosings'), where('tenantId', '==', targetTenantId), limit(100));
+      const snapDS = await getDocs(qDS);
+      const dsNumber = `DS${year}${month}${String(snapDS.size + 1).padStart(6, '0')}`;
 
-      await addDoc(collection(db, 'dailyClosings'), {
-        tenantId: profile.tenantId,
+      const finalCharityAmount = todayCharity ? todayCharity.charityAmount : (isCharityEnabled ? charityAmount : 0);
+
+      const closingRef = await addDoc(collection(db, 'dailyClosings'), {
+        tenantId: targetTenantId,
         dailyNumber: dsNumber,
         date: serverTimestamp(),
         totalSales,
@@ -180,12 +297,24 @@ export default function DailySettlement() {
         grossProfit,
         netProfit,
         transactionCount,
-        charityAmount: 0, 
-        isCharityEnabled,
+        charityAmount: finalCharityAmount,
+        isCharityEnabled: isCharityEnabled || !!todayCharity,
         status,
-        closedBy: profile.displayName || profile.email,
+        closedBy: profile?.displayName || profile?.email,
         createdAt: serverTimestamp()
       });
+
+      // If we processed charity early, update the charity record with the dailyClosingId
+      if (todayCharity) {
+        try {
+          await updateDoc(doc(db, 'charityRecords', todayCharity.id), {
+            dailyClosingId: closingRef.id,
+            dailyNumber: dsNumber
+          });
+        } catch (e) {
+          console.error('Error linking charity record:', e);
+        }
+      }
 
       setClosingSuccess(true);
       fetchTodayData();
@@ -199,21 +328,24 @@ export default function DailySettlement() {
   };
 
   const handleRequestOpen = async () => {
-    if (!profile?.tenantId || !currentClosing) return;
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId || !currentClosing) return;
 
-    setIsClosing(true);
+    const requestData: any = {
+      tenantId: targetTenantId,
+      tenantName: tenantInfo?.name || 'Unknown Tenant',
+      type: 'daily_settlement_open',
+      requestedBy: profile?.uid,
+      requestedAt: serverTimestamp(),
+      reason: requestReason,
+      status: 'pending'
+    };
+
+    if (currentClosing.id) requestData.closingId = currentClosing.id;
+    if (currentClosing.date) requestData.closingDate = currentClosing.date;
+
     try {
-      await addDoc(collection(db, 'approval_requests'), {
-        tenantId: profile.tenantId,
-        tenantName: tenantInfo?.name || 'Unknown Tenant',
-        type: 'daily_settlement_open',
-        closingId: currentClosing.id,
-        closingDate: currentClosing.date,
-        requestedBy: profile.uid,
-        requestedAt: serverTimestamp(),
-        reason: requestReason,
-        status: 'pending'
-      });
+      await addDoc(collection(db, 'approval_requests'), requestData);
       alert('Permintaan pembukaan kembali settlement telah dikirim ke Super Admin.');
       setIsRequestModalOpen(false);
       setRequestReason('');
@@ -331,11 +463,33 @@ export default function DailySettlement() {
                   {status === 'UNTUNG' ? <TrendingUp className="w-12 h-12" /> : <TrendingDown className="w-12 h-12" />}
                 </div>
                 <div>
-                  <h5 className="text-xl font-black">Finalisasi Settlement</h5>
-                  <p className="text-white/80 text-sm mt-2">Data yang sudah disettle akan dikunci dan tidak dapat diubah.</p>
+                  <h5 className="text-xl font-black">{todayCharity ? `Amal Tercatat (${todayCharity.charityNumber})` : 'Finalisasi Settlement'}</h5>
+                  <p className="text-white/80 text-sm mt-2">
+                    {todayCharity 
+                      ? 'Amal hari ini telah direkam. Klik di bawah untuk menutup buku secara permanen.' 
+                      : 'Data yang sudah disettle akan dikunci dan tidak dapat diubah.'}
+                  </p>
                 </div>
+
+                {!todayCharity && !isAlreadySettled && status === 'UNTUNG' && (
+                  <button
+                    onClick={handleProcessCharity}
+                    disabled={isProcessingCharity || isClosing}
+                    className="w-full py-4 bg-pink-500 text-white rounded-2xl font-black shadow-lg hover:bg-pink-600 transition-all flex items-center justify-center disabled:opacity-50"
+                  >
+                    <Heart className="w-5 h-5 mr-2" />
+                    {isProcessingCharity ? 'Memproses Amal...' : 'Catat Amal Dulu (2.5%)'}
+                  </button>
+                )}
+
                 <button
-                  onClick={() => setIsCharityConfirmOpen(true)}
+                  onClick={() => {
+                    if (todayCharity) {
+                      handleDoClosing(true);
+                    } else {
+                      setIsCharityConfirmOpen(true);
+                    }
+                  }}
                   disabled={isClosing || (transactionCount === 0 && totalExpenses === 0) || isAlreadySettled}
                   className="w-full py-4 bg-white text-indigo-600 rounded-2xl font-black shadow-lg hover:bg-indigo-50 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >

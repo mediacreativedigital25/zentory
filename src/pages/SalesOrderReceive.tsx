@@ -60,11 +60,11 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 export default function SalesOrderReceive() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'manual' | 'catalog' | 'service'>('all');
+  const [filter, setFilter] = useState<'all' | 'manual' | 'catalog' | 'service' | 'pos'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -92,8 +92,9 @@ export default function SalesOrderReceive() {
   }, []);
 
   useEffect(() => {
-    if (profile?.tenantId) {
-      getDoc(doc(db, 'tenants', profile.tenantId)).then(snap => {
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (targetTenantId) {
+      getDoc(doc(db, 'tenants', targetTenantId)).then(snap => {
         if (snap.exists()) {
           setTenantInfo({ id: snap.id, ...snap.data() } as Tenant);
         }
@@ -104,16 +105,17 @@ export default function SalesOrderReceive() {
         setTenants(snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant)));
       });
     }
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   useEffect(() => {
     if (!profile) return;
+    const targetTenantId = domainTenantId || profile.tenantId;
 
-    const q = profile.role === 'superadmin'
+    const q = (profile.role === 'superadmin' && !domainTenantId)
       ? query(collection(db, 'orders'))
       : query(
           collection(db, 'orders'),
-          where('tenantId', '==', profile.tenantId)
+          where('tenantId', '==', targetTenantId)
         );
 
     const unsubscribe = onSnapshot(q, (snap) => {
@@ -130,40 +132,46 @@ export default function SalesOrderReceive() {
       setLoading(false);
     });
 
-    // Check if today is settled
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    if (targetTenantId) {
+      // Check if today is settled
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const settledQ = query(
-      collection(db, 'dailyClosings'),
-      where('tenantId', '==', profile.tenantId),
-      where('date', '>=', Timestamp.fromDate(startOfDay)),
-      where('date', '<=', Timestamp.fromDate(endOfDay)),
-      limit(1)
-    );
+      const settledQ = query(
+        collection(db, 'dailyClosings'),
+        where('tenantId', '==', targetTenantId),
+        where('date', '>=', Timestamp.fromDate(startOfDay)),
+        where('date', '<=', Timestamp.fromDate(endOfDay)),
+        limit(1)
+      );
 
-    const unsubscribeSettled = onSnapshot(settledQ, (snap) => {
-      setIsSettledToday(!snap.empty);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'dailyClosings', profile);
-    });
+      const unsubscribeSettled = onSnapshot(settledQ, (snap) => {
+        setIsSettledToday(!snap.empty);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'dailyClosings', profile);
+      });
 
-    // Fetch bank accounts for mapping
-    const bQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId));
-    const unsubBanks = onSnapshot(bQuery, (snap) => {
-      setBankAccounts(snap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount)));
-    }, (error) => {
-      console.error('Error fetching bank accounts:', error);
-    });
+      // Fetch bank accounts for mapping
+      const bQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', targetTenantId));
+      const unsubBanks = onSnapshot(bQuery, (snap) => {
+        setBankAccounts(snap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount)));
+      }, (error) => {
+        console.error('Error fetching bank accounts:', error);
+      });
+
+      return () => {
+        unsubscribe();
+        unsubscribeSettled();
+        unsubBanks();
+      };
+    }
 
     return () => {
       unsubscribe();
-      unsubscribeSettled();
-      unsubBanks();
     };
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -187,6 +195,7 @@ export default function SalesOrderReceive() {
   const getBadgeColor = (type: string) => {
     switch (type) {
       case 'manual': return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'pos': return 'bg-indigo-50 text-indigo-700 border-indigo-100';
       case 'catalog': return 'bg-green-50 text-green-700 border-green-100';
       case 'service': return 'bg-purple-50 text-purple-700 border-purple-100';
       default: return 'bg-gray-50 text-gray-700 border-gray-100';
@@ -196,6 +205,7 @@ export default function SalesOrderReceive() {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'manual': return <Tag className="w-3 h-3 mr-1" />;
+      case 'pos': return <ShoppingBag className="w-3 h-3 mr-1" />;
       case 'catalog': return <Globe className="w-3 h-3 mr-1" />;
       case 'service': return <Briefcase className="w-3 h-3 mr-1" />;
       default: return null;
@@ -462,7 +472,7 @@ export default function SalesOrderReceive() {
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex-1 flex items-center gap-4 overflow-x-auto pb-2 sm:pb-0">
           <div className="flex gap-2">
-            {(['all', 'manual', 'catalog', 'service'] as const).map((t) => (
+            {(['all', 'manual', 'pos', 'catalog', 'service'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setFilter(t)}

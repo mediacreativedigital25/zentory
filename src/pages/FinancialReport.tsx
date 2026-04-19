@@ -34,7 +34,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 type FilterType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export default function FinancialReport() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,10 +43,15 @@ export default function FinancialReport() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
-    if (!profile?.tenantId) return;
+    if (!profile) return;
+    const targetTenantId = domainTenantId || profile.tenantId;
+    if (!targetTenantId && profile.role !== 'superadmin') return;
 
     // Fetch Bank Accounts for mapping
-    const bQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId));
+    const bQuery = (profile.role === 'superadmin' && !domainTenantId)
+      ? collection(db, 'bank_accounts')
+      : query(collection(db, 'bank_accounts'), where('tenantId', '==', targetTenantId));
+    
     const unsubBanks = onSnapshot(bQuery, (snap) => {
       setBankAccounts(snap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount)));
     });
@@ -71,12 +76,18 @@ export default function FinancialReport() {
 
     const startTimestamp = Timestamp.fromDate(startDate);
 
-    const q = query(
-      collection(db, 'transactions'),
-      where('tenantId', '==', profile.tenantId),
-      where('date', '>=', startTimestamp),
-      orderBy('date', 'desc')
-    );
+    const q = (profile.role === 'superadmin' && !domainTenantId)
+      ? query(
+          collection(db, 'transactions'),
+          where('date', '>=', startTimestamp),
+          orderBy('date', 'desc')
+        )
+      : query(
+          collection(db, 'transactions'),
+          where('tenantId', '==', targetTenantId),
+          where('date', '>=', startTimestamp),
+          orderBy('date', 'desc')
+        );
 
     const unsubscribe = onSnapshot(q, (snap) => {
       setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
@@ -89,7 +100,7 @@ export default function FinancialReport() {
       unsubscribe();
       unsubBanks();
     };
-  }, [profile, filter]);
+  }, [profile, domainTenantId, filter]);
 
   useEffect(() => {
     setCurrentPage(1);

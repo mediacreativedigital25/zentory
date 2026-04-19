@@ -1,9 +1,10 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
+import { PLANS } from './constants/plans';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -54,46 +55,71 @@ import CustomerAuth from './pages/CustomerAuth';
 import Changelog from './pages/Changelog';
 import Guide from './pages/Guide';
 import Pricing from './pages/Pricing';
+import SubscriptionExpired from './pages/SubscriptionExpired';
 import LayananInvoice from './pages/LayananInvoice';
 import LayananSaya from './pages/LayananSaya';
 import Checkout from './pages/Checkout';
 import NoAccess from './pages/NoAccess';
 
 const ProtectedRoute = ({ children, allowedRoles, permission }: { children: React.ReactNode; allowedRoles?: string[]; permission?: string }) => {
-  const { user, profile, permissions, loading } = useAuth();
+  const { user, profile, tenant, domainTenantId, permissions, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
   
+  // Domain isolation check
+  if (domainTenantId && profile?.role !== 'superadmin' && profile?.tenantId !== domainTenantId) {
+    return <Navigate to="/no-access" />;
+  }
+
   // Superadmin can access everything
   if (profile?.role === 'superadmin') return <Layout>{children}</Layout>;
+
+  // Subscription check
+  if (tenant && profile?.role !== 'superadmin') {
+    const isExpired = tenant.subscriptionStatus === 'expired' || (
+      tenant.subscriptionEndDate && 
+      new Date(tenant.subscriptionEndDate.seconds * 1000) < new Date()
+    );
+
+    const allowedExpiredPaths = ['/subscription-expired', '/pricing', '/checkout', '/layanan/invoice', '/layanan/saya', '/no-access'];
+    if (isExpired && !allowedExpiredPaths.includes(location.pathname)) {
+      return <Navigate to="/subscription-expired" />;
+    }
+  }
   
   const isSystemRole = ['admin', 'staff', 'customer', 'superadmin', 'kasir'].includes(profile?.role || '');
 
   // Redirect 'kasir' to sales order if they are on dashboard or other pages
-  if (profile?.role === 'kasir' && location.pathname !== '/sales/order' && location.pathname !== '/no-access') {
-    return <Navigate to="/sales/order" />;
+  const allowedKasirPaths = ['/sales/order', '/sales/pos', '/sales/receive', '/no-access'];
+  if (profile?.role === 'kasir' && !allowedKasirPaths.includes(location.pathname)) {
+    return <Navigate to="/sales/pos" />; // Default to POS for kasir
   }
 
   // Check roles and permissions
   if (profile) {
+    // 1. Subscription-based Feature Gating (Block access if plan doesn't support the feature)
+    if (permission && profile.role !== 'superadmin') {
+      const tenantFeatures = tenant?.features || PLANS[tenant?.plan || tenant?.subscription || 'free']?.features || [];
+      if (!tenantFeatures.includes(permission)) {
+        return <Navigate to="/no-access" />;
+      }
+    }
+
     if (isSystemRole) {
-      // For system roles, check allowedRoles
+      // 2. Role-based Gating
       if (allowedRoles && !allowedRoles.includes(profile.role)) {
         if (profile.role === 'customer') return <Navigate to={`/catalog/${profile.tenantId}/dashboard`} />;
         return <Navigate to="/no-access" />;
       }
     } else {
-      // For custom roles
+      // 3. Custom Role (Staff) Permissions Gating
       if (permission) {
-        // If permission is required, check it
         if (!permissions.includes(permission)) {
           return <Navigate to="/no-access" />;
         }
       } else if (allowedRoles) {
-        // If allowedRoles is specified but no permission key is provided,
-        // custom roles are denied by default for these specific routes
-        // unless they are explicitly allowed (which they aren't in this system's logic)
         return <Navigate to="/no-access" />;
       }
     }
@@ -109,6 +135,7 @@ const ProtectedRoute = ({ children, allowedRoles, permission }: { children: Reac
 
 export default function App() {
   const [isCustomDomain, setIsCustomDomain] = React.useState(false);
+  const [domainTenantId, setDomainTenantId] = React.useState<string | null>(null);
   const [checkingDomain, setCheckingDomain] = React.useState(true);
 
   React.useEffect(() => {
@@ -123,7 +150,9 @@ export default function App() {
           const domainQuery = query(collection(db, 'custom_domains'), where('domain', '==', hostname), where('status', '==', 'active'));
           const domainSnap = await getDocs(domainQuery);
           if (!domainSnap.empty) {
+            const domainData = domainSnap.docs[0].data();
             setIsCustomDomain(true);
+            setDomainTenantId(domainData.tenantId);
           }
         } catch (err) {
           console.error('Error checking custom domain:', err);
@@ -137,7 +166,7 @@ export default function App() {
   if (checkingDomain) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
 
   return (
-    <AuthProvider>
+    <AuthProvider domainTenantId={domainTenantId}>
       <BrowserRouter>
         <Routes>
           {/* If on custom domain, the root is the catalog */}
@@ -415,6 +444,8 @@ export default function App() {
               <Pricing />
             </ProtectedRoute>
           } />
+
+          <Route path="/subscription-expired" element={<SubscriptionExpired />} />
 
           <Route path="/layanan/invoice" element={
             <ProtectedRoute allowedRoles={['admin']}>

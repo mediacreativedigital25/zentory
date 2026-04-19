@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
 export default function Dashboard() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const navigate = useNavigate();
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
@@ -29,26 +29,28 @@ export default function Dashboard() {
 
     let unsubTenants: (() => void) | null = null;
 
-    if (profile.tenantId) {
+    const targetTenantId = domainTenantId || profile.tenantId;
+
+    if (targetTenantId) {
       transQuery = query(
         collection(db, 'transactions'),
-        where('tenantId', '==', profile.tenantId),
+        where('tenantId', '==', targetTenantId),
         orderBy('date', 'desc'),
         limit(10)
       );
       allTransQuery = query(
         collection(db, 'transactions'),
-        where('tenantId', '==', profile.tenantId)
+        where('tenantId', '==', targetTenantId)
       );
       prodQuery = query(
         collection(db, 'products'),
-        where('tenantId', '==', profile.tenantId)
+        where('tenantId', '==', targetTenantId)
       );
       ordersQuery = query(
         collection(db, 'orders'),
-        where('tenantId', '==', profile.tenantId)
+        where('tenantId', '==', targetTenantId)
       );
-    } else if (profile.role === 'superadmin') {
+    } else if (profile.role === 'superadmin' && !domainTenantId) {
       transQuery = query(collection(db, 'transactions'), orderBy('date', 'desc'), limit(10));
       allTransQuery = query(collection(db, 'transactions'));
       prodQuery = query(collection(db, 'products'));
@@ -78,8 +80,8 @@ export default function Dashboard() {
     }, (err) => handleFirestoreError(err, OperationType.GET, 'orders_count', auth, profile));
 
     const unsubBanks = onSnapshot(
-      profile.tenantId 
-        ? query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId))
+      targetTenantId 
+        ? query(collection(db, 'bank_accounts'), where('tenantId', '==', targetTenantId))
         : collection(db, 'bank_accounts'), 
       (snap) => {
         setBankAccounts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -95,7 +97,7 @@ export default function Dashboard() {
       unsubBanks();
       if (unsubTenants) unsubTenants();
     };
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   const stats = useMemo(() => {
     const activeSales = allTransactions.filter(t => t.type === 'sale' && t.status !== 'cancelled');

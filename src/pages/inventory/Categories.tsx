@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
 
 export default function Categories() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,9 +22,11 @@ export default function Categories() {
   useEffect(() => {
     if (!profile) return;
 
-    const q = profile.role === 'superadmin'
+    const targetTenantId = domainTenantId || profile.tenantId;
+
+    const q = (profile.role === 'superadmin' && !domainTenantId)
       ? collection(db, 'categories')
-      : query(collection(db, 'categories'), where('tenantId', '==', profile.tenantId));
+      : query(collection(db, 'categories'), where('tenantId', '==', targetTenantId));
       
     const unsubscribe = onSnapshot(q, (snap) => {
       setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
@@ -35,11 +37,12 @@ export default function Categories() {
     });
 
     return () => unsubscribe();
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.tenantId) return;
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId) return;
 
     setConfirmConfig({
       isOpen: true,
@@ -53,7 +56,7 @@ export default function Categories() {
           } else {
             await addDoc(collection(db, 'categories'), {
               ...formData,
-              tenantId: profile.tenantId,
+              tenantId: targetTenantId,
               createdAt: serverTimestamp(),
             });
           }

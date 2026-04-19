@@ -3,7 +3,13 @@ import { SubscriptionPlan } from '../types';
 export interface PlanDefinition {
   id: SubscriptionPlan;
   name: string;
-  price: string;
+  price: string; // Base display price (usually 30 days)
+  pricing: {
+    duration: number; // in days
+    price: number;
+    priceDisplay: string;
+    description: string;
+  }[];
   description: string;
   features: string[];
   limits: {
@@ -51,6 +57,9 @@ export const PLANS: Record<SubscriptionPlan, PlanDefinition> = {
     id: 'free',
     name: 'FREE',
     price: 'Rp 0',
+    pricing: [
+      { duration: 0, price: 0, priceDisplay: 'Rp 0', description: 'Selamanya' }
+    ],
     description: 'Untuk coba sistem',
     features: [
       FEATURE_KEYS.DASHBOARD,
@@ -69,6 +78,12 @@ export const PLANS: Record<SubscriptionPlan, PlanDefinition> = {
     id: 'starter',
     name: 'STARTER',
     price: 'Rp 29K',
+    pricing: [
+      { duration: 30, price: 29000, priceDisplay: 'Rp 29K', description: '30 Hari' },
+      { duration: 90, price: 79000, priceDisplay: 'Rp 79K', description: '90 Hari (~10% Hemat)' },
+      { duration: 180, price: 149000, priceDisplay: 'Rp 149K', description: '180 Hari (~15% Hemat)' },
+      { duration: 365, price: 279000, priceDisplay: 'Rp 279K', description: '365 Hari (~20% Hemat)' },
+    ],
     description: 'Untuk mulai usaha',
     features: [
       FEATURE_KEYS.DASHBOARD,
@@ -89,7 +104,13 @@ export const PLANS: Record<SubscriptionPlan, PlanDefinition> = {
   lite: {
     id: 'lite',
     name: 'LITE ⭐',
-    price: 'Rp 69K',
+    price: 'Rp 79K',
+    pricing: [
+      { duration: 30, price: 79000, priceDisplay: 'Rp 79K', description: '30 Hari' },
+      { duration: 90, price: 219000, priceDisplay: 'Rp 219K', description: '90 Hari (~10% Hemat)' },
+      { duration: 180, price: 399000, priceDisplay: 'Rp 399K', description: '180 Hari (~15% Hemat)' },
+      { duration: 365, price: 699000, priceDisplay: 'Rp 699K', description: '365 Hari (~20% Hemat)' },
+    ],
     description: 'Untuk bisnis berkembang',
     features: [
       FEATURE_KEYS.DASHBOARD,
@@ -115,7 +136,13 @@ export const PLANS: Record<SubscriptionPlan, PlanDefinition> = {
   pro: {
     id: 'pro',
     name: 'PRO',
-    price: 'Rp 149K',
+    price: 'Rp 179K',
+    pricing: [
+      { duration: 30, price: 179000, priceDisplay: 'Rp 179K', description: '30 Hari' },
+      { duration: 90, price: 499000, priceDisplay: 'Rp 499K', description: '90 Hari (~10% Hemat)' },
+      { duration: 180, price: 899000, priceDisplay: 'Rp 899K', description: '180 Hari (~15% Hemat)' },
+      { duration: 365, price: 1599000, priceDisplay: 'Rp 1.599K', description: '365 Hari (~20% Hemat)' },
+    ],
     description: 'Untuk bisnis dengan tim & cabang',
     features: Object.values(FEATURE_KEYS).filter(k => k !== FEATURE_KEYS.CUSTOM_DOMAIN),
     limits: {
@@ -128,7 +155,13 @@ export const PLANS: Record<SubscriptionPlan, PlanDefinition> = {
   business: {
     id: 'business',
     name: 'BUSINESS',
-    price: 'Rp 299K+',
+    price: 'Rp 349K',
+    pricing: [
+      { duration: 30, price: 349000, priceDisplay: 'Rp 349K', description: '30 Hari' },
+      { duration: 90, price: 999000, priceDisplay: 'Rp 999K', description: '90 Hari (~10% Hemat)' },
+      { duration: 180, price: 1799000, priceDisplay: 'Rp 1.799K', description: '180 Hari (~15% Hemat)' },
+      { duration: 365, price: 2999000, priceDisplay: 'Rp 2.999K', description: '365 Hari (~20% Hemat)' },
+    ],
     description: 'Untuk skala besar & enterprise',
     features: Object.values(FEATURE_KEYS),
     limits: {

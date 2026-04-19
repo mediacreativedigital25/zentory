@@ -10,7 +10,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 export default function Stock() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,9 +22,11 @@ export default function Stock() {
   useEffect(() => {
     if (!profile) return;
 
-    const q = profile.role === 'superadmin'
+    const targetTenantId = domainTenantId || profile.tenantId;
+
+    const q = (profile.role === 'superadmin' && !domainTenantId)
       ? collection(db, 'products')
-      : query(collection(db, 'products'), where('tenantId', '==', profile.tenantId));
+      : query(collection(db, 'products'), where('tenantId', '==', targetTenantId));
       
     const unsubscribe = onSnapshot(q, (snap) => {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
@@ -35,9 +37,9 @@ export default function Stock() {
     });
 
     // Fetch categories for filtering
-    const catQ = profile.role === 'superadmin'
+    const catQ = (profile.role === 'superadmin' && !domainTenantId)
       ? collection(db, 'categories')
-      : query(collection(db, 'categories'), where('tenantId', '==', profile.tenantId));
+      : query(collection(db, 'categories'), where('tenantId', '==', targetTenantId));
     
     const unsubscribeCat = onSnapshot(catQ, (snap) => {
       setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
@@ -47,7 +49,7 @@ export default function Stock() {
       unsubscribe();
       unsubscribeCat();
     };
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   const filteredProducts = products.filter(p => {
     // Exclude service products (Jasa) from stock monitoring as they don't have physical stock

@@ -7,7 +7,7 @@ import { Wallet, TrendingUp, TrendingDown, Plus, Search, Filter, ArrowUpRight, A
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Finance() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,11 +26,13 @@ export default function Finance() {
   useEffect(() => {
     if (!profile) return;
 
-    const q = profile.role === 'superadmin'
+    const targetTenantId = domainTenantId || profile.tenantId;
+
+    const q = (profile.role === 'superadmin' && !domainTenantId)
       ? query(collection(db, 'transactions'), orderBy('date', 'desc'))
       : query(
           collection(db, 'transactions'),
-          where('tenantId', '==', profile.tenantId),
+          where('tenantId', '==', targetTenantId),
           orderBy('date', 'desc')
         );
 
@@ -49,15 +51,16 @@ export default function Finance() {
     });
 
     return () => unsubscribe();
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.tenantId) return;
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId) return;
 
     try {
       await addDoc(collection(db, 'transactions'), {
-        tenantId: profile.tenantId,
+        tenantId: targetTenantId,
         type: formData.type,
         amount: formData.amount,
         description: formData.description,

@@ -12,7 +12,7 @@ import PrintBarcodeModal from '../../components/PrintBarcodeModal';
 import { logStockChange } from '../../lib/stock-logger';
 
 export default function Products() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -70,17 +70,19 @@ export default function Products() {
   useEffect(() => {
     if (!profile) return;
 
-    const productsQuery = profile.role === 'superadmin' 
+    const targetTenantId = domainTenantId || profile.tenantId;
+
+    const productsQuery = (profile.role === 'superadmin' && !domainTenantId) 
       ? collection(db, 'products')
-      : query(collection(db, 'products'), where('tenantId', '==', profile.tenantId));
+      : query(collection(db, 'products'), where('tenantId', '==', targetTenantId));
       
-    const categoriesQuery = profile.role === 'superadmin'
+    const categoriesQuery = (profile.role === 'superadmin' && !domainTenantId)
       ? collection(db, 'categories')
-      : query(collection(db, 'categories'), where('tenantId', '==', profile.tenantId));
+      : query(collection(db, 'categories'), where('tenantId', '==', targetTenantId));
       
-    const warehousesQuery = profile.role === 'superadmin'
+    const warehousesQuery = (profile.role === 'superadmin' && !domainTenantId)
       ? collection(db, 'warehouses')
-      : query(collection(db, 'warehouses'), where('tenantId', '==', profile.tenantId));
+      : query(collection(db, 'warehouses'), where('tenantId', '==', targetTenantId));
 
     const unsubProducts = onSnapshot(productsQuery, (snap) => {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
@@ -108,7 +110,7 @@ export default function Products() {
     }
 
     let unsubGlobalLogs = () => {};
-    if (activeTab === 'history' && profile?.tenantId) {
+    if (activeTab === 'history' && targetTenantId) {
       const startTimestamp = new Date(dateRange.start);
       startTimestamp.setHours(0, 0, 0, 0);
       const endTimestamp = new Date(dateRange.end);
@@ -116,7 +118,7 @@ export default function Products() {
 
       const globalLogsQuery = query(
         collection(db, 'stock_logs'),
-        where('tenantId', '==', profile.tenantId),
+        where('tenantId', '==', targetTenantId),
         where('createdAt', '>=', startTimestamp),
         where('createdAt', '<=', endTimestamp),
         orderBy('createdAt', 'desc')
@@ -133,7 +135,7 @@ export default function Products() {
       unsubLogs();
       unsubGlobalLogs();
     };
-  }, [profile, selectedProductForHistory, activeTab, dateRange]);
+  }, [profile, domainTenantId, selectedProductForHistory, activeTab, dateRange]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -190,7 +192,8 @@ export default function Products() {
 
   const handleBulkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.tenantId) return;
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId) return;
 
     setConfirmConfig({
       isOpen: true,
@@ -202,21 +205,21 @@ export default function Products() {
           for (const product of bulkProducts) {
             const docRef = await addDoc(collection(db, 'products'), {
               ...product,
-              tenantId: profile.tenantId,
+              tenantId: targetTenantId,
               createdAt: serverTimestamp(),
             });
 
             if (product.stock > 0) {
               await logStockChange(
-                profile.tenantId!,
+                targetTenantId,
                 docRef.id,
                 product.name,
                 'IN',
                 product.stock,
                 0,
                 product.stock,
-                profile.uid,
-                profile.displayName || 'System',
+                profile!.uid,
+                profile!.displayName || 'System',
                 undefined,
                 'Initial bulk stock'
               );
@@ -246,7 +249,8 @@ export default function Products() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.tenantId) return;
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (!targetTenantId) return;
 
     // Check for unique SKU and Barcode (simple client-side check for now)
     const duplicateSku = products.find(p => p.sku === formData.sku && p.id !== editingProduct?.id);
@@ -276,15 +280,15 @@ export default function Products() {
             
             if (stockDiff !== 0) {
               await logStockChange(
-                profile.tenantId!,
+                targetTenantId,
                 editingProduct.id,
                 formData.name,
                 stockDiff > 0 ? 'ADJUSTMENT' : 'ADJUSTMENT',
                 Math.abs(stockDiff),
                 editingProduct.stock,
                 formData.stock,
-                profile.uid,
-                profile.displayName || 'System',
+                profile!.uid,
+                profile!.displayName || 'System',
                 undefined,
                 'Manual adjustment'
               );
@@ -292,21 +296,21 @@ export default function Products() {
           } else {
             const docRef = await addDoc(collection(db, 'products'), {
               ...formData,
-              tenantId: profile.tenantId,
+              tenantId: targetTenantId,
               createdAt: serverTimestamp(),
             });
 
             if (formData.stock > 0) {
               await logStockChange(
-                profile.tenantId!,
+                targetTenantId,
                 docRef.id,
                 formData.name,
                 'IN',
                 formData.stock,
                 0,
                 formData.stock,
-                profile.uid,
-                profile.displayName || 'System',
+                profile!.uid,
+                profile!.displayName || 'System',
                 undefined,
                 'Initial stock'
               );

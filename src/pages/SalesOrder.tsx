@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, onSnapshot, runTransaction, Timestamp, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, onSnapshot, runTransaction, Timestamp, limit, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Product, Customer, BankAccount, StockLog, Tenant } from '../types';
@@ -11,7 +11,7 @@ import { logStockChange } from '../lib/stock-logger';
 import { getDoc } from 'firebase/firestore';
 
 export default function SalesOrder() {
-  const { profile } = useAuth();
+  const { profile, domainTenantId } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -38,14 +38,15 @@ export default function SalesOrder() {
   const [isSettledToday, setIsSettledToday] = useState(false);
 
   useEffect(() => {
-    if (profile?.tenantId) {
-      getDoc(doc(db, 'tenants', profile.tenantId)).then(snap => {
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    if (targetTenantId) {
+      getDoc(doc(db, 'tenants', targetTenantId)).then(snap => {
         if (snap.exists()) {
           setTenantInfo({ id: snap.id, ...snap.data() } as Tenant);
         }
       });
     }
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   useEffect(() => {
     const handleAfterPrint = () => {
@@ -56,11 +57,21 @@ export default function SalesOrder() {
   }, []);
 
   useEffect(() => {
-    if (!profile?.tenantId) return;
+    if (!profile) return;
+    const targetTenantId = domainTenantId || profile.tenantId;
+    if (!targetTenantId && profile.role !== 'superadmin') return;
+
+    const pQuery = (profile.role === 'superadmin' && !domainTenantId)
+      ? collection(db, 'products')
+      : query(collection(db, 'products'), where('tenantId', '==', targetTenantId));
     
-    const pQuery = query(collection(db, 'products'), where('tenantId', '==', profile.tenantId));
-    const cQuery = query(collection(db, 'customers'), where('tenantId', '==', profile.tenantId));
-    const bQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId), where('isActive', '==', true));
+    const cQuery = (profile.role === 'superadmin' && !domainTenantId)
+      ? collection(db, 'customers')
+      : query(collection(db, 'customers'), where('tenantId', '==', targetTenantId));
+    
+    const bQuery = (profile.role === 'superadmin' && !domainTenantId)
+      ? query(collection(db, 'bank_accounts'), where('isActive', '==', true))
+      : query(collection(db, 'bank_accounts'), where('tenantId', '==', targetTenantId), where('isActive', '==', true));
 
     const unsubProducts = onSnapshot(pQuery, (snap) => {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
@@ -80,10 +91,10 @@ export default function SalesOrder() {
       // Check if TUNAI account exists, if not create it
       let tunaiAccount = banks.find(b => b.name.toUpperCase() === 'TUNAI');
       
-      if (!tunaiAccount && profile?.tenantId) {
+      if (!tunaiAccount && targetTenantId) {
         try {
-          const newBankRef = await addDoc(collection(db, 'bank_accounts'), {
-            tenantId: profile.tenantId,
+          await addDoc(collection(db, 'bank_accounts'), {
+            tenantId: targetTenantId,
             name: 'TUNAI',
             accountNumber: 'CASH',
             balance: 0,
@@ -109,33 +120,41 @@ export default function SalesOrder() {
       console.error('Error fetching bank accounts:', error);
     });
 
-    // Check if today is settled
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    if (targetTenantId) {
+      // Check if today is settled
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const settledQ = query(
-      collection(db, 'dailyClosings'),
-      where('tenantId', '==', profile.tenantId),
-      where('date', '>=', Timestamp.fromDate(startOfDay)),
-      where('date', '<=', Timestamp.fromDate(endOfDay)),
-      limit(1)
-    );
+      const settledQ = query(
+        collection(db, 'dailyClosings'),
+        where('tenantId', '==', targetTenantId),
+        where('date', '>=', Timestamp.fromDate(startOfDay)),
+        where('date', '<=', Timestamp.fromDate(endOfDay)),
+        limit(1)
+      );
 
-    const unsubSettled = onSnapshot(settledQ, (snap) => {
-      setIsSettledToday(!snap.empty);
-    }, (error) => {
-      console.error('Error fetching settlement status:', error);
-    });
+      const unsubSettled = onSnapshot(settledQ, (snap) => {
+        setIsSettledToday(!snap.empty);
+      }, (error) => {
+        console.error('Error fetching settlement status:', error);
+      });
+
+      return () => {
+        unsubProducts();
+        unsubCustomers();
+        unsubBanks();
+        unsubSettled();
+      };
+    }
 
     return () => {
       unsubProducts();
       unsubCustomers();
       unsubBanks();
-      unsubSettled();
     };
-  }, [profile]);
+  }, [profile, domainTenantId]);
 
   useEffect(() => {
     if (barcodeInputRef.current) {
@@ -220,11 +239,12 @@ export default function SalesOrder() {
     const now = new Date();
     const yearMonth = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0');
     const prefix = type === 'manual' ? 'M' : type === 'catalog' ? 'IN' : '0J';
+    const targetTenantId = domainTenantId || profile?.tenantId;
     
     // In a real app, you'd use a counter in Firestore to ensure uniqueness
     // For this demo, we'll use a random suffix or count existing orders
     const ordersRef = collection(db, 'orders');
-    const q = query(ordersRef, where('tenantId', '==', profile?.tenantId), where('type', '==', type));
+    const q = query(ordersRef, where('tenantId', '==', targetTenantId), where('type', '==', type));
     const snap = await getDocs(q);
     const sequence = (snap.size + 1).toString().padStart(6, '0');
     
@@ -249,8 +269,48 @@ export default function SalesOrder() {
       onConfirm: async () => {
         setConfirmConfig(null);
         setIsProcessing(true);
+        const targetTenantId = domainTenantId || profile?.tenantId;
         try {
-          const orderNumber = await generateOrderNumber(orderType);
+          const isKasir = profile?.role === 'kasir';
+          let orderNumber = '';
+
+          if (isKasir) {
+            // Generate number PYYYYMM000001
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const prefix = `P${year}${month}`;
+            
+            try {
+              const q = query(
+                collection(db, 'orders'),
+                where('tenantId', '==', targetTenantId),
+                where('orderNumber', '>=', prefix),
+                where('orderNumber', '<=', prefix + '\uf8ff'),
+                orderBy('orderNumber', 'desc'),
+                limit(1)
+              );
+              
+              const snap = await getDocs(q);
+              let nextIndex = 1;
+              
+              if (!snap.empty) {
+                const lastNum = snap.docs[0].data().orderNumber;
+                const lastIndexStr = lastNum.replace(prefix, '');
+                const lastIndex = parseInt(lastIndexStr, 10);
+                if (!isNaN(lastIndex)) {
+                  nextIndex = lastIndex + 1;
+                }
+              }
+              
+              orderNumber = `${prefix}${String(nextIndex).padStart(6, '0')}`;
+            } catch (queryErr) {
+              orderNumber = `${prefix}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+            }
+          } else {
+            orderNumber = await generateOrderNumber(orderType);
+          }
+
           const customer = customers.find(c => c.id === selectedCustomer);
           
           const orderRef = doc(collection(db, 'orders'));
@@ -305,7 +365,7 @@ export default function SalesOrder() {
               const item = cart.find(i => i.product.id === update.ref.id);
               if (item) {
                 logStockChange(
-                  profile?.tenantId!,
+                  targetTenantId!,
                   item.product.id,
                   item.product.name,
                   'SALE',
@@ -323,10 +383,10 @@ export default function SalesOrder() {
             // Create Order
             transaction.set(orderRef, {
               orderNumber,
-              tenantId: profile?.tenantId,
+              tenantId: targetTenantId,
               customerId: selectedCustomer || null,
               customerName: customer?.name || 'Guest',
-              type: orderType,
+              type: isKasir ? 'pos' : orderType,
               items: cart.map(item => ({
                 productId: item.product.id,
                 name: item.product.name,
@@ -349,7 +409,7 @@ export default function SalesOrder() {
             // 3. Create Financial Transaction (only if there's an actual payment)
             if (amountPaid > 0) {
               transaction.set(transactionRef, {
-                tenantId: profile?.tenantId,
+                tenantId: targetTenantId,
                 type: 'sale',
                 category: 'Sales',
                 amount: amountPaid, // Only record the actual amount paid
