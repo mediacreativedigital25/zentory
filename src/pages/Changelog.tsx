@@ -4,6 +4,55 @@ import { History, CheckCircle2, Rocket, Shield, Layout, ShoppingCart, UserCheck,
 
 const changelogData = [
   {
+    date: '22 April 2026',
+    version: 'v2.5.0',
+    title: 'Manajemen Penagihan Kolektif (Invoice Collection)',
+    icon: Wallet,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
+    changes: [
+      'Peluncuran Modul "Invoice Collection": Fitur baru untuk merangkum dan melacak sesi penagihan masal per pelanggan.',
+      'Tombol "Simpan Koleksi": Integrasi fungsi penyimpanan pada modal Tagihkan untuk mendokumentasikan setiap sesi penagihan.',
+      'Penomoran Koleksi Otomatis: Implementasi format ID unik (IC-YYYYMM-XXXXXX) untuk standarisasi dokumen penagihan.',
+      'Dashboard Finansial Kolektif: Ringkasan statistik nominal tertagih dan sisa piutang kolektif secara real-time.',
+      'Riwayat Detail Penagihan: Kemudahan melihat daftar rincian nomor order yang tercakup dalam satu sesi koleksi.',
+      'Optimasi Alur Kerja Kolektor: Mempercepat proses administrasi penagihan piutang pelanggan yang menumpuk.'
+    ]
+  },
+  {
+    date: '22 April 2026',
+    version: 'v2.4.0',
+    title: 'Disiplin Target & Rincian Pencapaian',
+    icon: BarChart3,
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50',
+    changes: [
+      'Implementasi "Target Locking": Otomatisasi penguncian target untuk bulan berjalan dan bulan lalu guna menjaga integritas perencanaan bisnis.',
+      'Upgrade Tabel Pencapaian: Penambahan kolom multi-target (Target 1, 2, 3) beserta persentase realisasi untuk setiap tingkatan.',
+      'Fitur "Shortfall Tracking": Kalkulasi otomatis sisa nominal (Kurang: Rp.XXX) yang dibutuhkan untuk mencapai setiap level target.',
+      'Sinkronisasi Zona Waktu (Local Time): Standarisasi penentuan kunci bulan (YYYY-MM) berdasarkan waktu lokal pengguna untuk akurasi data "Bulan Berjalan".',
+      'Peningkatan UX Dashboard: Penambahan indikator visual "Target Terkunci" pada menu Setting Target.',
+      'Optimasi Performa Query: Filter transaksi bulanan kini lebih presisi di semua komponen analisis.'
+    ]
+  },
+  {
+    date: '19 April 2026',
+    version: 'v2.3.0',
+    title: 'Keamanan Multi-Tenant & RBAC Berbasis Domain',
+    icon: Shield,
+    color: 'text-rose-600',
+    bgColor: 'bg-rose-50',
+    changes: [
+      'Isolasi Data Tenant (Domain-Specific): Implementasi domainTenantId untuk memastikan data hanya dapat diakses melalui domain kustom yang sah.',
+      'Kontekstualisasi Superadmin: Superadmin kini secara otomatis mengikuti cakupan tenant saat mengakses aplikasi via custom domain.',
+      'Restrukturisasi Role Staff: Pembatasan akses fitur finansial sensitif, tutup buku harian, dan manajemen user untuk keamanan internal.',
+      'Optimasi POS Terminal untuk Kasir: Kasir kini dapat mengakses modul Customers untuk efisiensi input data pelanggan langsung dari terminal POS.',
+      'Peningkatan Keamanan Dashboard: Filter data transaksi, produk, dan saldo bank kini sepenuhnya patuh pada isolasi tenant di domain kustom.',
+      'Proteksi Rute Ganda: Penguatan logika ProtectedRoute untuk mencegah akses lintas tenant meskipun pengguna memiliki token yang valid.',
+      'Logout Terpadu pada Halaman NoAccess: Kemudahan bagi pengguna untuk berganti akun langsung jika terkena blokir isolasi domain.'
+    ]
+  },
+  {
     date: '15 April 2026',
     version: 'v2.2.0',
     title: 'Manajemen Invoice & Pelacakan Piutang',

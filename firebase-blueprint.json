@@ -377,11 +377,52 @@
       "description": "Records of charity donations.",
       "type": "object",
       "properties": {
-        "tenantId": { "type": "string" },
         "amount": { "type": "number" },
-        "date": { "type": "string", "format": "date-time" }
+        "date": { "type": "string", "format": "date-time" },
+        "tenantId": { "type": "string" }
       },
       "required": ["tenantId", "amount", "date"]
+    },
+    "invoice_collection": {
+      "title": "Invoice Collection",
+      "description": "A collection of multiple invoices for a customer.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "collectionNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "orderIds": { "type": "array" },
+        "orderNumbers": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "totalPaid": { "type": "number" },
+        "totalSisa": { "type": "number" },
+        "createdBy": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "collectionNumber", "customerName", "orderIds", "totalAmount", "status"]
+    },
+    "payment_receipt": {
+      "title": "Payment Receipt",
+      "description": "A receipt for payments against invoices.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "receiptNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "paymentMethod": { "type": "string", "enum": ["Tunai", "Bank Transfer"] },
+        "bankAccountId": { "type": "string" },
+        "bankAccountName": { "type": "string" },
+        "amount": { "type": "number" },
+        "note": { "type": "string" },
+        "invoices": { "type": "array" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "receiptNumber", "customerId", "amount", "paymentMethod"]
     },
     "system_service": {
       "title": "System Service",
@@ -497,6 +538,14 @@
     "/charityRecords/{charityId}": {
       "schema": "charity_record",
       "description": "Records of charity donations"
+    },
+    "/invoice_collections/{collectionId}": {
+      "schema": "invoice_collection",
+      "description": "Collections of multiple invoices"
+    },
+    "/payment_receipts/{receiptId}": {
+      "schema": "payment_receipt",
+      "description": "Payment receipts for customer invoices"
     },
     "/system_services/{serviceId}": {
       "schema": "system_service",

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot, orderBy } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db, auth } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Product, Category, Warehouse, StockLog } from '../../types';
-import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon, RefreshCw, Upload, Camera, Printer, Wand2, History, ChevronLeft, ChevronRight } from 'lucide-react';
+import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
+import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon, RefreshCw, Upload, Camera, Printer, Wand2, History, ChevronLeft, ChevronRight, AlertCircle, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
 import ImageUpload from '../../components/ImageUpload';
@@ -32,6 +33,7 @@ export default function Products() {
     name: '',
     sku: '',
     barcode: '',
+    minStock: 0,
     hpp: 0,
     price: 0,
     stock: 0,
@@ -60,12 +62,17 @@ export default function Products() {
     hpp: 0,
     price: 0,
     stock: 0,
+    minStock: 0,
     category: '',
     warehouseId: '',
     description: '',
     imageUrl: '',
     type: 'manual' as 'manual' | 'service',
+    variants: [] as any[],
+    wholesalePrices: [] as { minQuantity: number; price: number }[],
   });
+  const [formDisplayType, setFormDisplayType] = useState<'tunggal' | 'variasi' | 'grosir' | 'service'>('tunggal');
+  const [showPriceSettings, setShowPriceSettings] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -87,26 +94,27 @@ export default function Products() {
     const unsubProducts = onSnapshot(productsQuery, (snap) => {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
       setLoading(false);
-    });
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'products', auth, profile));
 
     const unsubCategories = onSnapshot(categoriesQuery, (snap) => {
       setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
-    });
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'categories', auth, profile));
 
     const unsubWarehouses = onSnapshot(warehousesQuery, (snap) => {
       setWarehouses(snap.docs.map(d => ({ id: d.id, ...d.data() } as Warehouse)));
-    });
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'warehouses', auth, profile));
 
     let unsubLogs = () => {};
-    if (selectedProductForHistory) {
+    if (selectedProductForHistory && targetTenantId) {
       const logsQuery = query(
         collection(db, 'stock_logs'),
+        where('tenantId', '==', targetTenantId),
         where('productId', '==', selectedProductForHistory.id),
         orderBy('createdAt', 'desc')
       );
       unsubLogs = onSnapshot(logsQuery, (snap) => {
         setStockLogs(snap.docs.map(d => ({ id: d.id, ...d.data() } as StockLog)));
-      });
+      }, (error) => handleFirestoreError(error, OperationType.GET, 'stock_logs', auth, profile));
     }
 
     let unsubGlobalLogs = () => {};
@@ -125,7 +133,7 @@ export default function Products() {
       );
       unsubGlobalLogs = onSnapshot(globalLogsQuery, (snap) => {
         setGlobalStockLogs(snap.docs.map(d => ({ id: d.id, ...d.data() } as StockLog)));
-      });
+      }, (error) => handleFirestoreError(error, OperationType.GET, 'global_stock_logs', auth, profile));
     }
 
     return () => {
@@ -168,6 +176,7 @@ export default function Products() {
       name: '',
       sku: generateSKU(),
       barcode: '',
+      minStock: 0,
       hpp: 0,
       price: 0,
       stock: 0,
@@ -230,6 +239,7 @@ export default function Products() {
             name: '',
             sku: '',
             barcode: '',
+            minStock: 0,
             hpp: 0,
             price: 0,
             stock: 0,
@@ -274,51 +284,77 @@ export default function Products() {
       onConfirm: async () => {
         setConfirmConfig(null);
         try {
+          // Consolidate data if variants exist
+          let finalData = { ...formData };
+          if (formData.variants && formData.variants.length > 0) {
+            finalData.stock = formData.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+            finalData.price = Math.min(...formData.variants.map(v => v.price || 0)); // Starting price
+            finalData.hpp = Math.min(...formData.variants.map(v => v.hpp || 0));
+            finalData.minStock = Math.min(...formData.variants.map(v => v.minStock || 0));
+          }
+
           if (editingProduct) {
-            const stockDiff = formData.stock - editingProduct.stock;
-            await updateDoc(doc(db, 'products', editingProduct.id), formData);
+            const stockDiff = finalData.stock - editingProduct.stock;
+            await updateDoc(doc(db, 'products', editingProduct.id), finalData);
             
             if (stockDiff !== 0) {
               await logStockChange(
                 targetTenantId,
                 editingProduct.id,
-                formData.name,
-                stockDiff > 0 ? 'ADJUSTMENT' : 'ADJUSTMENT',
+                finalData.name,
+                'ADJUSTMENT',
                 Math.abs(stockDiff),
                 editingProduct.stock,
-                formData.stock,
+                finalData.stock,
                 profile!.uid,
                 profile!.displayName || 'System',
                 undefined,
-                'Manual adjustment'
+                'Manual adjustment (including variants update)'
               );
             }
           } else {
             const docRef = await addDoc(collection(db, 'products'), {
-              ...formData,
+              ...finalData,
               tenantId: targetTenantId,
               createdAt: serverTimestamp(),
             });
 
-            if (formData.stock > 0) {
+            if (finalData.stock > 0) {
               await logStockChange(
                 targetTenantId,
                 docRef.id,
-                formData.name,
+                finalData.name,
                 'IN',
-                formData.stock,
+                finalData.stock,
                 0,
-                formData.stock,
+                finalData.stock,
                 profile!.uid,
                 profile!.displayName || 'System',
                 undefined,
-                'Initial stock'
+                'Initial stock (from variants)'
               );
             }
           }
           setIsModalOpen(false);
           setEditingProduct(null);
-          setFormData({ name: '', sku: '', barcode: '', hpp: 0, price: 0, stock: 0, category: '', warehouseId: '', description: '', imageUrl: '', type: 'manual' });
+          setFormDisplayType('tunggal');
+          setFormData({ 
+            name: '', 
+            sku: '', 
+            barcode: '', 
+            hpp: 0, 
+            price: 0, 
+            stock: 0, 
+            minStock: 0,
+            category: '', 
+            warehouseId: '', 
+            description: '', 
+            imageUrl: '', 
+            type: 'manual', 
+            variants: [],
+            wholesalePrices: [] 
+          });
+          setShowPriceSettings(false);
         } catch (err) {
           console.error(err);
           alert('Failed to save product.');
@@ -342,6 +378,12 @@ export default function Products() {
 
   const openEditModal = (product: Product) => {
     setEditingProduct(product);
+    const displayType = product.type === 'service' ? 'service'
+      : (product.variants && product.variants.length > 0) ? 'variasi'
+      : (product.wholesalePrices && product.wholesalePrices.length > 0) ? 'grosir'
+      : 'tunggal';
+    
+    setFormDisplayType(displayType);
     setFormData({
       name: product.name,
       sku: product.sku,
@@ -349,12 +391,16 @@ export default function Products() {
       hpp: product.hpp,
       price: product.price,
       stock: product.stock,
+      minStock: product.minStock || 0,
       category: product.category,
       warehouseId: product.warehouseId || '',
       description: product.description || '',
       imageUrl: product.imageUrl || '',
       type: product.type || 'manual',
+      variants: product.variants || [],
+      wholesalePrices: product.wholesalePrices || [],
     });
+    setShowPriceSettings(displayType === 'variasi' ? true : false);
     setIsModalOpen(true);
   };
 
@@ -455,6 +501,7 @@ export default function Products() {
           <button
             onClick={() => { 
               setEditingProduct(null); 
+              setFormDisplayType('tunggal');
               setFormData({ 
                 name: '', 
                 sku: generateSKU(), 
@@ -462,12 +509,16 @@ export default function Products() {
                 hpp: 0, 
                 price: 0, 
                 stock: 0, 
+                minStock: 0,
                 category: '', 
                 warehouseId: '', 
                 description: '', 
                 imageUrl: '', 
-                type: 'manual' 
+                type: 'manual',
+                variants: [],
+                wholesalePrices: []
               }); 
+              setShowPriceSettings(false);
               setIsModalOpen(true); 
             }}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
@@ -562,7 +613,14 @@ export default function Products() {
                           referrerPolicy="no-referrer"
                         />
                       </div>
-                      <span className="font-medium text-gray-900">{product.name}</span>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900 leading-none mb-1">{product.name}</span>
+                        {product.variants && product.variants.length > 0 && (
+                            <span className="flex items-center text-[9px] text-indigo-500 font-bold bg-indigo-50 px-1.5 py-0.5 rounded-full w-fit">
+                                <Layers className="w-2.5 h-2.5 mr-1" /> {product.variants.length} Variasi
+                            </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 font-mono">
@@ -587,12 +645,24 @@ export default function Products() {
                         NON-STOCK
                       </span>
                     ) : (
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                        product.stock > 10 ? 'bg-green-50 text-green-700' : 
-                        product.stock > 0 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'
-                      }`}>
-                        {product.stock} TERSEDIA
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-2 py-1 rounded-full text-center text-[10px] font-bold ${
+                          product.stock > (product.minStock || 10) ? 'bg-green-50 text-green-700' : 
+                          product.stock > 0 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'
+                        }`}>
+                          {product.stock} TERSEDIA
+                        </span>
+                        {product.stock <= (product.minStock || 0) && product.stock > 0 && (
+                          <span className="text-[9px] font-bold text-red-500 animate-pulse bg-red-50 px-1 rounded flex items-center justify-center">
+                            <AlertCircle className="w-2 h-2 mr-1" /> STOK KRITIS
+                          </span>
+                        )}
+                        {product.stock <= 0 && (
+                          <span className="text-[9px] font-bold text-red-600 bg-red-50 px-1 rounded flex items-center justify-center">
+                            <X className="w-2 h-2 mr-1" /> HABIS
+                          </span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -893,10 +963,11 @@ export default function Products() {
                       <tr className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
                         <th className="pb-4 px-2">Barcode</th>
                         <th className="pb-4 px-2">Nama Produk</th>
-                        <th className="pb-4 px-2 w-32">SKU (Auto)</th>
-                        <th className="pb-4 px-2 w-32">Harga Beli</th>
+                        <th className="pb-4 px-2 w-32 text-indigo-100">SKU (Auto)</th>
+                        <th className="pb-4 px-2 w-24">Min QTY</th>
+                        <th className="pb-4 px-2 w-32">HPP</th>
                         <th className="pb-4 px-2 w-32">Harga Jual</th>
-                        <th className="pb-4 px-2 w-24">QTY</th>
+                        <th className="pb-4 px-2 w-24">Stock Awal</th>
                         <th className="pb-4 px-2 w-40">Kategori</th>
                         <th className="pb-4 px-2 w-40">Gudang</th>
                         <th className="pb-4 px-2 w-48">Foto Produk</th>
@@ -957,32 +1028,41 @@ export default function Products() {
                             />
                           </td>
                           <td className="py-3 px-2">
-                            <input
-                              type="number"
-                              required
-                              value={row.hpp || 0}
-                              onChange={(e) => updateBulkRow(index, 'hpp', Number(e.target.value))}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                            />
-                          </td>
-                          <td className="py-3 px-2">
-                            <input
-                              type="number"
-                              required
-                              value={row.price || 0}
-                              onChange={(e) => updateBulkRow(index, 'price', Number(e.target.value))}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold text-indigo-600"
-                            />
-                          </td>
-                          <td className="py-3 px-2">
-                            <input
-                              type="number"
-                              required
-                              value={row.stock || 0}
-                              onChange={(e) => updateBulkRow(index, 'stock', Number(e.target.value))}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                            />
-                          </td>
+                             <input
+                               type="number"
+                               required
+                               value={row.minStock || 0}
+                               onChange={(e) => updateBulkRow(index, 'minStock', Number(e.target.value))}
+                               className="w-full px-3 py-2 border border-yellow-200 bg-yellow-50/30 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none text-sm"
+                             />
+                           </td>
+                           <td className="py-3 px-2">
+                             <input
+                               type="number"
+                               required
+                               value={row.hpp || 0}
+                               onChange={(e) => updateBulkRow(index, 'hpp', Number(e.target.value))}
+                               className="w-full px-3 py-2 border border-red-200 bg-red-50/30 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm"
+                             />
+                           </td>
+                           <td className="py-3 px-2">
+                             <input
+                               type="number"
+                               required
+                               value={row.price || 0}
+                               onChange={(e) => updateBulkRow(index, 'price', Number(e.target.value))}
+                               className="w-full px-3 py-2 border border-green-200 bg-green-50/30 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold text-green-700"
+                             />
+                           </td>
+                           <td className="py-3 px-2">
+                             <input
+                               type="number"
+                               required
+                               value={row.stock || 0}
+                               onChange={(e) => updateBulkRow(index, 'stock', Number(e.target.value))}
+                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                             />
+                           </td>
                           <td className="py-3 px-2">
                             <select
                               required
@@ -1077,22 +1157,45 @@ export default function Products() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-                <div className="flex p-1 bg-gray-100 rounded-xl mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, type: 'manual', sku: editingProduct?.type === 'manual' ? formData.sku : generateSKU() })}
-                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${formData.type === 'manual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                  >
-                    Manual Produk
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, type: 'service', sku: editingProduct?.type === 'service' ? formData.sku : generateServiceSKU(), hpp: 0, stock: 0, warehouseId: '' })}
-                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${formData.type === 'service' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                  >
-                    Jasa (Service)
-                  </button>
+              <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                <div className="space-y-4">
+                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-widest text-[10px]">Tipe Produk</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {[
+                      { id: 'tunggal', label: 'Produk Tunggal', description: 'Satu item, satu harga' },
+                      { id: 'variasi', label: 'Produk Variasi', description: 'Beberapa warna/ukuran' },
+                      { id: 'grosir', label: 'Produk Grosir', description: 'Harga bertingkat' },
+                      { id: 'service', label: 'Jasa (Service)', description: 'Layanan tanpa stok' }
+                    ].map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          setFormDisplayType(t.id as any);
+                          const isService = t.id === 'service';
+                          setFormData({ 
+                            ...formData, 
+                            type: isService ? 'service' : 'manual',
+                            sku: (editingProduct && (editingProduct.type === (isService ? 'service' : 'manual'))) ? formData.sku : (isService ? generateServiceSKU() : generateSKU()),
+                            hpp: isService ? 0 : formData.hpp,
+                            stock: isService ? 0 : formData.stock,
+                            warehouseId: isService ? '' : formData.warehouseId,
+                            variants: t.id === 'variasi' ? (formData.variants.length > 0 ? formData.variants : [{ id: Math.random().toString(36).substr(2, 9), name: 'Default', sku: `${formData.sku}-1`, stock: 0, hpp: 0, price: 0, minStock: 0 }]) : [],
+                            wholesalePrices: t.id === 'grosir' ? (formData.wholesalePrices.length > 0 ? formData.wholesalePrices : [{ minQuantity: 10, price: 0 }]) : []
+                          });
+                          setShowPriceSettings(t.id === 'variasi');
+                        }}
+                        className={`p-3 text-left rounded-xl border-2 transition-all group ${
+                          formDisplayType === t.id 
+                            ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50' 
+                            : 'border-gray-100 bg-white hover:border-indigo-200'
+                        }`}
+                      >
+                        <p className={`text-xs font-black mb-1 ${formDisplayType === t.id ? 'text-indigo-600' : 'text-gray-900'}`}>{t.label}</p>
+                        <p className="text-[9px] text-gray-500 leading-tight">{t.description}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1162,7 +1265,7 @@ export default function Products() {
                       </div>
                     </div>
                   </div>
-                  <div className={formData.type === 'service' ? 'col-span-2' : ''}>
+                  <div className={formDisplayType === 'service' ? 'col-span-2' : ''}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                     <select
                       required
@@ -1174,7 +1277,7 @@ export default function Products() {
                       {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                   </div>
-                  {formData.type === 'manual' && (
+                  {formDisplayType !== 'service' && (
                     <>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Gudang</label>
@@ -1187,41 +1290,262 @@ export default function Products() {
                           {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center text-red-600">
-                          HPP (Rp.) <DollarSign className="w-3 h-3 ml-1" />
-                        </label>
-                        <input
-                          type="number"
-                          required
-                          value={formData.hpp || 0}
-                          onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
-                          className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
+                      
+                      {formDisplayType === 'variasi' && (
+                        <div className="col-span-2 pt-2 border-t border-gray-100">
+                          <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-4">
+                              <div className="flex justify-between items-center">
+                                  <h4 className="text-sm font-bold text-indigo-900 flex items-center">
+                                      <Layers className="w-4 h-4 mr-2" /> Pengaturan Variasi
+                                  </h4>
+                                  <button 
+                                      type="button" 
+                                      onClick={() => {
+                                          const newVariants = [...formData.variants, { 
+                                              id: Math.random().toString(36).substr(2, 9), 
+                                              name: `Variasi ${formData.variants.length + 1}`,
+                                              sku: `${formData.sku}-${formData.variants.length + 1}`,
+                                              stock: 0, 
+                                              hpp: 0, 
+                                              price: 0, 
+                                              minStock: 0 
+                                          }];
+                                          setFormData({ ...formData, variants: newVariants });
+                                      }}
+                                      className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center px-3 py-1.5 rounded-lg shadow-sm"
+                                  >
+                                      <Plus className="w-3.5 h-3.5 mr-1" /> Tambah Variasi
+                                  </button>
+                              </div>
+
+                              <div className="overflow-x-auto">
+                                  <table className="w-full text-left text-xs border-separate border-spacing-y-2">
+                                      <thead>
+                                          <tr className="text-gray-400 font-bold uppercase tracking-widest text-[9px]">
+                                              <th className="px-2 pb-1">Jenis</th>
+                                              <th className="px-2 pb-1 w-20">Stock Awal</th>
+                                              <th className="px-2 pb-1 w-28">HPP</th>
+                                              <th className="px-2 pb-1 w-28">Harga Jual</th>
+                                              <th className="px-2 pb-1 w-16">Min QTY</th>
+                                              <th className="px-2 pb-1 w-10"></th>
+                                          </tr>
+                                      </thead>
+                                      <tbody>
+                                          {formData.variants.map((v, idx) => (
+                                              <tr key={v.id} className="bg-white rounded-xl shadow-sm border border-gray-100">
+                                                  <td className="p-2 first:rounded-l-xl">
+                                                      <input 
+                                                          type="text"
+                                                          value={v.name}
+                                                          onChange={(e) => {
+                                                              const newVars = [...formData.variants];
+                                                              newVars[idx].name = e.target.value;
+                                                              setFormData({ ...formData, variants: newVars });
+                                                          }}
+                                                          placeholder="Warna / Ukuran..."
+                                                          className="w-full bg-transparent border-none outline-none font-bold text-gray-900"
+                                                      />
+                                                  </td>
+                                                  <td className="p-2">
+                                                      <input 
+                                                          type="number"
+                                                          value={v.stock}
+                                                          onChange={(e) => {
+                                                              const newVars = [...formData.variants];
+                                                              newVars[idx].stock = Number(e.target.value);
+                                                              setFormData({ ...formData, variants: newVars });
+                                                          }}
+                                                          className="w-full bg-transparent border-none outline-none text-center"
+                                                      />
+                                                  </td>
+                                                  <td className="p-2">
+                                                      <input 
+                                                          type="number"
+                                                          value={v.hpp}
+                                                          onChange={(e) => {
+                                                              const newVars = [...formData.variants];
+                                                              newVars[idx].hpp = Number(e.target.value);
+                                                              setFormData({ ...formData, variants: newVars });
+                                                          }}
+                                                          className="w-full bg-transparent border-none outline-none text-red-600 font-medium"
+                                                      />
+                                                  </td>
+                                                  <td className="p-2">
+                                                      <input 
+                                                          type="number"
+                                                          value={v.price}
+                                                          onChange={(e) => {
+                                                              const newVars = [...formData.variants];
+                                                              newVars[idx].price = Number(e.target.value);
+                                                              setFormData({ ...formData, variants: newVars });
+                                                          }}
+                                                          className="w-full bg-transparent border-none outline-none font-bold text-green-700"
+                                                      />
+                                                  </td>
+                                                  <td className="p-2">
+                                                      <input 
+                                                          type="number"
+                                                          value={v.minStock}
+                                                          onChange={(e) => {
+                                                              const newVars = [...formData.variants];
+                                                              newVars[idx].minStock = Number(e.target.value);
+                                                              setFormData({ ...formData, variants: newVars });
+                                                          }}
+                                                          className="w-full bg-transparent border-none outline-none text-center text-[10px]"
+                                                      />
+                                                  </td>
+                                                  <td className="p-2 last:rounded-r-xl">
+                                                      <button 
+                                                          type="button"
+                                                          onClick={() => {
+                                                              setFormData({ ...formData, variants: formData.variants.filter((_, i) => i !== idx) });
+                                                          }}
+                                                          className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                                                      >
+                                                          <Trash2 className="w-3.5 h-3.5" />
+                                                      </button>
+                                                  </td>
+                                              </tr>
+                                          ))}
+                                      </tbody>
+                                  </table>
+                              </div>
+                              <p className="text-[10px] text-indigo-400 italic font-medium">
+                                  * Data harga & stok utama akan otomatis diakumulasi dari daftar variasi.
+                              </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {(formDisplayType === 'tunggal' || formDisplayType === 'grosir') && (
+                        <>
+                          <div className="col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-yellow-700 mb-1 flex items-center">
+                                Min. Stock <AlertCircle className="w-3 h-3 ml-1" />
+                              </label>
+                              <input
+                                type="number"
+                                required
+                                value={formData.minStock || 0}
+                                onChange={(e) => setFormData({ ...formData, minStock: Number(e.target.value) })}
+                                className="w-full px-4 py-2 border border-yellow-100 rounded-lg outline-none focus:ring-2 focus:ring-yellow-500 bg-yellow-50/30"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-bold text-red-600 mb-1 flex items-center">
+                                HPP (Rp.) <DollarSign className="w-3 h-3 ml-1" />
+                              </label>
+                              <input
+                                type="number"
+                                required
+                                value={formData.hpp || 0}
+                                onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
+                                className="w-full px-4 py-2 border border-red-100 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-bold text-green-600 mb-1 flex items-center">
+                                Harga Jual <DollarSign className="w-3 h-3 ml-1" />
+                              </label>
+                              <input
+                                type="number"
+                                required
+                                value={formData.price || 0}
+                                onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                                className="w-full px-4 py-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-bold text-green-700"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Awal</label>
+                              <input
+                                type="number"
+                                required
+                                value={formData.stock || 0}
+                                onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {formDisplayType === 'grosir' && (
+                        <div className="col-span-2">
+                          <div className="pt-2 border-t border-gray-100 mt-2">
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="block text-sm font-bold text-gray-700">Harga Grosir (Bertingkat)</label>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setFormData({ 
+                                        ...formData, 
+                                        wholesalePrices: [...formData.wholesalePrices, { minQuantity: 10, price: 0 }] 
+                                    })}
+                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center"
+                                >
+                                    <Plus className="w-3 h-3 mr-1" /> Tambah Tingkatan
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {formData.wholesalePrices.map((tier, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                        <div className="w-20">
+                                            <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Min. Qty</label>
+                                            <input 
+                                                type="number"
+                                                value={tier.minQuantity}
+                                                onChange={(e) => {
+                                                    const newPrices = [...formData.wholesalePrices];
+                                                    newPrices[idx].minQuantity = Number(e.target.value);
+                                                    setFormData({ ...formData, wholesalePrices: newPrices });
+                                                }}
+                                                className="w-full px-2 py-1 border border-gray-200 rounded text-xs"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Harga Grosir</label>
+                                            <input 
+                                                type="number"
+                                                value={tier.price}
+                                                onChange={(e) => {
+                                                    const newPrices = [...formData.wholesalePrices];
+                                                    newPrices[idx].price = Number(e.target.value);
+                                                    setFormData({ ...formData, wholesalePrices: newPrices });
+                                                }}
+                                                className="w-full px-2 py-1 border border-gray-200 rounded text-xs font-bold text-indigo-600"
+                                            />
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData({ 
+                                                    ...formData, 
+                                                    wholesalePrices: formData.wholesalePrices.filter((_, i) => i !== idx) 
+                                                });
+                                            }}
+                                            className="p-1 text-gray-400 hover:text-red-600 mt-4"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
-                  <div className={formData.type === 'service' ? 'col-span-2' : ''}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center text-green-600">
-                      Harga Jual (Rp.) <DollarSign className="w-3 h-3 ml-1" />
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      value={formData.price || 0}
-                      onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                  {formData.type === 'manual' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Stock Awal</label>
+                  {formDisplayType === 'service' && (
+                    <div className="col-span-2 text-green-600">
+                      <label className="block text-sm font-bold mb-1 flex items-center">
+                        Harga Jual <DollarSign className="w-3 h-3 ml-1" />
+                      </label>
                       <input
                         type="number"
                         required
-                        value={formData.stock || 0}
-                        onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={formData.price || 0}
+                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                        className="w-full px-4 py-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-bold text-green-700"
                       />
                     </div>
                   )}

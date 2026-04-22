@@ -15,7 +15,7 @@ export default function PurchaseRequests() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState<PurchaseRequest | null>(null);
   const [formData, setFormData] = useState({
-    items: [{ productId: '', name: '', quantity: 1 }],
+    items: [{ productId: '', variantId: '', name: '', variantName: '', quantity: 1 }],
     reason: '',
   });
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; type?: 'danger' | 'info' | 'warning' } | null>(null);
@@ -92,7 +92,7 @@ export default function PurchaseRequests() {
       }
       setIsModalOpen(false);
       setEditingRequest(null);
-      setFormData({ items: [{ productId: '', name: '', quantity: 1 }], reason: '' });
+      setFormData({ items: [{ productId: '', variantId: '', name: '', variantName: '', quantity: 1 }], reason: '' });
     } catch (err) {
       console.error(err);
       alert('Failed to save purchase request.');
@@ -115,7 +115,7 @@ export default function PurchaseRequests() {
   const addItem = () => {
     setFormData({
       ...formData,
-      items: [...formData.items, { productId: '', name: '', quantity: 1 }]
+      items: [...formData.items, { productId: '', variantId: '', name: '', variantName: '', quantity: 1 }]
     });
   };
 
@@ -131,7 +131,30 @@ export default function PurchaseRequests() {
     const product = products.find(p => p.id === productId);
     if (!product) return;
     const newItems = [...formData.items];
-    newItems[index] = { ...newItems[index], productId, name: product.name };
+    newItems[index] = { 
+      ...newItems[index], 
+      productId, 
+      name: product.name,
+      variantId: '',
+      variantName: ''
+    };
+    setFormData({ ...formData, items: newItems });
+  };
+
+  const updateVariant = (index: number, variantId: string) => {
+    const item = formData.items[index];
+    const product = products.find(p => p.id === item.productId);
+    if (!product || !product.variants) return;
+    
+    const variant = product.variants.find(v => v.id === variantId);
+    if (!variant) return;
+
+    const newItems = [...formData.items];
+    newItems[index] = { 
+      ...newItems[index], 
+      variantId, 
+      variantName: variant.name 
+    };
     setFormData({ ...formData, items: newItems });
   };
 
@@ -183,7 +206,9 @@ export default function PurchaseRequests() {
 
     const itemsHtml = pr.items.map(item => `
       <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+          ${item.name} ${item.variantName ? `<span style="color: #6366f1;">(${item.variantName})</span>` : ''}
+        </td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
       </tr>
     `).join('');
@@ -253,7 +278,7 @@ export default function PurchaseRequests() {
           <p className="text-gray-500">Permintaan pembelian internal untuk persetujuan.</p>
         </div>
         <button
-          onClick={() => { setEditingRequest(null); setFormData({ items: [{ productId: '', name: '', quantity: 1 }], reason: '' }); setIsModalOpen(true); }}
+          onClick={() => { setEditingRequest(null); setFormData({ items: [{ productId: '', variantId: '', name: '', variantName: '', quantity: 1 }], reason: '' }); setIsModalOpen(true); }}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -286,9 +311,13 @@ export default function PurchaseRequests() {
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-900">{pr.items.length} Items</p>
-                    <p className="text-xs text-gray-500 truncate max-w-[200px]">
-                      {pr.items.map(i => i.name).join(', ')}
-                    </p>
+                    <div className="flex flex-col gap-0.5">
+                      {pr.items.map((i, idx) => (
+                        <p key={idx} className="text-xs text-gray-500 truncate max-w-[200px]">
+                          • {i.name} {i.variantName && <span className="text-indigo-400">[{i.variantName}]</span>} ({i.quantity})
+                        </p>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(pr.status)}`}>
@@ -363,39 +392,61 @@ export default function PurchaseRequests() {
                   </div>
                   
                   <div className="space-y-3">
-                    {formData.items.map((item, index) => (
-                      <div key={index} className="flex gap-3 items-start bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <div className="flex-1">
-                          <select
-                            required
-                            value={item.productId}
-                            onChange={(e) => updateItem(index, e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                          >
-                            <option value="">Pilih Produk</option>
-                            {products.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>)}
-                          </select>
+                    {formData.items.map((item, index) => {
+                      const selectedProduct = products.find(p => p.id === item.productId);
+                      return (
+                        <div key={index} className="flex flex-col gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                          <div className="flex gap-3 items-start">
+                            <div className="flex-1">
+                              <select
+                                required
+                                value={item.productId}
+                                onChange={(e) => updateItem(index, e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                              >
+                                <option value="">Pilih Produk</option>
+                                {products.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>)}
+                              </select>
+                            </div>
+                            <div className="w-24">
+                              <input
+                                type="number"
+                                required
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => updateQty(index, Number(e.target.value))}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Qty"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          
+                          {selectedProduct?.variants && selectedProduct.variants.length > 0 && (
+                            <div className="flex gap-3 items-center">
+                              <div className="w-6 border-l-2 border-b-2 border-indigo-200 h-4 rounded-bl-lg -mt-4 ml-4"></div>
+                              <select
+                                required
+                                value={item.variantId || ''}
+                                onChange={(e) => updateVariant(index, e.target.value)}
+                                className="flex-1 px-3 py-1.5 border border-indigo-100 bg-indigo-50/30 rounded-lg text-xs font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                              >
+                                <option value="">Pilih Variasi</option>
+                                {selectedProduct.variants.map(v => (
+                                  <option key={v.id} value={v.id}>{v.name} (S: {v.stock})</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                         </div>
-                        <div className="w-24">
-                          <input
-                            type="number"
-                            required
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => updateQty(index, Number(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="Qty"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 

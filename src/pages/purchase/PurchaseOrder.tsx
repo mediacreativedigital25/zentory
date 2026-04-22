@@ -19,7 +19,7 @@ export default function PurchaseOrders() {
   const [formData, setFormData] = useState({
     supplierId: '',
     prId: '',
-    items: [{ productId: '', name: '', quantity: 1, price: 0 }],
+    items: [{ productId: '', variantId: '', name: '', quantity: 1, price: 0 }],
     status: 'draft' as const,
   });
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; type?: 'danger' | 'info' | 'warning' } | null>(null);
@@ -122,7 +122,7 @@ export default function PurchaseOrders() {
       }
       setIsModalOpen(false);
       setEditingOrder(null);
-      setFormData({ supplierId: '', prId: '', items: [{ productId: '', name: '', quantity: 1, price: 0 }], status: 'draft' });
+      setFormData({ supplierId: '', prId: '', items: [{ productId: '', variantId: '', name: '', quantity: 1, price: 0 }], status: 'draft' });
     } catch (err) {
       console.error(err);
       alert('Failed to save purchase order.');
@@ -145,7 +145,7 @@ export default function PurchaseOrders() {
   const addItem = () => {
     setFormData({
       ...formData,
-      items: [...formData.items, { productId: '', name: '', quantity: 1, price: 0 }]
+      items: [...formData.items, { productId: '', variantId: '', name: '', quantity: 1, price: 0 }]
     });
   };
 
@@ -157,11 +157,35 @@ export default function PurchaseOrders() {
     });
   };
 
-  const updateItem = (index: number, productId: string) => {
+  const updateItem = (index: number, productId: string, variantId?: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
+    
     const newItems = [...formData.items];
-    newItems[index] = { ...newItems[index], productId, name: product.name, price: product.hpp || 0 };
+    let name = product.name;
+    let price = product.hpp || 0;
+    
+    if (variantId && product.variants) {
+      const variant = product.variants.find((v: any) => v.id === variantId);
+      if (variant) {
+        name = `${product.name} - ${variant.name}`;
+        price = variant.hpp || 0;
+      }
+    } else if (product.variants && product.variants.length > 0) {
+      // If product has variants but none selected yet, default to first variant
+      const variant = product.variants[0];
+      name = `${product.name} - ${variant.name}`;
+      price = variant.hpp || 0;
+      variantId = variant.id;
+    }
+
+    newItems[index] = { 
+      ...newItems[index], 
+      productId, 
+      variantId, // Ensure this is stored if needed
+      name, 
+      price 
+    };
     setFormData({ ...formData, items: newItems });
   };
 
@@ -177,11 +201,23 @@ export default function PurchaseOrders() {
     
     const newItems = pr.items.map(item => {
       const product = products.find(p => p.id === item.productId);
+      let price = product?.hpp || 0;
+      let name = item.name;
+
+      if (item.variantId && product?.variants) {
+        const variant = product.variants.find(v => v.id === item.variantId);
+        if (variant) {
+          price = variant.hpp || 0;
+          name = `${product.name} - ${variant.name}`;
+        }
+      }
+
       return {
         productId: item.productId,
-        name: item.name,
+        variantId: item.variantId || null,
+        name: name,
         quantity: item.quantity,
-        price: product?.hpp || 0
+        price: price
       };
     });
 
@@ -289,7 +325,7 @@ export default function PurchaseOrders() {
           <p className="text-gray-500">Dokumen resmi pesanan pembelian ke supplier.</p>
         </div>
         <button
-          onClick={() => { setEditingOrder(null); setFormData({ supplierId: '', prId: '', items: [{ productId: '', name: '', quantity: 1, price: 0 }], status: 'draft' }); setIsModalOpen(true); }}
+          onClick={() => { setEditingOrder(null); setFormData({ supplierId: '', prId: '', items: [{ productId: '', variantId: '', name: '', quantity: 1, price: 0 }], status: 'draft' }); setIsModalOpen(true); }}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -428,6 +464,19 @@ export default function PurchaseOrders() {
                             <option value="">Pilih Produk</option>
                             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
+                          {/* Variant Selector */}
+                          {products.find(p => p.id === item.productId)?.variants && 
+                           (products.find(p => p.id === item.productId)?.variants?.length || 0) > 0 && (
+                            <select
+                              value={(item as any).variantId || ''}
+                              onChange={(e) => updateItem(index, item.productId, e.target.value)}
+                              className="w-full mt-2 px-3 py-1.5 border border-indigo-100 bg-indigo-50/50 rounded-lg text-[11px] font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                              {products.find(p => p.id === item.productId)?.variants?.map((v: any) => (
+                                <option key={v.id} value={v.id}>{v.name} (HPP: Rp.{v.hpp.toLocaleString()})</option>
+                              ))}
+                            </select>
+                          )}
                         </div>
                         <div className="w-20">
                           <input

@@ -102,12 +102,31 @@ export interface Product {
   hpp: number; // Cost of Goods Sold
   price: number; // Selling Price
   stock: number;
+  minStock: number; // Minimum stock for alerts
   category: string;
   warehouseId?: string;
   imageUrl?: string;
   description?: string;
   type: 'manual' | 'service';
   createdAt: any;
+  variants?: ProductVariant[];
+  wholesalePrices?: WholesalePrice[];
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  sku: string;
+  barcode?: string;
+  hpp: number;
+  price: number;
+  stock: number;
+  minStock: number;
+}
+
+export interface WholesalePrice {
+  minQuantity: number;
+  price: number;
 }
 
 export interface Category {
@@ -148,7 +167,14 @@ export interface Order {
   customerId?: string;
   customerName?: string;
   type: 'manual' | 'catalog' | 'service' | 'pos';
-  items: { productId: string; name: string; quantity: number; price: number; hpp: number }[];
+  items: { 
+    productId: string; 
+    variantId?: string | null;
+    name: string; 
+    quantity: number; 
+    price: number; 
+    hpp: number 
+  }[];
   totalAmount: number;
   paidAmount?: number;
   paymentStatus?: 'paid' | 'partial' | 'unpaid';
@@ -158,14 +184,23 @@ export interface Order {
   dueDate?: any;
   userId: string;
   paymentMethod?: string; // ID of BankAccount
+  isInCollection?: boolean;
 }
 
 export interface Transaction {
   id: string;
+  orderId?: string; // Reference to order id
   tenantId: string;
   type: 'sale' | 'expense';
   amount: number;
-  items?: { productId: string; name: string; quantity: number; price: number; hpp: number }[];
+  items?: { 
+    productId: string; 
+    variantId?: string | null;
+    name: string; 
+    quantity: number; 
+    price: number; 
+    hpp: number 
+  }[];
   date: any;
   dueDate?: any;
   status: 'completed' | 'pending' | 'cancelled';
@@ -275,7 +310,13 @@ export interface PurchaseRequest {
   id: string;
   prNumber: string;
   tenantId: string;
-  items: { productId: string; name: string; quantity: number }[];
+  items: { 
+    productId: string; 
+    variantId?: string | null;
+    name: string; 
+    variantName?: string;
+    quantity: number 
+  }[];
   requestedBy: string;
   requestedByName?: string;
   date: any;
@@ -294,7 +335,13 @@ export interface PurchaseOrder {
   supplierId: string;
   supplierName?: string;
   prId?: string;
-  items: { productId: string; name: string; quantity: number; price: number }[];
+  items: { 
+    productId: string; 
+    variantId?: string | null;
+    name: string; 
+    quantity: number; 
+    price: number 
+  }[];
   totalAmount: number;
   date: any;
   status: 'draft' | 'sent' | 'received' | 'cancelled';
@@ -309,6 +356,7 @@ export interface GoodsReceipt {
   supplierId: string;
   items: { 
     productId: string; 
+    variantId?: string | null;
     name: string; 
     quantityOrdered: number; 
     quantityReceived: number; 
@@ -334,6 +382,7 @@ export interface PurchaseInvoice {
 
 export interface StockOpname {
   id: string;
+  soNumber: string;
   tenantId: string;
   date: any;
   period: 'Harian' | 'Mingguan' | 'Bulanan';
@@ -345,10 +394,69 @@ export interface StockOpname {
   createdByName?: string;
   items: {
     productId: string;
+    variantId?: string | null;
     productName: string;
+    variantName?: string;
     sku: string;
     systemStock: number;
     physicalStock?: number;
     difference?: number;
   }[];
+}
+
+export interface InvoiceCollection {
+  id: string;
+  tenantId: string;
+  collectionNumber: string;
+  customerId?: string | null;
+  customerName: string;
+  date: any;
+  orderIds: string[];
+  orderNumbers: string[];
+  totalAmount: number;
+  totalPaid: number;
+  totalSisa: number;
+  createdBy: string;
+  status: 'open' | 'closed' | 'pending' | 'completed' | 'cancelled';
+  createdAt: any;
+}
+
+export interface SalesTarget {
+  id: string;
+  tenantId: string;
+  month: string; // YYYY-MM
+  target1: number;
+  target2: number;
+  target3: number;
+  updatedAt: any;
+  updatedBy: string;
+}
+
+export interface PaymentReceipt {
+  id: string;
+  tenantId: string;
+  receiptNumber: string; // RP202604000001
+  customerId: string;
+  customerName: string;
+  date: any;
+  paymentMethod: 'Tunai' | 'Bank Transfer';
+  bankAccountId?: string; // If Bank Transfer
+  bankAccountName?: string;
+  amount: number;
+  note?: string;
+  collections?: {
+    collectionId: string;
+    collectionNumber: string;
+    amountPaid: number;
+  }[];
+  invoices?: {
+    orderId: string;
+    orderNumber: string;
+    date?: any;
+    dueDate?: any;
+    totalAmount?: number;
+    amountPaid: number;
+  }[];
+  createdBy: string;
+  createdAt: any;
 }

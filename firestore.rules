@@ -27,14 +27,14 @@ service cloud.firestore {
     // Super Admin: hardcoded email or role 'superadmin'
     function isSuperAdmin() {
       return isSignedIn() && (
-        (request.auth.token.email == "mediacreativedigital25@gmail.com" && isEmailVerified()) ||
+        request.auth.token.email == "mediacreativedigital25@gmail.com" ||
         (userExists() && getUserData().role == 'superadmin')
       );
     }
 
     // Tenant Isolation Helpers
     function getTenantId() {
-      return getUserData().tenantId;
+      return userExists() ? getUserData().tenantId : null;
     }
     
     function isTenantAdmin(tenantId) {
@@ -59,8 +59,8 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     
     match /tenants/{tenantId} {
-      allow read: if true; // Catalogs need to find the tenant by slug/id
-      allow create: if isSignedIn() && isEmailVerified() && incoming().ownerId == request.auth.uid;
+      allow read, list: if true; // Catalogs need to find the tenant by slug/id
+      allow create: if isSuperAdmin() || (isSignedIn() && isEmailVerified() && incoming().ownerId == request.auth.uid);
       allow update: if isSuperAdmin() || isTenantAdmin(tenantId);
       allow delete: if isSuperAdmin();
     }
@@ -213,6 +213,11 @@ service cloud.firestore {
       allow update, delete: if isSuperAdmin();
     }
 
+    match /sales_targets/{targetId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+    }
+
     match /expenseRules/{ruleId} {
       allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
       allow write: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(incoming().tenantId));
@@ -225,6 +230,20 @@ service cloud.firestore {
     }
 
     match /charityRecords/{charityId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
+      allow delete: if isSuperAdmin();
+    }
+
+    match /invoice_collections/{collectionId} {
+      allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
+      allow delete: if isSuperAdmin();
+    }
+
+    match /payment_receipts/{receiptId} {
       allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && resource.data.tenantId == getTenantId());
       allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
       allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
@@ -282,6 +301,11 @@ service cloud.firestore {
     }
 
     match /system/{configId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    match /system_roadmap/{itemId} {
       allow read: if isSignedIn();
       allow write: if isSuperAdmin();
     }

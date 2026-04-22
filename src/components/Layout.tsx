@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { LayoutDashboard, Package, ShoppingCart, Wallet, Store, LogOut, Settings, Users, ChevronDown, UserRound, Menu, X, History, BookOpen, Calculator, Truck, CheckCircle2, Globe, Building2, Lock, Zap, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Wallet, Store, LogOut, Settings, Users, ChevronDown, UserRound, Menu, X, History, BookOpen, Calculator, Truck, CheckCircle2, Globe, Building2, Lock, Zap, ShieldCheck, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePermissions } from '../hooks/usePermissions';
 import UpgradePrompt from './Subscription/UpgradePrompt';
@@ -30,18 +30,44 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
+    { 
+      label: 'Superadmin', 
+      icon: ShieldCheck, 
+      roles: ['superadmin'],
+      children: [
+        { label: 'Dashboard', path: '/superadmin/dashboard' },
+        { label: 'Invoice', path: '/superadmin/invoices' },
+        { label: 'Service Tenant', path: '/superadmin/services' },
+        { label: 'Tenant', path: '/superadmin/tenants' },
+        { label: 'Approvals', path: '/superadmin/approvals' },
+        { label: 'Users', path: '/superadmin/users' },
+        { label: 'Reset Data', path: '/superadmin/reset' },
+        { label: 'Roadmaps', path: '/superadmin/roadmap' },
+        { label: 'Global Setting', path: '/superadmin/settings' },
+        { label: 'Domain Management', path: '/superadmin/domains' },
+      ]
+    },
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['admin', 'staff', 'superadmin'], permission: 'dashboard' },
     { label: 'Approval', icon: CheckCircle2, path: '/approvals', roles: ['admin'], permission: 'approvals' },
     { 
       label: 'Sales', 
       icon: ShoppingCart, 
-      roles: ['admin', 'staff', 'superadmin'],
+      roles: ['admin', 'staff', 'superadmin', 'kasir'],
       children: [
         { label: 'Sales Order', path: '/sales/order', permission: 'sales_order' },
         { label: 'Sales POS', path: '/sales/pos', permission: 'sales_order' },
         { label: 'Sales Order Receive', path: '/sales/receive', permission: 'sales_receive' },
         { label: 'Kupon', path: '/sales/coupons', permission: 'sales_order' },
         { label: 'Customers', path: '/sales/customers', permission: 'sales_customers' },
+      ]
+    },
+    { 
+      label: 'Sales Analisis', 
+      icon: TrendingUp, 
+      roles: ['admin', 'staff', 'superadmin'],
+      children: [
+        { label: 'Setting Target', path: '/sales/analysis/target', permission: 'sales_order' },
+        { label: 'Pencapaian', path: '/sales/analysis/achievement', permission: 'sales_order' },
       ]
     },
     { 
@@ -74,15 +100,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: Wallet, 
       roles: ['admin', 'staff', 'superadmin'],
       children: [
-        { label: 'Invoice', path: '/finance/invoices', permission: 'finance_invoices' },
+        { label: 'Invoice', path: '/finance/invoices', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
+        { label: 'Receive Payment', path: '/finance/receive-payment', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
+        { label: 'Invoice Collection', path: '/finance/collections', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
         { label: 'Akun Bank', path: '/finance/bank-accounts', permission: 'finance_bank_accounts' },
         { label: 'Claim Expense', path: '/finance/claim', permission: 'finance_claim' },
-        { label: 'Amal', path: '/finance/charity', permission: 'finance_charity' },
-        { label: 'Report Keuangan', path: '/finance/report', permission: 'finance_report' },
+        { label: 'Amal', path: '/finance/charity', roles: ['admin', 'superadmin'], permission: 'finance_charity' },
+        { label: 'Report Keuangan', path: '/finance/report', roles: ['admin', 'superadmin'], permission: 'finance_report' },
         { label: 'Setting Claim Expense', path: '/finance/settings', roles: ['admin'], permission: 'finance_settings' },
       ]
     },
-    { label: 'Daily Settlement', icon: Calculator, path: '/daily-settlement', roles: ['admin', 'staff'], permission: 'daily_settlement' },
+    { label: 'Daily Settlement', icon: Calculator, path: '/daily-settlement', roles: ['admin'], permission: 'daily_settlement' },
     { 
       label: 'Master', 
       icon: Settings, 
@@ -107,20 +135,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { label: 'Changelog', icon: History, path: '/changelog', roles: ['admin', 'staff', 'superadmin'], permission: 'changelog' },
     { label: 'Panduan', icon: BookOpen, path: '/guide', roles: ['admin', 'staff', 'superadmin'], permission: 'guide' },
     { 
-      label: 'Superadmin', 
+      label: 'Super Admin', 
       icon: ShieldCheck, 
       roles: ['superadmin'],
       children: [
         { label: 'Dashboard', path: '/superadmin/dashboard' },
-        { label: 'Invoice', path: '/superadmin/invoices' },
-        { label: 'Service Tenant', path: '/superadmin/services' },
-        { label: 'Tenant', path: '/superadmin/tenants' },
-        { label: 'Approvals', path: '/superadmin/approvals' },
-        { label: 'Users', path: '/superadmin/users' },
+        { label: 'Tenants', path: '/superadmin/tenants' },
         { label: 'Reset Data', path: '/superadmin/reset' },
-        { label: 'Roadmaps', path: '/superadmin/roadmap' },
-        { label: 'Global Setting', path: '/superadmin/settings' },
-        { label: 'Domain Management', path: '/superadmin/domains' },
+        { label: 'Settings', path: '/superadmin/settings' },
       ]
     },
   ];

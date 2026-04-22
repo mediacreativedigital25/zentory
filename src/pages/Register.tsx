@@ -55,7 +55,15 @@ export default function Register() {
 
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message);
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Email ini sudah terdaftar. Silakan login atau gunakan email lain.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password terlalu lemah. Gunakan minimal 6 karakter.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Format email tidak valid.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

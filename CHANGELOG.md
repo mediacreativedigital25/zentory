@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0] - 2026-04-22
+
+### Added
+- **Invoice Collection Module**: A dedicated page to track mass collection sessions per customer.
+- **Collection Persistence**: Ability to save tagihan sessions to Firestore from the "Tagihkan" modal.
+- **Automatic ID Generation**: Implemented uniquely formatted collection numbers (IC-YYYYMM-XXXXXX).
+- **Collective Financial Stats**: Summary widgets for total collected and outstanding collective debt.
+- **Order Coverage Listing**: Detailed view to see exactly which invoice numbers are included in a specific collection.
+
+## [2.4.0] - 2026-04-22
+
+### Added
+- **Target locking logic**: Automatically disable target editing for current and past months to enforce planning discipline.
+- **Enhanced Achievement Table**: Added Omzet, multiple targets (Target 1, 2, 3), and percentage progress columns.
+- **Shortfall Tracking (Kurang: Rp.XXX)**: Added dynamic calculation of remaining amount needed to reach each target level.
+- **Standardized Month Keys**: Implemented local-time based month key generation to fix "current month" detection issues.
+- **Visual indicators**: Added "Target Terkunci" status and red "Shortfall" labels for better situational awareness.
+
+### Fixed
+- **Timezone Drift**: Resolved issue where current month would not appear in analysis tables due to UTC/Local time differences.
+- **Month Selector Sync**: Ensuring the target selector in "Setting Target" matches the display in "Pencapaian".
+
 ## [Unreleased] - 2026-04-11
 
 ### Added

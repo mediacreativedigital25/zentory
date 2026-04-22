@@ -213,7 +213,20 @@ export default function Catalog() {
     setCart(cart.filter(item => item.product.id !== productId));
   };
 
-  const subtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+  const getProductPrice = (product: Product, quantity: number) => {
+    if (!product.wholesalePrices || product.wholesalePrices.length === 0) {
+      return product.price;
+    }
+    
+    // Sort by minQuantity descending to find the highest applicable tier
+    const applicableTier = [...product.wholesalePrices]
+      .sort((a, b) => b.minQuantity - a.minQuantity)
+      .find(tier => quantity >= tier.minQuantity);
+      
+    return applicableTier ? applicableTier.price : product.price;
+  };
+
+  const subtotal = cart.reduce((acc, item) => acc + (getProductPrice(item.product, item.quantity) * item.quantity), 0);
   
   const discount = useMemo(() => {
     if (!appliedCoupon) return 0;
@@ -309,14 +322,17 @@ export default function Catalog() {
         customerName: profile?.displayName || user.email,
         customerEmail: user.email,
         customerAddress: shippingAddress,
-        items: cart.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          price: item.product.price,
-          hpp: item.product.hpp || 0,
-          quantity: item.quantity,
-          total: item.product.price * item.quantity
-        })),
+        items: cart.map(item => {
+          const unitPrice = getProductPrice(item.product, item.quantity);
+          return {
+            productId: item.product.id,
+            name: item.product.name,
+            price: unitPrice,
+            hpp: item.product.hpp || 0,
+            quantity: item.quantity,
+            total: unitPrice * item.quantity
+          };
+        }),
         totalAmount: total,
         discountAmount: discount,
         couponId: appliedCoupon?.id || null,
@@ -349,7 +365,7 @@ export default function Catalog() {
         items: cart.map(item => ({
           productId: item.product.id,
           name: item.product.name,
-          price: item.product.price,
+          price: getProductPrice(item.product, item.quantity),
           hpp: item.product.hpp || 0,
           quantity: item.quantity
         })),
@@ -564,9 +580,20 @@ export default function Catalog() {
                 </div>
 
                 <div className="p-2 sm:p-3 flex-1 flex flex-col">
-                  <h4 className="text-xs sm:text-sm text-gray-800 line-clamp-2 mb-2 min-h-[2.5rem] leading-tight">
+                  <h4 className="text-xs sm:text-sm text-gray-800 line-clamp-2 mb-2 min-h-[1.25rem] leading-tight">
                     {product.name}
                   </h4>
+
+                  {product.wholesalePrices && product.wholesalePrices.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                        {product.wholesalePrices.slice(0, 2).map((tier, idx) => (
+                            <span key={idx} className="text-[9px] font-bold bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 flex items-center">
+                                <Tag className="w-2 h-2 mr-1" /> {tier.minQuantity}+ : Rp.{tier.price.toLocaleString()}
+                            </span>
+                        ))}
+                        {product.wholesalePrices.length > 2 && <span className="text-[9px] text-gray-400 font-bold px-1">...</span>}
+                    </div>
+                  )}
                   
                   <div className="mt-auto">
                     <div className="flex items-baseline gap-1 mb-1">
@@ -739,7 +766,17 @@ export default function Catalog() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-gray-900 text-sm mb-1 truncate">{item.product.name}</h4>
-                          <p className="text-indigo-600 font-black text-sm mb-3">Rp.{item.product.price.toLocaleString()}</p>
+                          <div className="flex flex-col gap-0.5 mb-2">
+                            <p className={`text-sm font-black ${getProductPrice(item.product, item.quantity) < item.product.price ? 'text-green-600' : 'text-indigo-600'}`}>
+                                Rp.{getProductPrice(item.product, item.quantity).toLocaleString()}
+                                {getProductPrice(item.product, item.quantity) < item.product.price && (
+                                    <span className="text-[10px] text-gray-400 line-through ml-2 font-medium">Rp.{item.product.price.toLocaleString()}</span>
+                                )}
+                            </p>
+                            {getProductPrice(item.product, item.quantity) < item.product.price && (
+                                <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded w-fit">Harga Grosir Diterapkan</span>
+                            )}
+                          </div>
                           <div className="flex items-center space-x-3">
                             <div className="flex items-center bg-gray-100 rounded-lg p-1">
                               <button 

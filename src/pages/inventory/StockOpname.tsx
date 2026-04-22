@@ -141,6 +141,26 @@ export default function StockOpnamePage() {
       unsubscribeWh();
     };
   }, [profile]);
+  
+  const generateSONumber = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const prefix = `SO${year}${month}`;
+    
+    // Find the highest sequence for the current month
+    const sameMonthRecords = records.filter(r => r.soNumber?.startsWith(prefix));
+    let nextSeq = 1;
+    if (sameMonthRecords.length > 0) {
+      const sequences = sameMonthRecords.map(r => {
+        const seqStr = r.soNumber.replace(prefix, '');
+        return parseInt(seqStr, 10) || 0;
+      });
+      nextSeq = Math.max(...sequences) + 1;
+    }
+    
+    return `${prefix}${String(nextSeq).padStart(6, '0')}`;
+  };
 
   const handleCreatePlanning = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,15 +192,33 @@ export default function StockOpnamePage() {
         throw err;
       });
 
-      const items = productsSnap.docs
-        .map(d => ({ id: d.id, ...(d.data() as any) } as Product))
-        .filter(p => p.type !== 'service')
-        .map(p => ({
-          productId: p.id,
-          productName: p.name,
-          sku: p.sku,
-          systemStock: p.stock || 0
-        }));
+      const items: any[] = [];
+      productsSnap.docs.forEach(d => {
+        const p = { id: d.id, ...(d.data() as any) } as Product;
+        if (p.type === 'service') return;
+
+        if (p.variants && p.variants.length > 0) {
+          p.variants.forEach(v => {
+            items.push({
+              productId: p.id,
+              variantId: v.id,
+              productName: p.name,
+              variantName: v.name,
+              sku: v.sku,
+              systemStock: v.stock || 0
+            });
+          });
+        } else {
+          items.push({
+            productId: p.id,
+            variantId: null,
+            productName: p.name,
+            variantName: null,
+            sku: p.sku,
+            systemStock: p.stock || 0
+          });
+        }
+      });
 
       if (items.length === 0) {
         alert('Tidak ada produk dalam kategori ini.');
@@ -189,6 +227,7 @@ export default function StockOpnamePage() {
 
       await addDoc(collection(db, path), {
         tenantId: profile.tenantId,
+        soNumber: generateSONumber(),
         date: serverTimestamp(),
         period: formData.period,
         category: formData.category === 'all' ? 'Semua Kategori' : formData.category,
@@ -229,44 +268,48 @@ export default function StockOpnamePage() {
     doc.setTextColor(100, 116, 139); // Slate 500
     
     // Column 1
-    doc.text('PERIODE', 14, 38);
-    doc.text('KATEGORI', 14, 44);
+    doc.text('NO. SO', 14, 38);
+    doc.text('PERIODE', 14, 44);
+    doc.text('KATEGORI', 14, 50);
     
     // Column 2
     doc.text('GUDANG', 105, 38);
     doc.text('TANGGAL', 105, 44);
+    doc.text('PEMBUAT', 105, 50);
 
     doc.setFontSize(10);
     doc.setTextColor(15, 23, 42); // Slate 900
     doc.setFont('helvetica', 'bold');
     
     // Values Column 1
-    doc.text(`: ${record.period}`, 40, 38);
-    doc.text(`: ${record.category}`, 40, 44);
+    doc.text(`: ${record.soNumber || '-'}`, 40, 38);
+    doc.text(`: ${record.period}`, 40, 44);
+    doc.text(`: ${record.category}`, 40, 50);
     
     // Values Column 2
     doc.text(`: ${record.warehouseName}`, 130, 38);
     doc.text(`: ${date}`, 130, 44);
+    doc.text(`: ${record.createdByName || '-'}`, 130, 50);
 
     // Remark (Full Width below)
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
     doc.setFont('helvetica', 'normal');
-    doc.text('REMARK', 14, 52);
+    doc.text('REMARK', 14, 58);
     
     doc.setFontSize(10);
     doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
-    doc.text(`: ${record.remark || '-'}`, 40, 52);
+    doc.text(`: ${record.remark || '-'}`, 40, 58);
 
     // Footer Info
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Dicetak oleh: ${record.createdByName || '-'}`, 14, 60);
+    doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 66);
 
     const tableData = record.items.map(item => [
-      item.productName,
+      `${item.productName}${item.variantName ? ` (${item.variantName})` : ''}`,
       item.sku,
       item.systemStock.toString(),
       '..........', // Physical QTY
@@ -274,7 +317,7 @@ export default function StockOpnamePage() {
     ]);
 
     autoTable(doc, {
-      startY: 68,
+      startY: 72,
       head: [['PRODUK', 'SKU', 'STOK SISTEM', 'STOK FISIK', 'SELISIH']],
       body: tableData,
       theme: 'grid',
@@ -306,6 +349,7 @@ export default function StockOpnamePage() {
     const metadata = [
       ['LAPORAN STOCK OPNAME'],
       [''],
+      ['No. Stock Opname', record.soNumber || '-'],
       ['Periode', record.period, '', 'Gudang', record.warehouseName],
       ['Kategori', record.category, '', 'Tanggal', date],
       ['Remark', record.remark || '-'],
@@ -316,7 +360,7 @@ export default function StockOpnamePage() {
     // Prepare table data
     const tableHeaders = ['PRODUK', 'SKU', 'STOK SISTEM', 'STOK FISIK (MANUAL)', 'SELISIH (MANUAL)'];
     const tableRows = record.items.map(item => [
-      item.productName,
+      `${item.productName}${item.variantName ? ` (${item.variantName})` : ''}`,
       item.sku,
       item.systemStock,
       '',
@@ -370,6 +414,7 @@ export default function StockOpnamePage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50">
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">No. SO</th>
                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</th>
                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kategori</th>
                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Warehouse</th>
@@ -380,6 +425,9 @@ export default function StockOpnamePage() {
             <tbody className="divide-y divide-gray-50">
               {paginatedRecords.map((record) => (
                 <tr key={record.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-black text-indigo-600 font-mono">{record.soNumber || '-'}</span>
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
@@ -605,7 +653,11 @@ export default function StockOpnamePage() {
               </div>
               
               <div className="flex-1 overflow-y-auto p-8 space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 font-mono">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">No. Stock Opname</p>
+                    <p className="text-sm font-black text-indigo-600">{selectedRecord.soNumber || '-'}</p>
+                  </div>
                   <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Periode</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.period}</p>
@@ -648,7 +700,14 @@ export default function StockOpnamePage() {
                       <tbody className="divide-y divide-gray-50">
                         {selectedRecord.items.map((item, idx) => (
                           <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                            <td className="px-4 py-3 text-sm font-bold text-gray-900">{item.productName}</td>
+                            <td className="px-4 py-3 text-sm font-bold text-gray-900">
+                              {item.productName}
+                              {item.variantName && (
+                                <span className="ml-1 text-xs text-indigo-600 font-medium bg-indigo-50 px-1.5 py-0.5 rounded">
+                                  {item.variantName}
+                                </span>
+                              )}
+                            </td>
                             <td className="px-4 py-3 text-xs font-mono font-bold text-gray-500">{item.sku}</td>
                             <td className="px-4 py-3 text-sm font-black text-indigo-600 text-center">{item.systemStock}</td>
                           </tr>

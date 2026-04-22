@@ -126,7 +126,15 @@ export default function Users() {
       setFormData({ email: '', displayName: '', role: '', tenantId: '', password: '' });
     } catch (err: any) {
       console.error(err);
-      alert('Failed to save user: ' + (err.message || 'Unknown error'));
+      let errorMessage = 'Gagal menyimpan user.';
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email ini sudah terdaftar di sistem. Gunakan email lain.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = 'Password terlalu lemah. Gunakan minimal 6 karakter.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Format email tidak valid.';
+      }
+      alert(errorMessage);
     }
   };
 

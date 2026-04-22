@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, serverTimestamp, addDoc, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Order, Customer, BankAccount } from '../../types';
@@ -53,8 +53,8 @@ export default function Invoices() {
 
     const unsubscribeOrders = onSnapshot(ordersQuery, (snap) => {
       const ordersData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
-      // Sort by date descending
-      setOrders(ordersData.sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)));
+      // Sort by date descending for UI (latest first)
+      setOrders(ordersData.filter(o => !o.isInCollection).sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)));
       setLoading(false);
     }, (err) => {
       console.error('Error fetching orders:', err);
@@ -259,6 +259,74 @@ export default function Invoices() {
     });
 
     doc.save(`Invoice_Collection_${now.getTime()}.pdf`);
+  };
+
+  const handleSaveCollection = async () => {
+    if (!profile?.tenantId || selectedOrderIds.length === 0) return;
+
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const prefix = `IC${year}${month}`;
+
+      // Get next sequence number
+      const lastCollectionQuery = query(
+        collection(db, 'invoice_collections'),
+        where('tenantId', '==', profile.tenantId),
+        where('collectionNumber', '>=', prefix),
+        where('collectionNumber', '<=', prefix + '\uf8ff'),
+        orderBy('collectionNumber', 'desc'),
+        limit(1)
+      );
+      
+      const lastSnap = await getDocs(lastCollectionQuery);
+      let nextNumber = 1;
+      if (!lastSnap.empty) {
+        const lastNum = lastSnap.docs[0].data().collectionNumber;
+        const sequence = parseInt(lastNum.slice(-6));
+        if (!isNaN(sequence)) {
+          nextNumber = sequence + 1;
+        }
+      }
+      
+      const collectionNumber = `${prefix}${String(nextNumber).padStart(6, '0')}`;
+      
+      const firstCustomer = selectedOrders.length > 0 ? selectedOrders[0] : null;
+      const allSameCustomer = selectedOrders.every(o => o.customerId === firstCustomer?.customerId);
+      
+      // Sort selected orders by date ascending (oldest first) for FIFO payment distribution
+      const sortedSelectedOrders = [...selectedOrders].sort((a, b) => (a.date?.seconds || 0) - (b.date?.seconds || 0));
+
+      // Update orders to be in collection
+      const updatePromises = sortedSelectedOrders.map(o => 
+        updateDoc(doc(db, 'orders', o.id), { isInCollection: true })
+      );
+      await Promise.all(updatePromises);
+      
+      await addDoc(collection(db, 'invoice_collections'), {
+        tenantId: profile.tenantId,
+        collectionNumber,
+        customerId: allSameCustomer ? firstCustomer?.customerId : null,
+        customerName: allSameCustomer ? (firstCustomer?.customerName || 'Pelanggan') : 'Berbagai Pelanggan',
+        date: serverTimestamp(),
+        orderIds: sortedSelectedOrders.map(o => o.id),
+        orderNumbers: sortedSelectedOrders.map(o => o.orderNumber),
+        totalAmount: totalSelectedNominal,
+        totalPaid: totalSelectedNominal - totalSelectedSisa,
+        totalSisa: totalSelectedSisa,
+        createdBy: profile.uid,
+        status: 'open',
+        createdAt: serverTimestamp()
+      });
+
+      setIsTagihkanModalOpen(false);
+      setSelectedOrderIds([]);
+      alert(`Berhasil menyimpan Invoice Collection #${collectionNumber}`);
+    } catch (err) {
+      console.error('Error saving collection:', err);
+      alert('Gagal menyimpan koleksi tagihan.');
+    }
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500 font-bold animate-pulse">Memuat data Invoice...</div>;
@@ -498,19 +566,26 @@ export default function Invoices() {
                 </div>
               </div>
 
-              <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-3">
+              <div className="p-8 bg-gray-50 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <button
                   onClick={() => setIsTagihkanModalOpen(false)}
-                  className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-100 transition-all"
+                  className="col-span-2 sm:col-span-1 px-6 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-100 transition-all text-xs"
                 >
                   BATAL
                 </button>
                 <button
-                  onClick={generatePDF}
-                  className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  onClick={handleSaveCollection}
+                  className="px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
                 >
-                  <Printer className="w-5 h-5" />
-                  PRINT INVOICE (PDF)
+                  <Check className="w-4 h-4" />
+                  SIMPAN
+                </button>
+                <button
+                  onClick={generatePDF}
+                  className="px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                >
+                  <Printer className="w-4 h-4" />
+                  CETAK
                 </button>
               </div>
             </motion.div>

@@ -81,14 +81,30 @@ export default function Stock() {
     doc.setDrawColor(226, 232, 240); // Slate 200
     doc.line(14, 40, 196, 40);
 
-    const tableData = filteredProducts.map(p => [
-      p.name,
-      p.sku,
-      p.category,
-      p.stock.toString(),
-      '', // Physical QTY placeholder
-      ''  // Total placeholder
-    ]);
+    const tableData: string[][] = [];
+    filteredProducts.forEach(p => {
+      tableData.push([
+        p.name,
+        p.sku,
+        p.category,
+        p.stock.toString(),
+        '', // Physical QTY placeholder
+        ''  // Total placeholder
+      ]);
+      
+      if (p.variants && p.variants.length > 0) {
+        p.variants.forEach(v => {
+          tableData.push([
+            `   - ${v.name}`,
+            v.sku,
+            '',
+            v.stock.toString(),
+            '',
+            ''
+          ]);
+        });
+      }
+    });
 
     autoTable(doc, {
       startY: 48,
@@ -120,14 +136,30 @@ export default function Stock() {
 
   const handleExportExcel = () => {
     const date = new Date().toLocaleDateString('id-ID');
-    const data = filteredProducts.map(p => ({
-      'Produk': p.name,
-      'SKU': p.sku,
-      'Kategori': p.category,
-      'QTY System': p.stock,
-      'QTY FISIK (Manual)': '',
-      'Total (Manual)': ''
-    }));
+    const data: any[] = [];
+    filteredProducts.forEach(p => {
+      data.push({
+        'Produk': p.name,
+        'SKU': p.sku,
+        'Kategori': p.category,
+        'QTY System': p.stock,
+        'QTY FISIK (Manual)': '',
+        'Total (Manual)': ''
+      });
+
+      if (p.variants && p.variants.length > 0) {
+        p.variants.forEach(v => {
+          data.push({
+            'Produk': `   - ${v.name}`,
+            'SKU': v.sku,
+            'Kategori': '',
+            'QTY System': v.stock,
+            'QTY FISIK (Manual)': '',
+            'Total (Manual)': ''
+          });
+        });
+      }
+    });
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -205,48 +237,83 @@ export default function Stock() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
-                        <img
-                          src={product.imageUrl || `https://picsum.photos/seed/${product.id}/100/100`}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
+                <React.Fragment key={product.id}>
+                  <tr className="hover:bg-gray-50/50 transition-colors group border-b border-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                          <img
+                            src={product.imageUrl || `https://picsum.photos/seed/${product.id}/100/100`}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900 text-sm">
+                            {product.name}
+                            {(product.variants && product.variants.length > 0) && (
+                              <span className="ml-2 text-[8px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded uppercase font-black">Variasi</span>
+                            )}
+                          </h3>
+                          <p className="text-xs text-gray-500 font-mono">SKU: {product.sku}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 text-sm">{product.name}</h3>
-                        <p className="text-xs text-gray-500 font-mono">SKU: {product.sku}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-                      {product.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm ${
-                        product.stock > 10 ? 'bg-green-500 text-white' : 
-                        product.stock > 0 ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white'
-                      }`}>
-                        {product.stock} UNIT
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+                        {product.category}
                       </span>
-                      {product.stock <= 5 && product.stock > 0 && (
-                        <span className="text-[9px] font-black text-yellow-600 animate-pulse uppercase tracking-tighter">Stok Menipis</span>
-                      )}
-                      {product.stock <= 0 && (
-                        <span className="text-[9px] font-black text-red-600 uppercase tracking-tighter">Stok Habis</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <p className="text-sm font-black text-indigo-600">Rp.{(product.price || 0).toLocaleString()}</p>
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm ${
+                          product.stock > 10 ? 'bg-green-500 text-white' : 
+                          product.stock > 0 ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white'
+                        }`}>
+                          {product.stock} UNIT
+                        </span>
+                        {product.stock <= 5 && product.stock > 0 && (
+                          <span className="text-[9px] font-black text-yellow-600 animate-pulse uppercase tracking-tighter">Stok Menipis</span>
+                        )}
+                        {product.stock <= 0 && (
+                          <span className="text-[9px] font-black text-red-600 uppercase tracking-tighter">Stok Habis</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <p className="text-sm font-black text-indigo-600">Rp.{(product.price || 0).toLocaleString()}</p>
+                    </td>
+                  </tr>
+                  
+                  {/* Variant Rows */}
+                  {product.variants && product.variants.length > 0 && product.variants.map((v: any) => (
+                    <tr key={v.id} className="bg-gray-50/30 text-[11px] group border-b border-gray-50/50">
+                      <td className="px-6 py-2 pl-16">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-300"></div>
+                          <span className="font-bold text-gray-700">{v.name}</span>
+                          <span className="text-[9px] text-gray-400 font-mono">({v.sku})</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-2">
+                        <span className="text-[9px] text-gray-400 italic">Sub-Item</span>
+                      </td>
+                      <td className="px-6 py-2">
+                        <div className="flex justify-center">
+                          <span className={`px-2 py-0.5 rounded-full font-bold ${
+                            v.stock > 0 ? 'text-gray-600 bg-white border border-gray-100' : 'text-red-400'
+                          }`}>
+                            {v.stock} unit
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-2 text-right">
+                        <span className="text-gray-500">Rp.{v.price.toLocaleString()}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

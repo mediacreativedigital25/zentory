@@ -177,37 +177,81 @@ export default function SalesOrder() {
     }
   };
 
-  const addToCart = (product: Product) => {
+  const [selectedVariantProduct, setSelectedVariantProduct] = useState<Product | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>('');
+
+  const addToCart = (product: Product, variantId?: string) => {
     const isService = product.type === 'service';
-    if (orderType === 'manual' && !isService && product.stock <= 0) return;
-    const existing = cart.find(item => item.product.id === product.id);
-    if (existing) {
-      if (orderType === 'manual' && !isService && existing.quantity >= product.stock) return;
-      setCart(cart.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
-    } else {
-      setCart([...cart, { product, quantity: 1 }]);
+    
+    if (product.variants && product.variants.length > 0 && !variantId) {
+      setSelectedVariantProduct(product);
+      setSelectedVariantId(product.variants[0].id);
+      return;
     }
+
+    const variant = variantId ? product.variants?.find((v: any) => v.id === variantId) : null;
+    const stockToUse = variant ? variant.stock : product.stock;
+
+    if (orderType === 'manual' && !isService && stockToUse <= 0) {
+      alert('Stok produk/variasi ini habis!');
+      return;
+    }
+
+    const cartItemId = variantId ? `${product.id}-${variantId}` : product.id;
+    const existing = cart.find(item => {
+        const itemVid = (item as any).variantId;
+        const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+        return currentItemId === cartItemId;
+    });
+
+    if (existing) {
+      if (orderType === 'manual' && !isService && existing.quantity >= stockToUse) return;
+      setCart(cart.map(item => {
+          const itemVid = (item as any).variantId;
+          const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+          return currentItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item;
+      }));
+    } else {
+      setCart([...cart, { product, quantity: 1, variantId } as any]);
+    }
+
+    setSelectedVariantProduct(null);
+    setSelectedVariantId('');
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
+  const updateQuantity = (cartItemId: string, delta: number) => {
     setCart(cart.map(item => {
-      if (item.product.id === productId) {
+      const itemVid = (item as any).variantId;
+      const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+
+      if (currentItemId === cartItemId) {
         const newQty = Math.max(0, item.quantity + delta);
         const isService = item.product.type === 'service';
-        if (orderType === 'manual' && !isService && newQty > item.product.stock) return item;
+        
+        const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+        const stockToUse = variant ? variant.stock : item.product.stock;
+
+        if (orderType === 'manual' && !isService && newQty > stockToUse) return item;
         return { ...item, quantity: newQty };
       }
       return item;
     }).filter(item => item.quantity > 0));
   };
 
-  const setQuantity = (productId: string, value: number) => {
+  const setQuantity = (cartItemId: string, value: number) => {
     setCart(cart.map(item => {
-      if (item.product.id === productId) {
+      const itemVid = (item as any).variantId;
+      const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+
+      if (currentItemId === cartItemId) {
         const newQty = Math.max(0, value);
         const isService = item.product.type === 'service';
-        if (orderType === 'manual' && !isService && newQty > item.product.stock) {
-          return { ...item, quantity: item.product.stock };
+
+        const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+        const stockToUse = variant ? variant.stock : item.product.stock;
+
+        if (orderType === 'manual' && !isService && newQty > stockToUse) {
+          return { ...item, quantity: stockToUse };
         }
         return { ...item, quantity: newQty };
       }
@@ -215,7 +259,32 @@ export default function SalesOrder() {
     }).filter(item => item.quantity > 0));
   };
 
-  const total = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+  const getProductPrice = (product: Product, variantId?: string) => {
+    // Calculate total quantity of this product in cart (across all variants)
+    const productTotalQty = cart
+      .filter(item => item.product.id === product.id)
+      .reduce((sum, item) => sum + item.quantity, 0);
+
+    let basePrice = product.price;
+
+    if (variantId && product.variants) {
+        const variant = product.variants.find((v: any) => v.id === variantId);
+        if (variant) basePrice = variant.price;
+    }
+
+    if (!product.wholesalePrices || product.wholesalePrices.length === 0) {
+      return basePrice;
+    }
+    
+    // Sort by minQuantity descending to find the highest applicable tier
+    const applicableTier = [...product.wholesalePrices]
+      .sort((a, b) => b.minQuantity - a.minQuantity)
+      .find(tier => productTotalQty >= tier.minQuantity);
+      
+    return applicableTier ? applicableTier.price : basePrice;
+  };
+
+  const total = cart.reduce((acc, item) => acc + (getProductPrice(item.product, (item as any).variantId) * item.quantity), 0);
 
   useEffect(() => {
     if (paymentType === 'cash') {
@@ -331,7 +400,7 @@ export default function SalesOrder() {
 
           await runTransaction(db, async (transaction) => {
             // 1. Read all necessary data first (Update stock for manual products)
-            const productUpdates: { ref: any; newStock: number }[] = [];
+            const productUpdates: { ref: any; updateData: any; item: any; previousStock: number; currentItemStock: number }[] = [];
             
             if (orderType === 'manual') {
               for (const item of cart) {
@@ -340,18 +409,51 @@ export default function SalesOrder() {
                 
                 if (!pDoc.exists()) throw new Error(`Product ${item.product.name} not found`);
                 
-                const productData = pDoc.data();
-                const currentStock = productData.stock || 0;
+                const productData = pDoc.data() as Product;
+                const itemVid = (item as any).variantId;
                 const isService = productData.type === 'service';
                 
-                if (!isService && currentStock < item.quantity) {
-                  throw new Error(`Stok ${item.product.name} tidak mencukupi`);
-                }
-                
                 if (!isService) {
+                  let previousStock = productData.stock || 0;
+                  let currentItemStock = 0;
+                  let updateData: any = {};
+
+                  if (itemVid && productData.variants) {
+                    const variantIndex = productData.variants.findIndex(v => v.id === itemVid);
+                    if (variantIndex === -1) throw new Error(`Variant not found for ${productData.name}`);
+                    
+                    const variant = productData.variants[variantIndex];
+                    currentItemStock = variant.stock;
+                    if (currentItemStock < item.quantity) {
+                      throw new Error(`Stok variasi ${variant.name} untuk ${productData.name} tidak mencukupi`);
+                    }
+
+                    const updatedVariants = [...productData.variants];
+                    updatedVariants[variantIndex] = {
+                      ...variant,
+                      stock: variant.stock - item.quantity
+                    };
+
+                    updateData = {
+                      variants: updatedVariants,
+                      stock: (productData.stock || 0) - item.quantity
+                    };
+                  } else {
+                    currentItemStock = productData.stock || 0;
+                    if (currentItemStock < item.quantity) {
+                      throw new Error(`Stok ${productData.name} tidak mencukupi`);
+                    }
+                    updateData = {
+                      stock: (productData.stock || 0) - item.quantity
+                    };
+                  }
+
                   productUpdates.push({
                     ref: productRef,
-                    newStock: currentStock - item.quantity
+                    updateData,
+                    item,
+                    previousStock,
+                    currentItemStock
                   });
                 }
               }
@@ -359,25 +461,25 @@ export default function SalesOrder() {
 
             // 2. Perform all writes after all reads
             for (const update of productUpdates) {
-              transaction.update(update.ref, { stock: update.newStock });
+              transaction.update(update.ref, update.updateData);
               
-              // Find item in cart to get name and quantity
-              const item = cart.find(i => i.product.id === update.ref.id);
-              if (item) {
-                logStockChange(
-                  targetTenantId!,
-                  item.product.id,
-                  item.product.name,
-                  'SALE',
-                  item.quantity,
-                  item.product.stock,
-                  update.newStock,
-                  profile?.uid!,
-                  profile?.displayName || 'System',
-                  { id: orderRef.id, number: orderNumber },
-                  'Sales Order'
-                );
-              }
+              const itemVid = (update.item as any).variantId;
+              const variant = itemVid ? update.item.product.variants?.find((v: any) => v.id === itemVid) : null;
+              const logName = variant ? `${update.item.product.name} (${variant.name})` : update.item.product.name;
+
+              logStockChange(
+                targetTenantId!,
+                update.item.product.id,
+                logName,
+                'SALE',
+                update.item.quantity,
+                update.currentItemStock,
+                update.currentItemStock - update.item.quantity,
+                profile?.uid!,
+                profile?.displayName || 'System',
+                { id: orderRef.id, number: orderNumber },
+                `Sales Order ${itemVid ? '(Variant)' : ''}`
+              );
             }
 
             // Create Order
@@ -387,13 +489,21 @@ export default function SalesOrder() {
               customerId: selectedCustomer || null,
               customerName: customer?.name || 'Guest',
               type: isKasir ? 'pos' : orderType,
-              items: cart.map(item => ({
+            items: cart.map(item => {
+              const itemVid = (item as any).variantId;
+              const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+              const unitPrice = getProductPrice(item.product, itemVid);
+              const name = variant ? `${item.product.name} (${variant.name})` : item.product.name;
+              
+              return {
                 productId: item.product.id,
-                name: item.product.name,
+                variantId: itemVid || null,
+                name,
                 quantity: item.quantity,
-                price: item.product.price,
-                hpp: item.product.hpp || 0
-              })),
+                price: unitPrice,
+                hpp: variant ? (variant.hpp || 0) : (item.product.hpp || 0)
+              };
+            }),
               totalAmount: total,
               paidAmount: amountPaid,
               paymentStatus,
@@ -414,13 +524,18 @@ export default function SalesOrder() {
                 category: 'Sales',
                 amount: amountPaid, // Only record the actual amount paid
                 totalOrderAmount: total,
-                items: cart.map(item => ({
-                  productId: item.product.id,
-                  name: item.product.name,
-                  quantity: item.quantity,
-                  price: item.product.price,
-                  hpp: item.product.hpp || 0
-                })),
+                items: cart.map(item => {
+                  const itemVid = (item as any).variantId;
+                  const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+                  return {
+                    productId: item.product.id,
+                    variantId: itemVid || null,
+                    name: variant ? `${item.product.name} (${variant.name})` : item.product.name,
+                    quantity: item.quantity,
+                    price: getProductPrice(item.product, itemVid),
+                    hpp: variant ? (variant.hpp || 0) : (item.product.hpp || 0)
+                  };
+                }),
                 date: serverTimestamp(),
                 dueDate: paymentType === 'credit' ? dueDate : null,
                 status: 'completed',
@@ -435,12 +550,16 @@ export default function SalesOrder() {
           setLastOrder({
             orderNumber,
             customerName: customer?.name || 'Guest',
-            items: cart.map(item => ({
-              productId: item.product.id,
-              name: item.product.name,
-              quantity: item.quantity,
-              price: item.product.price
-            })),
+            items: cart.map(item => {
+              const itemVid = (item as any).variantId;
+              const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+              return {
+                productId: item.product.id,
+                name: variant ? `${item.product.name} (${variant.name})` : item.product.name,
+                quantity: item.quantity,
+                price: getProductPrice(item.product, itemVid)
+              };
+            }),
             totalAmount: total,
             status: status,
             type: orderType,
@@ -544,13 +663,34 @@ export default function SalesOrder() {
                 key={product.id}
                 onClick={() => addToCart(product)}
                 disabled={orderType === 'manual' && product.stock <= 0}
-                className="flex flex-col text-left group bg-white border border-gray-100 rounded-xl p-2 lg:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50"
+                className="flex flex-col text-left group bg-white border border-gray-100 rounded-xl p-2 lg:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
               >
                 <div className="aspect-square bg-gray-50 rounded-lg mb-2 lg:mb-3 overflow-hidden relative">
                   <img src={product.imageUrl || `https://picsum.photos/seed/${product.id}/200/200`} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   {orderType === 'manual' && product.stock <= 0 && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <span className="text-[8px] lg:text-[10px] font-bold text-white bg-red-600 px-2 py-1 rounded">OUT OF STOCK</span>
+                    </div>
+                  )}
+                  {product.variants && product.variants.length > 0 && (
+                    <div className="absolute top-1 left-1">
+                      <span className="bg-indigo-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase tracking-tighter">
+                        Variasi
+                      </span>
+                    </div>
+                  )}
+                  {product.wholesalePrices && product.wholesalePrices.length > 0 && (
+                    <div className="absolute top-1 right-1">
+                      <span className="bg-green-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase tracking-tighter">
+                        Grosir
+                       </span>
+                    </div>
+                  )}
+                  {product.type === 'service' && (
+                    <div className="absolute bottom-1 right-1">
+                      <span className="bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase tracking-tighter">
+                        Jasa
+                      </span>
                     </div>
                   )}
                 </div>
@@ -595,24 +735,48 @@ export default function SalesOrder() {
               <p className="text-xs font-bold">Cart is empty</p>
             </div>
           ) : (
-            cart.map((item) => (
-              <div key={item.product.id} className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0">
-                <div className="flex-1 min-w-0 mr-4">
-                  <p className="text-xs lg:text-sm font-bold text-gray-900 leading-tight mb-1">{item.product.name}</p>
-                  <p className="text-[10px] lg:text-xs text-gray-500 font-medium">Rp.{(item.product.price || 0).toLocaleString()} x {item.quantity}</p>
+            cart.map((item) => {
+              const itemVid = (item as any).variantId;
+              const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+              const unitPrice = getProductPrice(item.product, itemVid);
+              const basePrice = variant ? variant.price : item.product.price;
+              const isDiscounted = unitPrice < basePrice;
+              const cartItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+
+              return (
+                <div key={cartItemId} className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0">
+                  <div className="flex-1 min-w-0 mr-4">
+                    <p className="text-xs lg:text-sm font-bold text-gray-900 leading-tight mb-1">
+                      {item.product.name}
+                      {variant && <span className="text-indigo-600 ml-1">[{variant.name}]</span>}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className={`text-[10px] lg:text-xs font-bold ${isDiscounted ? 'text-green-600' : 'text-gray-500'}`}>
+                        Rp.{unitPrice.toLocaleString()}
+                        {isDiscounted && (
+                          <span className="text-[8px] lg:text-[10px] text-gray-400 line-through ml-1 font-medium">Rp.{basePrice.toLocaleString()}</span>
+                        )}
+                      </p>
+                      {isDiscounted && (
+                        <span className="text-[8px] text-green-600 font-bold bg-green-50 px-1 py-0.5 rounded border border-green-100">Grosir!</span>
+                      )}
+                    </div>
+                    <p className="text-[10px] lg:text-xs text-gray-400 font-medium">Total: Rp.{(unitPrice * item.quantity).toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center space-x-1 shrink-0">
+                    <button onClick={() => updateQuantity(cartItemId, -1)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"><Minus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
+                    <input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) => setQuantity(cartItemId, parseInt(e.target.value) || 0)}
+                      className="text-xs lg:text-sm font-black w-10 lg:w-12 text-center text-indigo-600 bg-gray-50 border-none outline-none focus:ring-1 focus:ring-indigo-500 rounded py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button onClick={() => updateQuantity(cartItemId, 1)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"><Plus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
+                    <button onClick={() => updateQuantity(cartItemId, -item.quantity)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors ml-1"><Trash2 className="w-3 h-3 lg:w-4 lg:h-4" /></button>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1 shrink-0">
-                  <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"><Minus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) => setQuantity(item.product.id, parseInt(e.target.value) || 0)}
-                    className="text-xs lg:text-sm font-black w-10 lg:w-12 text-center text-indigo-600 bg-gray-50 border-none outline-none focus:ring-1 focus:ring-indigo-500 rounded py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                  <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"><Plus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -621,17 +785,75 @@ export default function SalesOrder() {
             <span>Total</span>
             <span>Rp.{(total || 0).toLocaleString()}</span>
           </div>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              setIsCheckoutModalOpen(true);
-            }}
-            disabled={cart.length === 0 || isProcessing}
-            className="w-full bg-indigo-600 text-white py-3 lg:py-4 rounded-xl font-bold text-base lg:text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-lg shadow-indigo-200 active:scale-95"
-          >
-            <CreditCard className="w-5 h-5 lg:w-6 lg:h-6 mr-2" />
-            Checkout
-          </button>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          setIsCheckoutModalOpen(true);
+        }}
+        disabled={cart.length === 0 || isProcessing}
+        className="w-full bg-indigo-600 text-white py-3 lg:py-4 rounded-xl font-bold text-base lg:text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-lg shadow-indigo-200 active:scale-95"
+      >
+        <CreditCard className="w-5 h-5 lg:w-6 lg:h-6 mr-2" />
+        Checkout
+      </button>
+
+      {/* Variant Selection Modal */}
+      <AnimatePresence>
+        {selectedVariantProduct && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+            >
+              <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
+                <div>
+                    <h3 className="text-xl font-bold">{selectedVariantProduct.name}</h3>
+                    <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest mt-1">Pilih Variasi Produk</p>
+                </div>
+                <button onClick={() => setSelectedVariantProduct(null)} className="p-2 hover:bg-white/10 rounded-full">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 space-y-3">
+                {selectedVariantProduct.variants?.map((v: any) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setSelectedVariantId(v.id)}
+                    disabled={v.stock <= 0}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                      selectedVariantId === v.id 
+                        ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50' 
+                        : 'border-gray-100 hover:border-indigo-200 bg-white'
+                    } ${v.stock <= 0 ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                  >
+                    <div className="text-left">
+                        <p className={`font-bold ${selectedVariantId === v.id ? 'text-indigo-600' : 'text-gray-900'}`}>{v.name}</p>
+                        <p className="text-[10px] text-gray-500 font-mono">{v.sku}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-black text-indigo-600">Rp.{v.price.toLocaleString()}</p>
+                        <p className={`text-[9px] font-bold ${v.stock <= 5 ? 'text-red-500 animate-pulse' : 'text-gray-400'}`}>
+                            {v.stock > 0 ? `Stok: ${v.stock}` : 'Stok Habis'}
+                        </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => addToCart(selectedVariantProduct, selectedVariantId)}
+                  disabled={!selectedVariantId}
+                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
+                >
+                  MASUKKAN PESANAN
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
         </div>
       </div>
 

@@ -95,31 +95,93 @@ export default function Sales() {
   const currentCustomer = customers.find(c => c.id === selectedCustomer);
   const canUseTempo = currentCustomer?.type === 'langganan' && currentCustomer?.allowTempo;
 
-  const addToCart = (product: Product) => {
+  const [selectedVariantProduct, setSelectedVariantProduct] = useState<Product | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>('');
+
+  const addToCart = (product: Product, variantId?: string) => {
     const isService = product.type === 'service';
-    if (!isService && product.stock <= 0) return;
-    const existing = cart.find(item => item.product.id === product.id);
-    if (existing) {
-      if (!isService && existing.quantity >= product.stock) return;
-      setCart(cart.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
-    } else {
-      setCart([...cart, { product, quantity: 1 }]);
+    
+    if (product.variants && product.variants.length > 0 && !variantId) {
+      setSelectedVariantProduct(product);
+      setSelectedVariantId(product.variants[0].id);
+      return;
     }
+
+    const variant = variantId ? product.variants?.find((v: any) => v.id === variantId) : null;
+    const stockToUse = variant ? variant.stock : product.stock;
+    
+    if (!isService && stockToUse <= 0) {
+      alert('Stok produk/variasi ini habis!');
+      return;
+    }
+
+    const cartItemId = variantId ? `${product.id}-${variantId}` : product.id;
+    const existing = cart.find(item => {
+        const itemVid = (item as any).variantId;
+        const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+        return currentItemId === cartItemId;
+    });
+
+    if (existing) {
+      if (!isService && existing.quantity >= stockToUse) return;
+      setCart(cart.map(item => {
+          const itemVid = (item as any).variantId;
+          const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+          return currentItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item;
+      }));
+    } else {
+      setCart([...cart, { product, quantity: 1, variantId } as any]);
+    }
+    
+    setSelectedVariantProduct(null);
+    setSelectedVariantId('');
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
+  const updateQuantity = (cartItemId: string, delta: number) => {
     setCart(cart.map(item => {
-      if (item.product.id === productId) {
+      const itemVid = (item as any).variantId;
+      const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+      
+      if (currentItemId === cartItemId) {
         const newQty = Math.max(0, item.quantity + delta);
         const isService = item.product.type === 'service';
-        if (!isService && newQty > item.product.stock) return item;
+        
+        const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+        const stockToUse = variant ? variant.stock : item.product.stock;
+
+        if (!isService && newQty > stockToUse) return item;
         return { ...item, quantity: newQty };
       }
       return item;
     }).filter(item => item.quantity > 0));
   };
 
-  const total = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+  const getProductPrice = (product: Product, variantId?: string) => {
+    // Calculate total quantity of this product in cart (across all variants)
+    const productTotalQty = cart
+      .filter(item => item.product.id === product.id)
+      .reduce((sum, item) => sum + item.quantity, 0);
+
+    let basePrice = product.price;
+
+    if (variantId && product.variants) {
+      const variant = product.variants.find((v: any) => v.id === variantId);
+      if (variant) basePrice = variant.price;
+    }
+
+    if (!product.wholesalePrices || product.wholesalePrices.length === 0) {
+      return basePrice;
+    }
+    
+    // Sort by minQuantity descending to find the highest applicable tier
+    const applicableTier = [...product.wholesalePrices]
+      .sort((a, b) => b.minQuantity - a.minQuantity)
+      .find(tier => productTotalQty >= tier.minQuantity);
+      
+    return applicableTier ? applicableTier.price : basePrice;
+  };
+
+  const total = cart.reduce((acc, item) => acc + (getProductPrice(item.product, (item as any).variantId) * item.quantity), 0);
 
   const handleCheckout = async () => {
     if (cart.length === 0 || isProcessing) return;
@@ -182,14 +244,22 @@ export default function Sales() {
         customerName: currentCustomer?.name || 'Guest',
         customerEmail: currentCustomer?.email || 'guest@example.com',
         customerAddress: currentCustomer?.address || '-',
-        items: cart.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          price: item.product.price,
-          hpp: item.product.hpp || 0,
-          quantity: item.quantity,
-          total: item.product.price * item.quantity
-        })),
+        items: cart.map(item => {
+          const itemVid = (item as any).variantId;
+          const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+          const unitPrice = getProductPrice(item.product, itemVid);
+          const name = variant ? `${item.product.name} (${variant.name})` : item.product.name;
+          
+          return {
+            productId: item.product.id,
+            variantId: itemVid || null,
+            name,
+            price: unitPrice,
+            hpp: variant ? (variant.hpp || 0) : (item.product.hpp || 0),
+            quantity: item.quantity,
+            total: unitPrice * item.quantity
+          };
+        }),
         totalAmount: total,
         paidAmount: paymentType === 'cash' ? total : 0,
         paymentStatus: paymentType === 'cash' ? 'paid' : 'unpaid',
@@ -210,12 +280,17 @@ export default function Sales() {
         type: 'sale',
         category: 'Sales POS',
         amount: total,
-        items: cart.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          quantity: item.quantity,
-          price: item.product.price
-        })),
+        items: cart.map(item => {
+            const itemVid = (item as any).variantId;
+            const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+            return {
+                productId: item.product.id,
+                variantId: itemVid || null,
+                name: variant ? `${item.product.name} (${variant.name})` : item.product.name,
+                quantity: item.quantity,
+                price: getProductPrice(item.product, itemVid)
+            };
+        }),
         date: serverTimestamp(),
         dueDate,
         status,
@@ -233,24 +308,45 @@ export default function Sales() {
       // 3. Update stock
       for (const item of cart) {
         const isService = item.product.type === 'service';
+        const itemVid = (item as any).variantId;
         
         if (!isService) {
-          await updateDoc(doc(db, 'products', item.product.id), {
-            stock: increment(-item.quantity)
-          });
+          if (itemVid && item.product.variants) {
+            // Update variants array in product doc
+            const updatedVariants = item.product.variants.map((v: any) => {
+                if (v.id === itemVid) {
+                    return { ...v, stock: v.stock - item.quantity };
+                }
+                return v;
+            });
+            
+            // Also update total stock
+            await updateDoc(doc(db, 'products', item.product.id), {
+                variants: updatedVariants,
+                stock: increment(-item.quantity)
+            });
+          } else {
+            await updateDoc(doc(db, 'products', item.product.id), {
+                stock: increment(-item.quantity)
+            });
+          }
+
+          const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+          const currentStock = variant ? variant.stock : item.product.stock;
+          const logName = variant ? `${item.product.name} (${variant.name})` : item.product.name;
 
           await logStockChange(
             targetTenantId!,
             item.product.id,
-            item.product.name,
+            logName,
             'SALE',
             item.quantity,
-            item.product.stock,
-            item.product.stock - item.quantity,
+            currentStock,
+            currentStock - item.quantity,
             profile?.uid!,
             profile?.displayName || 'System',
             { id: transRef.id, number: transactionNumber },
-            'Sales transaction POS'
+            `Sales POS ${itemVid ? '(Variant)' : ''}`
           );
         }
       }
@@ -349,6 +445,27 @@ export default function Sales() {
                       {cart.find(item => item.product.id === product.id)?.quantity}
                     </div>
                   )}
+                  {product.variants && product.variants.length > 0 && (
+                    <div className="absolute top-1 left-1">
+                      <span className="bg-indigo-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase tracking-tighter">
+                        Variasi
+                      </span>
+                    </div>
+                  )}
+                  {product.wholesalePrices && product.wholesalePrices.length > 0 && (
+                    <div className="absolute top-1 right-1">
+                      <span className="bg-green-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase tracking-tighter">
+                        Grosir
+                      </span>
+                    </div>
+                  )}
+                  {product.type === 'service' && (
+                    <div className="absolute bottom-1 right-1">
+                      <span className="bg-orange-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase tracking-tighter">
+                        Jasa
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 truncate leading-tight">{product.name}</h4>
                 <div className="flex justify-between items-center mt-1 sm:mt-2">
@@ -383,26 +500,49 @@ export default function Sales() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-3 md:space-y-4">
-          {cart.map((item) => (
-            <div key={item.product.id} className="flex items-center justify-between bg-gray-50 p-2 md:p-3 rounded-xl">
-              <div className="flex-1 min-w-0 mr-2 md:mr-4">
-                <p className="text-xs md:text-sm font-bold text-gray-900 truncate">{item.product.name}</p>
-                <p className="text-[10px] md:text-xs text-gray-500 font-medium">Rp.{(item.product.price || 0).toLocaleString()} x {item.quantity}</p>
+          {cart.map((item) => {
+            const itemVid = (item as any).variantId;
+            const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+            const unitPrice = getProductPrice(item.product, itemVid);
+            const basePrice = variant ? variant.price : item.product.price;
+            const isDiscounted = unitPrice < basePrice;
+            const cartItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+
+            return (
+              <div key={cartItemId} className="flex items-center justify-between bg-gray-50 p-2 md:p-3 rounded-xl border border-gray-100 hover:border-indigo-100 transition-colors">
+                <div className="flex-1 min-w-0 mr-2 md:mr-4">
+                  <p className="text-xs md:text-sm font-bold text-gray-900 truncate">
+                    {item.product.name}
+                    {variant && <span className="text-indigo-600 ml-1">[{variant.name}]</span>}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-[10px] md:text-xs font-bold ${isDiscounted ? 'text-green-600' : 'text-gray-500'}`}>
+                      Rp.{unitPrice.toLocaleString()}
+                      {isDiscounted && (
+                        <span className="text-[8px] md:text-[10px] text-gray-400 line-through ml-1 font-medium">Rp.{basePrice.toLocaleString()}</span>
+                      )}
+                    </p>
+                    {isDiscounted && (
+                      <span className="text-[8px] text-green-600 font-bold bg-green-50 px-1 py-0.5 rounded border border-green-100">Grosir!</span>
+                    )}
+                  </div>
+                  <p className="text-[10px] md:text-xs text-gray-400">Total: Rp.{(unitPrice * item.quantity).toLocaleString()}</p>
+                </div>
+                <div className="flex items-center space-x-1 md:space-x-2">
+                  <button onClick={() => updateQuantity(cartItemId, -1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                    <Minus className="w-3 h-3 md:w-4 md:h-4" />
+                  </button>
+                  <span className="text-xs md:text-sm font-black w-4 md:w-6 text-center">{item.quantity}</span>
+                  <button onClick={() => updateQuantity(cartItemId, 1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                    <Plus className="w-3 h-3 md:w-4 md:h-4" />
+                  </button>
+                  <button onClick={() => updateQuantity(cartItemId, -item.quantity)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-1 md:ml-2">
+                    <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center space-x-1 md:space-x-2">
-                <button onClick={() => updateQuantity(item.product.id, -1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Minus className="w-3 h-3 md:w-4 md:h-4" />
-                </button>
-                <span className="text-xs md:text-sm font-black w-4 md:w-6 text-center">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.product.id, 1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Plus className="w-3 h-3 md:w-4 md:h-4" />
-                </button>
-                <button onClick={() => updateQuantity(item.product.id, -item.quantity)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-1 md:ml-2">
-                  <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {cart.length === 0 && (
             <div className="text-center py-10 md:py-20">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -452,6 +592,64 @@ export default function Sales() {
           </span>
         </button>
       )}
+
+      {/* Variant Selection Modal */}
+      <AnimatePresence>
+        {selectedVariantProduct && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+            >
+              <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
+                <div>
+                    <h3 className="text-xl font-bold">{selectedVariantProduct.name}</h3>
+                    <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest mt-1">Pilih Variasi Produk</p>
+                </div>
+                <button onClick={() => setSelectedVariantProduct(null)} className="p-2 hover:bg-white/10 rounded-full">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 space-y-3">
+                {selectedVariantProduct.variants?.map((v: any) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setSelectedVariantId(v.id)}
+                    disabled={v.stock <= 0}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                      selectedVariantId === v.id 
+                        ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50' 
+                        : 'border-gray-100 hover:border-indigo-200 bg-white'
+                    } ${v.stock <= 0 ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                  >
+                    <div className="text-left">
+                        <p className={`font-bold ${selectedVariantId === v.id ? 'text-indigo-600' : 'text-gray-900'}`}>{v.name}</p>
+                        <p className="text-[10px] text-gray-500 font-mono">{v.sku}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-black text-indigo-600">Rp.{v.price.toLocaleString()}</p>
+                        <p className={`text-[9px] font-bold ${v.stock <= 5 ? 'text-red-500 animate-pulse' : 'text-gray-400'}`}>
+                            {v.stock > 0 ? `Stok: ${v.stock}` : 'Stok Habis'}
+                        </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => addToCart(selectedVariantProduct, selectedVariantId)}
+                  disabled={!selectedVariantId}
+                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
+                >
+                  MASUKKAN KERANJANG
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Checkout Modal */}
       <AnimatePresence>

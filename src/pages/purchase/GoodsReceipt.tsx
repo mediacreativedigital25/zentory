@@ -90,11 +90,12 @@ export default function GoodsReceipts() {
       poId,
       items: po.items.map(item => ({
         productId: item.productId,
+        variantId: (item as any).variantId || null,
         name: item.name,
         quantityOrdered: item.quantity,
         quantityReceived: item.quantity,
         isChecked: false
-      }))
+      })) as any
     });
   };
 
@@ -151,15 +152,50 @@ export default function GoodsReceipts() {
       onConfirm: async () => {
         setConfirmConfig(null);
         try {
-          // Update Stock for each item
+          // Fetch PO to get prices for HPP update
+          const poRef = doc(db, 'purchase_orders', receipt.poId);
+          const poSnap = await getDoc(poRef);
+          const poData = poSnap.exists() ? poSnap.data() as PurchaseOrder : null;
+
+          // Update Stock and HPP for each item
           for (const item of receipt.items) {
             const productRef = doc(db, 'products', item.productId);
             const productSnap = await getDoc(productRef);
-            const currentStock = productSnap.exists() ? (productSnap.data() as Product).stock : 0;
+            if (!productSnap.exists()) continue;
+            
+            const productData = productSnap.data() as Product;
+            const currentStock = productData.stock;
 
-            await updateDoc(productRef, {
-              stock: increment(item.quantityReceived)
-            });
+            // Get purchase price for HPP update
+            const poItem = poData?.items.find(i => i.productId === item.productId && (i as any).variantId === (item as any).variantId);
+            const newHPP = poItem?.price || productData.hpp;
+            const itemVid = (item as any).variantId;
+
+            if (itemVid && productData.variants) {
+                // Update variant stock and HPP
+                const updatedVariants = productData.variants.map((v: any) => {
+                    if (v.id === itemVid) {
+                        return { 
+                            ...v, 
+                            stock: v.stock + item.quantityReceived,
+                            hpp: newHPP
+                        };
+                    }
+                    return v;
+                });
+                await updateDoc(productRef, {
+                    variants: updatedVariants,
+                    stock: increment(item.quantityReceived)
+                });
+            } else {
+                await updateDoc(productRef, {
+                    stock: increment(item.quantityReceived),
+                    hpp: newHPP
+                });
+            }
+
+            const variant = itemVid ? productData.variants?.find((v: any) => v.id === itemVid) : null;
+            const variantCurrentStock = variant ? variant.stock : productData.stock;
 
             await logStockChange(
               profile?.tenantId!,
@@ -167,12 +203,12 @@ export default function GoodsReceipts() {
               item.name,
               'PURCHASE',
               item.quantityReceived,
-              currentStock,
-              currentStock + item.quantityReceived,
+              variantCurrentStock,
+              variantCurrentStock + item.quantityReceived,
               profile?.uid!,
               profile?.displayName || 'System',
               { id: receipt.id, number: receipt.grNumber },
-              `Goods Receipt from PO: ${receipt.poNumber || '-'}`
+              `Goods Receipt from PO: ${receipt.poNumber || '-'} ${itemVid ? '(Variant)' : ''}`
             );
           }
 

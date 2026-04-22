@@ -31,11 +31,15 @@ import Warehouses from './pages/inventory/Warehouses';
 import InventoryReport from './pages/inventory/InventoryReport';
 import StockOpname from './pages/inventory/StockOpname';
 import Invoices from './pages/finance/Invoices';
+import ReceivePayment from './pages/finance/ReceivePayment';
 import Sales from './pages/Sales';
 import Coupons from './pages/Coupons';
+import SettingTarget from './pages/analysis/SettingTarget';
+import Achievement from './pages/analysis/Achievement';
 import Finance from './pages/Finance';
 import ClaimExpense from './pages/ClaimExpense';
 import FinancialReport from './pages/FinancialReport';
+import InvoiceCollection from './pages/finance/InvoiceCollection';
 import ExpenseSettings from './pages/ExpenseSettings';
 import BankAccounts from './pages/finance/BankAccounts';
 import Charity from './pages/Charity';
@@ -92,7 +96,7 @@ const ProtectedRoute = ({ children, allowedRoles, permission }: { children: Reac
   const isSystemRole = ['admin', 'staff', 'customer', 'superadmin', 'kasir'].includes(profile?.role || '');
 
   // Redirect 'kasir' to sales order if they are on dashboard or other pages
-  const allowedKasirPaths = ['/sales/order', '/sales/pos', '/sales/receive', '/no-access'];
+  const allowedKasirPaths = ['/sales/order', '/sales/pos', '/sales/receive', '/sales/customers', '/no-access'];
   if (profile?.role === 'kasir' && !allowedKasirPaths.includes(location.pathname)) {
     return <Navigate to="/sales/pos" />; // Default to POS for kasir
   }
@@ -256,6 +260,18 @@ export default function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/sales/analysis/target" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order">
+              <SettingTarget />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/sales/analysis/achievement" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order">
+              <Achievement />
+            </ProtectedRoute>
+          } />
+
           <Route path="/sales/coupons" element={
             <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order">
               <Coupons />
@@ -263,7 +279,7 @@ export default function App() {
           } />
 
           <Route path="/finance" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="finance_report">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_report">
               <FinancialReport />
             </ProtectedRoute>
           } />
@@ -275,13 +291,25 @@ export default function App() {
           } />
 
           <Route path="/finance/invoices" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="finance_invoices">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices">
               <Invoices />
             </ProtectedRoute>
           } />
 
+          <Route path="/finance/receive-payment" element={
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices">
+              <ReceivePayment />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/finance/collections" element={
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices">
+              <InvoiceCollection />
+            </ProtectedRoute>
+          } />
+
           <Route path="/finance/report" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="finance_report">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_report">
               <FinancialReport />
             </ProtectedRoute>
           } />
@@ -299,13 +327,13 @@ export default function App() {
           } />
 
           <Route path="/finance/charity" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="finance_charity">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_charity">
               <Charity />
             </ProtectedRoute>
           } />
 
           <Route path="/daily-settlement" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="daily_settlement">
+            <ProtectedRoute allowedRoles={['admin']} permission="daily_settlement">
               <DailySettlement />
             </ProtectedRoute>
           } />

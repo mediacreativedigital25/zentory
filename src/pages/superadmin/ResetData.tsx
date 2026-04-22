@@ -31,6 +31,8 @@ export default function SuperAdminResetData() {
 
   const collectionsToReset = [
     { id: 'orders', label: 'Orders (Pesanan)' },
+    { id: 'invoice_collections', label: 'Invoice Collections (Penagihan)' },
+    { id: 'payment_receipts', label: 'Payment Receipts (Kuitansi)' },
     { id: 'transactions', label: 'Transactions (Keuangan)' },
     { id: 'bank_accounts', label: 'Bank Accounts (Rekening)' },
     { id: 'dailyClosings', label: 'Daily Closings (Tutup Buku)' },
