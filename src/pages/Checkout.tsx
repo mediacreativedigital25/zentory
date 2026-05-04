@@ -19,9 +19,11 @@ import { PLANS } from '../constants/plans';
 import { useAuth } from '../hooks/useAuth';
 import { SubscriptionPlan } from '../types';
 import { db } from '../lib/firebase';
-import { doc, onSnapshot, addDoc, collection, serverTimestamp, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { doc, onSnapshot, addDoc, collection, serverTimestamp, query, where, getDocs, orderBy, limit, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { auth } from '../lib/firebase';
+import { sendInvoiceCreatedNotification } from '../lib/fonnte';
+import { sendInvoiceCreatedEmail } from '../lib/email';
 
 export default function Checkout() {
   const [searchParams] = useSearchParams();
@@ -46,6 +48,59 @@ export default function Checkout() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generatedInvoiceNumber, setGeneratedInvoiceNumber] = useState('');
+  const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponSuccess, setCouponSuccess] = useState('');
+  const [isLoadingCoupon, setIsLoadingCoupon] = useState(false);
+
+  const calculateTotalBeforeDiscount = () => selectedAmount;
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.type === 'percentage') {
+      return Math.floor(selectedAmount * (appliedCoupon.value / 100));
+    }
+    if (appliedCoupon.type === 'nominal') {
+      return appliedCoupon.value > selectedAmount ? selectedAmount : appliedCoupon.value;
+    }
+    return 0; // free_days doesn't reduce price necessarily, maybe it adds duration
+  };
+  
+  const calculateFinalTotal = () => {
+    return calculateTotalBeforeDiscount() - calculateDiscount();
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCodeInput.trim()) return;
+    setIsLoadingCoupon(true);
+    setCouponError('');
+    setCouponSuccess('');
+    try {
+      const code = couponCodeInput.toUpperCase().replace(/\s/g, '');
+      const docRef = doc(db, 'tenant_coupons', code);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (!data.isActive) {
+          setCouponError('Kupon tidak aktif.');
+          setAppliedCoupon(null);
+        } else if (data.maxUses > 0 && data.usedCount >= data.maxUses) {
+          setCouponError('Kupon sudah mencapai batas maksimal penggunaan.');
+          setAppliedCoupon(null);
+        } else {
+          setAppliedCoupon({ id: snap.id, ...data });
+          setCouponSuccess('Kupon berhasil diterapkan!');
+        }
+      } else {
+        setCouponError('Kupon tidak ditemukan.');
+        setAppliedCoupon(null);
+      }
+    } catch(err) {
+      setCouponError('Gagal memeriksa kupon.');
+    } finally {
+      setIsLoadingCoupon(false);
+    }
+  };
 
   const generateInvoiceNumber = async () => {
     const now = new Date();
@@ -112,16 +167,22 @@ export default function Checkout() {
       const invoiceNumber = await generateInvoiceNumber();
       setGeneratedInvoiceNumber(invoiceNumber);
 
-      const invoiceData = {
+      let usedDuration = durationParam;
+      if (appliedCoupon?.type === 'free_days') {
+        usedDuration += appliedCoupon.value;
+      }
+
+      const invoiceData: any = {
         tenantId: tenant.id,
         tenantName: tenant.name,
         userId: profile.uid,
         userEmail: profile.email,
         planId: planId,
         planName: planInfo.name,
-        duration: durationParam,
+        duration: usedDuration,
         amount: selectedAmount,
-        total: selectedAmount,
+        discount: calculateDiscount(),
+        total: calculateFinalTotal(),
         status: 'pending',
         paymentMethod: paymentMethod,
         invoiceNumber: invoiceNumber,
@@ -129,8 +190,38 @@ export default function Checkout() {
         updatedAt: serverTimestamp(),
       };
 
+      if (appliedCoupon) {
+        invoiceData.couponCode = appliedCoupon.code;
+        invoiceData.couponType = appliedCoupon.type;
+        invoiceData.couponValue = appliedCoupon.value;
+        
+        // Update coupon used count if coupon used
+        await updateDoc(doc(db, 'tenant_coupons', appliedCoupon.id), {
+          usedCount: increment(1)
+        });
+      }
+
       await addDoc(collection(db, 'finance_invoices'), invoiceData);
       
+      try {
+        const emailVarData = {
+          nama_tenant: tenant.name,
+          plan_name: planInfo.name,
+          amount: `Rp ${calculateFinalTotal().toLocaleString('id-ID')}`,
+          invoice_url: `${window.location.origin}/layanan/invoice?id=${invoiceNumber}`,
+          invoice_number: invoiceNumber
+        };
+
+        if (tenant.phone) {
+          await sendInvoiceCreatedNotification(tenant.phone, emailVarData);
+        }
+        if (tenant.email) {
+          await sendInvoiceCreatedEmail(tenant.email, emailVarData);
+        }
+      } catch (e) {
+        console.error("Failed to send Notification", e);
+      }
+
       setIsSuccess(true);
     } catch (err) {
       console.error(err);
@@ -410,11 +501,58 @@ export default function Checkout() {
                 <p className="font-black text-gray-900">{selectedPriceDisplay}</p>
               </div>
 
+              {/* Coupon Section */}
+              <div className="space-y-2 pt-2">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Kupon Diskon (Gunakan jika ada)</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="KODE KUPON"
+                    value={couponCodeInput}
+                    onChange={e => setCouponCodeInput(e.target.value)}
+                    disabled={!!appliedCoupon || isLoadingCoupon}
+                    className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono font-bold text-sm"
+                  />
+                  {!appliedCoupon ? (
+                    <button 
+                      onClick={handleApplyCoupon}
+                      disabled={isLoadingCoupon || !couponCodeInput}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold w-24 flex items-center justify-center disabled:opacity-50"
+                    >
+                      {isLoadingCoupon ? 'Cek...' : 'Terapkan'}
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setAppliedCoupon(null)}
+                      className="px-4 py-2 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200"
+                    >
+                      Hapus
+                    </button>
+                  )}
+                </div>
+                {couponError && <p className="text-xs text-red-600 font-bold">{couponError}</p>}
+                {couponSuccess && <p className="text-xs text-green-600 font-bold">{couponSuccess}</p>}
+              </div>
+
               <div className="space-y-3 px-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 font-medium">Subtotal</span>
                   <span className="text-gray-900 font-bold">{selectedPriceDisplay}</span>
                 </div>
+                
+                {calculateDiscount() > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600 font-bold flex items-center gap-1">Diskon Kupon</span>
+                    <span className="text-green-600 font-bold">-Rp {calculateDiscount().toLocaleString('id-ID')}</span>
+                  </div>
+                )}
+                {appliedCoupon?.type === 'free_days' && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-indigo-600 font-bold">Gratis Langganan</span>
+                    <span className="text-indigo-600 font-bold">+{appliedCoupon.value} Hari</span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 font-medium">Biaya Layanan</span>
                   <span className="text-gray-900 font-bold">Rp0</span>
@@ -422,7 +560,7 @@ export default function Checkout() {
                 <div className="pt-4 border-t border-gray-100 flex justify-between items-end">
                   <div>
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Bayar</p>
-                    <p className="text-2xl font-black text-indigo-600">{selectedPriceDisplay}</p>
+                    <p className="text-2xl font-black text-indigo-600">Rp {calculateFinalTotal().toLocaleString('id-ID')}</p>
                   </div>
                 </div>
               </div>

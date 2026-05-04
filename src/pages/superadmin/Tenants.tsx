@@ -2,13 +2,91 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, doc, updateDoc, serverTimestamp, writeBatch, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Tenant, SubscriptionPlan } from '../../types';
-import { Building2, Search, RefreshCcw, Eye, X, Save, Phone, Mail, MapPin, Briefcase, Plus, Trash2 } from 'lucide-react';
+import { Building2, Search, RefreshCcw, Eye, X, Save, Phone, Mail, MapPin, Briefcase, Plus, Trash2, ListChecks, CheckCircle, LayoutDashboard, CheckCircle2, ShoppingCart, TrendingUp, Package, Truck, Wallet, Calculator, Settings, Store, ShieldCheck, History, BookOpen, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { auth } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
 import { PLANS } from '../../constants/plans';
 import ConfirmModal from '../../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
+
+const AVAILABLE_MENUS = [
+  { label: 'Dashboard', icon: LayoutDashboard },
+  { label: 'Approval', icon: CheckCircle2 },
+  { 
+    label: 'Sales', 
+    icon: ShoppingCart,
+    children: [
+      { label: 'Sales Order V1' },
+      { label: 'Sales Order' },
+      { label: 'Sales POS' },
+      { label: 'Sales Order Receive' },
+      { label: 'Kupon' },
+      { label: 'Customers' },
+    ]
+  },
+  { 
+    label: 'Sales Analisis', 
+    icon: TrendingUp,
+    children: [
+      { label: 'Setting Target' },
+      { label: 'Pencapaian' },
+      { label: 'Operational Cost Ratio' },
+    ]
+  },
+  { 
+    label: 'Inventory', 
+    icon: Package,
+    children: [
+      { label: 'Daftar Produk' },
+      { label: 'Riwayat Produk' },
+      { label: 'Kategori' },
+      { label: 'Stock' },
+      { label: 'Gudang' },
+      { label: 'Report Inventory' },
+      { label: 'Stock Opname' },
+    ]
+  },
+  { 
+    label: 'Purchase', 
+    icon: Truck,
+    children: [
+      { label: 'Purchase Request (PR)' },
+      { label: 'Purchase Order (PO)' },
+      { label: 'Goods Receipt' },
+      { label: 'Purchase Invoice' },
+      { label: 'Supplier' },
+    ]
+  },
+  { 
+    label: 'Finance', 
+    icon: Wallet,
+    children: [
+      { label: 'Invoice' },
+      { label: 'Receive Payment' },
+      { label: 'Invoice Collection' },
+      { label: 'Akun Bank' },
+      { label: 'Claim Expense' },
+      { label: 'Amal' },
+      { label: 'Report Keuangan' },
+      { label: 'Setting Claim Expense' },
+    ]
+  },
+  { label: 'Daily Settlement', icon: Calculator },
+  { 
+    label: 'Master', 
+    icon: Settings,
+    children: [
+      { label: 'Tambah User' },
+      { label: 'Tambah Role' },
+    ]
+  },
+  { label: 'Catalog Editor', icon: Store },
+  { label: 'Profil Bisnis', icon: Building2 },
+  { label: 'Layanan', icon: ShieldCheck, children: [{ label: 'Invoice' }, { label: 'Layanan Saya' }] },
+  { label: 'Changelog', icon: History },
+  { label: 'Panduan', icon: BookOpen }
+];
 
 export default function SuperAdminTenants() {
   const { profile } = useAuth();
@@ -541,9 +619,155 @@ export default function SuperAdminTenants() {
                     </div>
                   </div>
                 </div>
+
+                {/* Menu Access Settings */}
+                <div className="mt-12 pt-8 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-6">
+                    <h4 className="font-bold text-gray-900 flex items-center">
+                      <ListChecks className="w-5 h-5 mr-2 text-indigo-600" />
+                      Custom Menu Access
+                    </h4>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => {
+                          const allEnabled: Record<string, any> = {};
+                          AVAILABLE_MENUS.forEach(menu => {
+                            allEnabled[menu.label] = true;
+                            if (menu.children) {
+                              menu.children.forEach(child => {
+                                allEnabled[`${menu.label}_${child.label}`] = true;
+                              });
+                            }
+                          });
+                          setTenantFormData({ ...tenantFormData, menuSettings: allEnabled });
+                          if (!isEditingTenant) setIsEditingTenant(true);
+                        }}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                      >
+                        Aktifkan Semua
+                      </button>
+                      <button
+                        onClick={() => {
+                          const allDisabled: Record<string, any> = {};
+                          AVAILABLE_MENUS.forEach(menu => {
+                            allDisabled[menu.label] = false;
+                            if (menu.children) {
+                              menu.children.forEach(child => {
+                                allDisabled[`${menu.label}_${child.label}`] = false;
+                              });
+                            }
+                          });
+                          setTenantFormData({ ...tenantFormData, menuSettings: allDisabled });
+                          if (!isEditingTenant) setIsEditingTenant(true);
+                        }}
+                        className="text-xs font-bold text-red-600 hover:text-red-700"
+                      >
+                        Matikan Semua
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {AVAILABLE_MENUS.map((menu) => {
+                      const isEnabled = tenantFormData.menuSettings?.[menu.label] !== false;
+                      const hasSubMenus = menu.children && menu.children.length > 0;
+                      
+                      return (
+                        <div key={menu.label} className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden transition-all">
+                          <div className={`p-4 flex items-center justify-between ${isEnabled ? 'bg-indigo-50/50' : 'bg-gray-50/50'}`}>
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-xl ${isEnabled ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                                <menu.icon className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <p className={`text-sm font-bold ${isEnabled ? 'text-gray-900' : 'text-gray-400'}`}>{menu.label}</p>
+                                {hasSubMenus && (
+                                  <p className="text-[10px] text-gray-400 font-medium">
+                                    {menu.children?.length} Sub Menu tersedia
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const currentSettings = tenantFormData.menuSettings || {};
+                                const newEnabled = !isEnabled;
+                                const newSettings = { ...currentSettings, [menu.label]: newEnabled };
+                                
+                                // If disabling parent, disable all children? Or just leave them?
+                                // Let's disable children too if parent is disabled for better UX
+                                if (menu.children && !newEnabled) {
+                                  menu.children.forEach(child => {
+                                    newSettings[`${menu.label}_${child.label}`] = false;
+                                  });
+                                } else if (menu.children && newEnabled) {
+                                  // Enable all children if parent is enabled? Maybe better to keep previous state but at least parent must be true
+                                  menu.children.forEach(child => {
+                                    newSettings[`${menu.label}_${child.label}`] = true;
+                                  });
+                                }
+
+                                setTenantFormData({ ...tenantFormData, menuSettings: newSettings });
+                                if (!isEditingTenant) setIsEditingTenant(true);
+                              }}
+                              className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                                isEnabled 
+                                  ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100' 
+                                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                              }`}
+                            >
+                              {isEnabled ? 'Aktif' : 'Nonaktif'}
+                            </button>
+                          </div>
+
+                          {isEnabled && hasSubMenus && (
+                            <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 bg-white">
+                              {menu.children?.map((child) => {
+                                const childKey = `${menu.label}_${child.label}`;
+                                const isChildEnabled = tenantFormData.menuSettings?.[childKey] !== false;
+                                
+                                return (
+                                  <button
+                                    key={child.label}
+                                    onClick={() => {
+                                      const currentSettings = tenantFormData.menuSettings || {};
+                                      setTenantFormData({
+                                        ...tenantFormData,
+                                        menuSettings: {
+                                          ...currentSettings,
+                                          [childKey]: !isChildEnabled
+                                        }
+                                      });
+                                      if (!isEditingTenant) setIsEditingTenant(true);
+                                    }}
+                                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                                      isChildEnabled 
+                                        ? 'bg-white border-indigo-200 text-indigo-700 shadow-sm' 
+                                        : 'bg-gray-50 border-gray-100 text-gray-400 opacity-60'
+                                    }`}
+                                  >
+                                    <span className="text-[11px] font-bold text-left">{child.label}</span>
+                                    {isChildEnabled ? (
+                                      <CheckCircle className="w-3 h-3 fill-indigo-600 text-white shrink-0 ml-2" />
+                                    ) : (
+                                      <div className="w-3 h-3 rounded-full border border-gray-300 shrink-0 ml-2" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-4 text-[10px] text-gray-400 italic">
+                    * Menu yang dinonaktifkan tidak akan muncul pada sidebar tenant terkait, terlepas dari role user.
+                  </p>
+                </div>
               </div>
 
-              {isEditingTenant && (
+              {(isEditingTenant || tenantFormData.menuSettings !== selectedTenantForDetail.menuSettings) && (
                 <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-4">
                   <button
                     onClick={() => setIsEditingTenant(false)}

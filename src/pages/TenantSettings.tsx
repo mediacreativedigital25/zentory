@@ -6,6 +6,7 @@ import { Tenant } from '../types';
 import { Building2, Save, User, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Image as ImageIcon, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
+import ImageUpload from '../components/ImageUpload';
 
 export default function TenantSettings() {
   const { profile } = useAuth();
@@ -120,6 +121,23 @@ export default function TenantSettings() {
           </div>
           
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-sm font-bold text-gray-700">Logo Bisnis</label>
+              <div className="w-48">
+                <ImageUpload
+                  value={formData.settings?.logoUrl || ''}
+                  onChange={(url) => setFormData({ 
+                    ...formData, 
+                    settings: { ...(formData.settings || {}), logoUrl: url } 
+                  })}
+                  label="Upload Logo (Maks 2MB)"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Logo ini akan ditampilkan pada seluruh bukti transaksi, struk, dan dokumen resmi bisnis Anda.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700">Nama Bisnis</label>
               <div className="relative">

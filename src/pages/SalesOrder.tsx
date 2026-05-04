@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, onSnapshot, runTransaction, Timestamp, limit, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { useAuth } from '../hooks/useAuth';
 import { Product, Customer, BankAccount, StockLog, Tenant } from '../types';
 import { ShoppingCart, Search, Plus, Minus, Trash2, CreditCard, User, Tag, Briefcase, X, ListOrdered, Barcode, Landmark, AlertCircle, CheckCircle2, Printer, FileText } from 'lucide-react';
@@ -181,8 +182,6 @@ export default function SalesOrder() {
   const [selectedVariantId, setSelectedVariantId] = useState<string>('');
 
   const addToCart = (product: Product, variantId?: string) => {
-    const isService = product.type === 'service';
-    
     if (product.variants && product.variants.length > 0 && !variantId) {
       setSelectedVariantProduct(product);
       setSelectedVariantId(product.variants[0].id);
@@ -190,6 +189,7 @@ export default function SalesOrder() {
     }
 
     const variant = variantId ? product.variants?.find((v: any) => v.id === variantId) : null;
+    const isService = product.type === 'service' || (variant && variant.type === 'non-stock');
     const stockToUse = variant ? variant.stock : product.stock;
 
     if (orderType === 'manual' && !isService && stockToUse <= 0) {
@@ -226,9 +226,9 @@ export default function SalesOrder() {
 
       if (currentItemId === cartItemId) {
         const newQty = Math.max(0, item.quantity + delta);
-        const isService = item.product.type === 'service';
-        
         const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+        const isService = item.product.type === 'service' || (variant && variant.type === 'non-stock');
+        
         const stockToUse = variant ? variant.stock : item.product.stock;
 
         if (orderType === 'manual' && !isService && newQty > stockToUse) return item;
@@ -245,9 +245,9 @@ export default function SalesOrder() {
 
       if (currentItemId === cartItemId) {
         const newQty = Math.max(0, value);
-        const isService = item.product.type === 'service';
-
         const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+        const isService = item.product.type === 'service' || (variant && variant.type === 'non-stock');
+
         const stockToUse = variant ? variant.stock : item.product.stock;
 
         if (orderType === 'manual' && !isService && newQty > stockToUse) {
@@ -326,6 +326,11 @@ export default function SalesOrder() {
   const handleCheckout = async () => {
     if (cart.length === 0 || isProcessing) return;
 
+    if (paymentMethodType === 'transfer' && !selectedBankAccountId) {
+      alert('Silakan pilih bank terlebih dahulu.');
+      return;
+    }
+
     if (isSettledToday) {
       alert('Buku hari ini sudah ditutup (Settled). Tidak dapat memproses pesanan baru.');
       return;
@@ -340,50 +345,12 @@ export default function SalesOrder() {
         setIsProcessing(true);
         const targetTenantId = domainTenantId || profile?.tenantId;
         try {
-          const isKasir = profile?.role === 'kasir';
           let orderNumber = '';
-
-          if (isKasir) {
-            // Generate number PYYYYMM000001
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const prefix = `P${year}${month}`;
-            
-            try {
-              const q = query(
-                collection(db, 'orders'),
-                where('tenantId', '==', targetTenantId),
-                where('orderNumber', '>=', prefix),
-                where('orderNumber', '<=', prefix + '\uf8ff'),
-                orderBy('orderNumber', 'desc'),
-                limit(1)
-              );
-              
-              const snap = await getDocs(q);
-              let nextIndex = 1;
-              
-              if (!snap.empty) {
-                const lastNum = snap.docs[0].data().orderNumber;
-                const lastIndexStr = lastNum.replace(prefix, '');
-                const lastIndex = parseInt(lastIndexStr, 10);
-                if (!isNaN(lastIndex)) {
-                  nextIndex = lastIndex + 1;
-                }
-              }
-              
-              orderNumber = `${prefix}${String(nextIndex).padStart(6, '0')}`;
-            } catch (queryErr) {
-              orderNumber = `${prefix}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-            }
-          } else {
-            orderNumber = await generateOrderNumber(orderType);
-          }
 
           const customer = customers.find(c => c.id === selectedCustomer);
           
           const orderRef = doc(collection(db, 'orders'));
-          const transactionRef = doc(collection(db, 'transactions'));
+          const customerCode = customer?.code || '';
 
           // Calculate Due Date if credit
           let dueDate = null;
@@ -394,92 +361,114 @@ export default function SalesOrder() {
             dueDate = Timestamp.fromDate(date);
           }
 
-          // Determine status based on payment
-          const status = amountPaid >= total ? 'completed' : amountPaid > 0 ? 'processing' : 'pending';
-          const paymentStatus = amountPaid >= total ? 'paid' : amountPaid > 0 ? 'partial' : 'unpaid';
+          let status = 'pending';
+          let paymentStatus = 'unpaid';
+          let actualPaidAmount = 0;
 
+          const stockLogsToProcess: any[] = [];
           await runTransaction(db, async (transaction) => {
-            // 1. Read all necessary data first (Update stock for manual products)
-            const productUpdates: { ref: any; updateData: any; item: any; previousStock: number; currentItemStock: number }[] = [];
+            // 1. READS FIRST
+            const now = new Date();
+            const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const counterRef = doc(db, 'counters', `${targetTenantId}_orders_${yearMonth}`);
+            const counterDoc = await transaction.get(counterRef);
             
-            if (orderType === 'manual') {
+            const productDocs: { ref: any; data: Product; item: any }[] = [];
+            if (orderType === 'manual' || isKasir) {
               for (const item of cart) {
                 const productRef = doc(db, 'products', item.product.id);
                 const pDoc = await transaction.get(productRef);
-                
                 if (!pDoc.exists()) throw new Error(`Product ${item.product.name} not found`);
-                
-                const productData = pDoc.data() as Product;
-                const itemVid = (item as any).variantId;
-                const isService = productData.type === 'service';
-                
-                if (!isService) {
-                  let previousStock = productData.stock || 0;
-                  let currentItemStock = 0;
-                  let updateData: any = {};
-
-                  if (itemVid && productData.variants) {
-                    const variantIndex = productData.variants.findIndex(v => v.id === itemVid);
-                    if (variantIndex === -1) throw new Error(`Variant not found for ${productData.name}`);
-                    
-                    const variant = productData.variants[variantIndex];
-                    currentItemStock = variant.stock;
-                    if (currentItemStock < item.quantity) {
-                      throw new Error(`Stok variasi ${variant.name} untuk ${productData.name} tidak mencukupi`);
-                    }
-
-                    const updatedVariants = [...productData.variants];
-                    updatedVariants[variantIndex] = {
-                      ...variant,
-                      stock: variant.stock - item.quantity
-                    };
-
-                    updateData = {
-                      variants: updatedVariants,
-                      stock: (productData.stock || 0) - item.quantity
-                    };
-                  } else {
-                    currentItemStock = productData.stock || 0;
-                    if (currentItemStock < item.quantity) {
-                      throw new Error(`Stok ${productData.name} tidak mencukupi`);
-                    }
-                    updateData = {
-                      stock: (productData.stock || 0) - item.quantity
-                    };
-                  }
-
-                  productUpdates.push({
-                    ref: productRef,
-                    updateData,
-                    item,
-                    previousStock,
-                    currentItemStock
-                  });
-                }
+                productDocs.push({
+                  ref: productRef,
+                  data: pDoc.data() as Product,
+                  item
+                });
               }
             }
 
-            // 2. Perform all writes after all reads
+            // 2. CALCULATIONS
+            let sequence = 1;
+            if (counterDoc.exists()) {
+              sequence = (counterDoc.data().sequence || 0) + 1;
+            }
+            const prefix = isKasir ? 'M' : (orderType === 'manual' ? 'M' : 'IN');
+            orderNumber = `${prefix}${yearMonth}${String(sequence).padStart(6, '0')}`;
+
+            const productUpdates: { ref: any; updateData: any }[] = [];
+            for (const pInfo of productDocs) {
+              const productData = pInfo.data;
+              const item = pInfo.item;
+              const itemVid = (item as any).variantId;
+              const variant = itemVid ? productData.variants?.find((v: any) => v.id === itemVid) : null;
+              const isService = productData.type === 'service' || (variant && variant.type === 'non-stock');
+              
+              if (!isService) {
+                let currentItemStock = 0;
+                let updateData: any = {};
+
+                if (itemVid && productData.variants) {
+                  const variantIndex = productData.variants.findIndex(v => v.id === itemVid);
+                  if (variantIndex === -1) throw new Error(`Variant not found for ${productData.name}`);
+                  
+                  const variant = productData.variants[variantIndex];
+                  currentItemStock = variant.stock;
+                  if (currentItemStock < item.quantity) {
+                    throw new Error(`Stok variasi ${variant.name} untuk ${productData.name} tidak mencukupi`);
+                  }
+
+                  const updatedVariants = [...productData.variants];
+                  updatedVariants[variantIndex] = {
+                    ...variant,
+                    stock: variant.stock - item.quantity
+                  };
+
+                  updateData = {
+                    variants: updatedVariants,
+                    stock: (productData.stock || 0) - item.quantity
+                  };
+                } else {
+                  currentItemStock = productData.stock || 0;
+                  if (currentItemStock < item.quantity) {
+                    throw new Error(`Stok ${productData.name} tidak mencukupi`);
+                  }
+                  updateData = {
+                    stock: (productData.stock || 0) - item.quantity
+                  };
+                }
+
+                productUpdates.push({
+                  ref: pInfo.ref,
+                  updateData
+                });
+
+                const variant = itemVid ? productData.variants?.find(v => v.id === itemVid) : null;
+                const logName = variant ? `${productData.name} (${variant.name})` : productData.name;
+                stockLogsToProcess.push({
+                  productId: item.product.id,
+                  name: logName,
+                  qty: item.quantity,
+                  prev: currentItemStock,
+                  curr: currentItemStock - item.quantity,
+                  variant: !!itemVid
+                });
+              }
+            }
+
+            // 3. WRITES LAST
+            if (counterDoc.exists()) {
+              transaction.update(counterRef, { sequence });
+            } else {
+              transaction.set(counterRef, { 
+                tenantId: targetTenantId,
+                prefix: yearMonth,
+                sequence: 1,
+                updatedAt: serverTimestamp()
+              });
+            }
+
             for (const update of productUpdates) {
               transaction.update(update.ref, update.updateData);
-              
-              const itemVid = (update.item as any).variantId;
-              const variant = itemVid ? update.item.product.variants?.find((v: any) => v.id === itemVid) : null;
-              const logName = variant ? `${update.item.product.name} (${variant.name})` : update.item.product.name;
-
-              logStockChange(
-                targetTenantId!,
-                update.item.product.id,
-                logName,
-                'SALE',
-                update.item.quantity,
-                update.currentItemStock,
-                update.currentItemStock - update.item.quantity,
-                profile?.uid!,
-                profile?.displayName || 'System',
-                { id: orderRef.id, number: orderNumber },
-                `Sales Order ${itemVid ? '(Variant)' : ''}`
-              );
             }
 
             // Create Order
@@ -488,6 +477,7 @@ export default function SalesOrder() {
               tenantId: targetTenantId,
               customerId: selectedCustomer || null,
               customerName: customer?.name || 'Guest',
+              customerCode,
               type: isKasir ? 'pos' : orderType,
             items: cart.map(item => {
               const itemVid = (item as any).variantId;
@@ -505,7 +495,7 @@ export default function SalesOrder() {
               };
             }),
               totalAmount: total,
-              paidAmount: amountPaid,
+              paidAmount: actualPaidAmount,
               paymentStatus,
               paymentType,
               date: serverTimestamp(),
@@ -515,37 +505,24 @@ export default function SalesOrder() {
               paymentMethod: selectedBankAccountId || null,
               createdAt: serverTimestamp()
             });
-
-            // 3. Create Financial Transaction (only if there's an actual payment)
-            if (amountPaid > 0) {
-              transaction.set(transactionRef, {
-                tenantId: targetTenantId,
-                type: 'sale',
-                category: 'Sales',
-                amount: amountPaid, // Only record the actual amount paid
-                totalOrderAmount: total,
-                items: cart.map(item => {
-                  const itemVid = (item as any).variantId;
-                  const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
-                  return {
-                    productId: item.product.id,
-                    variantId: itemVid || null,
-                    name: variant ? `${item.product.name} (${variant.name})` : item.product.name,
-                    quantity: item.quantity,
-                    price: getProductPrice(item.product, itemVid),
-                    hpp: variant ? (variant.hpp || 0) : (item.product.hpp || 0)
-                  };
-                }),
-                date: serverTimestamp(),
-                dueDate: paymentType === 'credit' ? dueDate : null,
-                status: 'completed',
-                userId: profile?.uid,
-                orderNumber: orderNumber,
-                bankAccountId: selectedBankAccountId || null,
-                createdAt: serverTimestamp()
-              });
-            }
           });
+
+          // 4. LOG STOCK CHANGES AFTER SUCCESS
+          for (const log of stockLogsToProcess) {
+            logStockChange(
+              targetTenantId!,
+              log.productId,
+              log.name,
+              'SALE',
+              log.qty,
+              log.prev,
+              log.curr,
+              profile?.uid!,
+              profile?.displayName || 'System',
+              { id: orderRef.id, number: orderNumber },
+              `Sales Order ${log.variant ? '(Variant)' : ''}`
+            );
+          }
 
           setLastOrder({
             orderNumber,
@@ -573,8 +550,8 @@ export default function SalesOrder() {
           setAmountPaid(0);
           setCashReceived(0);
         } catch (err: any) {
-          console.error(err);
-          alert(err.message || 'Gagal memproses pesanan.');
+          console.error('Error saving order:', err);
+          handleFirestoreError(err, OperationType.WRITE, 'orders/transaction', auth, profile);
         } finally {
           setIsProcessing(false);
         }
@@ -602,7 +579,9 @@ export default function SalesOrder() {
         )}
         <div className="p-4 lg:p-6 border-b border-gray-100 space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg lg:text-xl font-bold text-gray-900">Buat Pesanan Baru</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg lg:text-xl font-bold text-gray-900">Buat Pesanan Baru</h2>
+            </div>
             <button
               onClick={() => navigate('/sales/receive')}
               className="flex items-center px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-xs lg:text-sm font-bold"
@@ -721,7 +700,7 @@ export default function SalesOrder() {
               >
                 <option value="">Guest Customer</option>
                 {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.phone})</option>
+                  <option key={c.id} value={c.id}>{c.name} {c.code ? `(${c.code})` : `(${c.phone})`}</option>
                 ))}
               </select>
             </div>
@@ -828,9 +807,16 @@ export default function SalesOrder() {
                         : 'border-gray-100 hover:border-indigo-200 bg-white'
                     } ${v.stock <= 0 ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                   >
-                    <div className="text-left">
-                        <p className={`font-bold ${selectedVariantId === v.id ? 'text-indigo-600' : 'text-gray-900'}`}>{v.name}</p>
-                        <p className="text-[10px] text-gray-500 font-mono">{v.sku}</p>
+                    <div className="flex items-center gap-4 text-left">
+                        {v.imageUrl && (
+                          <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0">
+                            <img src={v.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt={v.name} />
+                          </div>
+                        )}
+                        <div>
+                          <p className={`font-bold ${selectedVariantId === v.id ? 'text-indigo-600' : 'text-gray-900'}`}>{v.name}</p>
+                          <p className="text-[10px] text-gray-500 font-mono">{v.sku}</p>
+                        </div>
                     </div>
                     <div className="text-right">
                         <p className="font-black text-indigo-600">Rp.{v.price.toLocaleString()}</p>
@@ -1015,7 +1001,7 @@ export default function SalesOrder() {
                 </div>
                 <button
                   onClick={handleCheckout}
-                  disabled={isProcessing || (paymentType === 'cash' && paymentMethodType === 'tunai' && cashReceived < total)}
+                  disabled={isProcessing || (paymentType === 'cash' && paymentMethodType === 'tunai' && cashReceived < total) || (paymentMethodType === 'transfer' && !selectedBankAccountId)}
                   className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-xl shadow-indigo-100 active:scale-95"
                 >
                   {isProcessing ? (
@@ -1107,8 +1093,14 @@ export default function SalesOrder() {
                 <div className="max-w-4xl mx-auto">
                   <div className="flex justify-between items-start mb-10">
                     <div>
-                      <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
+                      {tenantInfo?.settings?.logoUrl ? (
+                        <img src={tenantInfo.settings.logoUrl} alt="Logo Business" className="h-16 mb-2 object-contain" />
+                      ) : (
+                        <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
+                      )}
                       <p className="text-sm text-gray-500 max-w-xs">{tenantInfo?.settings?.description || 'Business Inventory & Sales Solutions'}</p>
+                      <p className="text-sm text-gray-500 mt-1">{tenantInfo?.settings?.address || ''}</p>
+                      <p className="text-sm text-gray-500">{tenantInfo?.settings?.phone || ''}</p>
                     </div>
                     <div className="text-right">
                       <h2 className="text-3xl font-bold text-gray-900 uppercase tracking-tighter">INVOICE</h2>
@@ -1170,9 +1162,14 @@ export default function SalesOrder() {
 
             {printType === 'receipt' && (
               <div className="p-4 text-black font-mono text-[10px] w-[80mm] mx-auto bg-white min-h-screen">
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 flex flex-col items-center">
+                  {tenantInfo?.settings?.logoUrl && (
+                    <img src={tenantInfo.settings.logoUrl} alt="Logo" className="max-w-[40mm] h-10 mb-2 object-contain grayscale" />
+                  )}
                   <h1 className="text-base font-bold uppercase">{tenantInfo?.name || 'ZENTORY'}</h1>
                   <p className="text-[8px]">{tenantInfo?.settings?.description || 'Sales Receipt'}</p>
+                  {tenantInfo?.settings?.address && <p className="text-[8px] mt-1">{tenantInfo?.settings?.address}</p>}
+                  {tenantInfo?.settings?.phone && <p className="text-[8px]">{tenantInfo?.settings?.phone}</p>}
                 </div>
                 
                 <div className="border-t border-dashed border-gray-300 py-2 mb-2">

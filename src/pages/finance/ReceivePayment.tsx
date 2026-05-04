@@ -194,9 +194,14 @@ export default function ReceivePayment() {
         // Distribution logic for underlying orders
         let remainingPayment = item.amountToPay;
         for (const orderId of colDoc.orderIds) {
-          if (remainingPayment <= 0) break;
-          
           const orderRef = doc(db, 'orders', orderId);
+          // If collection is completed, free all its orders from "isInCollection" flag
+          if (colStatus === 'completed') {
+            await updateDoc(orderRef, { isInCollection: false });
+          }
+
+          if (remainingPayment <= 0) continue;
+          
           const orderSnap = await getDoc(orderRef);
           if (orderSnap.exists()) {
             const orderData = orderSnap.data();

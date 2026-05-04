@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, getDocs, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { InvoiceCollection as InvoiceCollectionType } from '../../types';
@@ -7,6 +7,7 @@ import {
   FileStack, 
   Search, 
   Eye, 
+  Trash2,
   ChevronLeft, 
   ChevronRight, 
   Calendar, 
@@ -14,9 +15,13 @@ import {
   History,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  Printer,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function InvoiceCollection() {
   const { profile } = useAuth();
@@ -26,30 +31,30 @@ export default function InvoiceCollection() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedCollection, setSelectedCollection] = useState<InvoiceCollectionType | null>(null);
+  const [selectedCollectionOrders, setSelectedCollectionOrders] = useState<any[]>([]);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
-  const handleResetCollections = async () => {
-    if (profile?.role !== 'superadmin' || isUpdating) return;
-    if (!confirm('DANGEROUS ACTION: Apakah Anda yakin ingin mendelete/reset seluruh riwayat Invoice Collection untuk tenant ini?')) return;
-
-    setIsUpdating(true);
-    try {
-      // In production, better to use a batch or cloud function
-      const q = query(collection(db, 'invoice_collections'), where('tenantId', '==', profile?.tenantId));
-      const snap = await getDocs(q);
-      
-      const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
-      await Promise.all(deletePromises);
-      
-      alert('Berhasil mereset data koleksi.');
-    } catch (err) {
-      console.error('Error resetting collections:', err);
-      alert('Gagal mereset data.');
-    } finally {
-      setIsUpdating(false);
+  useEffect(() => {
+    if (!selectedCollection || !isDetailModalOpen) {
+      setSelectedCollectionOrders([]);
+      return;
     }
-  };
+
+    const fetchOrders = async () => {
+      const orders: any[] = [];
+      for (const id of selectedCollection.orderIds) {
+        const d = await getDocs(query(collection(db, 'orders'), where('__name__', '==', id)));
+        if (!d.empty) {
+          orders.push({ id: d.docs[0].id, ...d.docs[0].data() });
+        }
+      }
+      setSelectedCollectionOrders(orders);
+    };
+
+    fetchOrders();
+  }, [selectedCollection, isDetailModalOpen]);
 
   useEffect(() => {
     if (!profile?.tenantId) return;
@@ -85,28 +90,97 @@ export default function InvoiceCollection() {
     currentPage * rowsPerPage
   );
 
+  const generatePDF = () => {
+    if (!selectedCollection) return;
+    const doc = new jsPDF();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'numeric', year: 'numeric' });
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVOICE COLLECTION SUMMARY', 105, 15, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`No. Koleksi : ${selectedCollection.collectionNumber}`, 14, 25);
+    doc.text(`Pelanggan : ${selectedCollection.customerName}`, 14, 30);
+    doc.text(`Tanggal : ${selectedCollection.date?.toDate().toLocaleDateString('id-ID')}`, 14, 35);
+    doc.text(`Status : ${selectedCollection.status.toUpperCase()}`, 14, 40);
+
+    const tableData = selectedCollectionOrders.length > 0 
+      ? selectedCollectionOrders.map((o, idx) => [
+          (idx + 1).toString(),
+          o.orderNumber,
+          o.date?.toDate().toLocaleDateString('id-ID') || '-',
+          o.totalAmount.toLocaleString(),
+          o.paidAmount?.toLocaleString() || '0',
+          (o.totalAmount - (o.paidAmount || 0)).toLocaleString(),
+          o.paymentStatus?.toUpperCase() || 'UNKNOWN'
+        ])
+      : selectedCollection.orderNumbers.map((num, idx) => [
+          (idx + 1).toString(),
+          num,
+          '-',
+          '-',
+          '-',
+          '-',
+          'IN COLLECTION'
+        ]);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [['No', 'Order #', 'Date', 'Amount', 'Paid', 'Sisa', 'Status']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL TAGIHAN: Rp.${selectedCollection.totalAmount.toLocaleString()}`, 140, finalY);
+    doc.text(`TOTAL TERBAYAR: Rp.${selectedCollection.totalPaid.toLocaleString()}`, 140, finalY + 7);
+    doc.text(`SISA PIUTANG: Rp.${selectedCollection.totalSisa.toLocaleString()}`, 140, finalY + 14);
+
+    doc.save(`Collection_${selectedCollection.collectionNumber}.pdf`);
+  };
+
   const handleCloseCollection = async () => {
     if (!selectedCollection || isUpdating) return;
     
-    if (!confirm('Apakah Anda yakin ingin menutup koleksi ini? Status akan menjadi CLOSED dan invoice di dalamnya bisa ditagihkan kembali.')) return;
+    const hasUnpaid = selectedCollection.totalSisa > 0;
+    const msg = hasUnpaid 
+      ? 'PERINGATAN: Koleksi ini BELUM LUNAS. Menutup koleksi akan mengembalikan invoice yang belum lunas ke daftar piutang agar bisa ditagihkan kembali. Lanjutkan?'
+      : 'Koleksi ini sudah LUNAS. Menutup koleksi akan mengarsipkan data ini. Lanjutkan?';
+
+    if (!confirm(msg)) return;
 
     setIsUpdating(true);
     try {
-      // Free up orders
-      const orderPromises = selectedCollection.orderIds.map(id => 
-        updateDoc(doc(db, 'orders', id), { isInCollection: false })
-      );
-      await Promise.all(orderPromises);
+      console.log('Closing collection:', selectedCollection.id);
+      
+      // Free up all orders in this collection from the lock
+      if (selectedCollection.orderIds && selectedCollection.orderIds.length > 0) {
+        const orderPromises = selectedCollection.orderIds.map(id => 
+          updateDoc(doc(db, 'orders', id), { 
+            isInCollection: false,
+            updatedAt: serverTimestamp()
+          })
+        );
+        await Promise.all(orderPromises);
+        console.log(`Freed ${selectedCollection.orderIds.length} orders`);
+      }
 
       await updateDoc(doc(db, 'invoice_collections', selectedCollection.id), {
-        status: 'closed'
+        status: selectedCollection.totalSisa <= 0 ? 'completed' : 'closed',
+        updatedAt: serverTimestamp()
       });
+      
       setIsDetailModalOpen(false);
       setSelectedCollection(null);
-      alert('Koleksi berhasil ditutup.');
+      alert('Koleksi berhasil ditutup dan data telah diperbarui.');
     } catch (err) {
       console.error('Error closing collection:', err);
-      alert('Gagal menutup koleksi.');
+      alert('Gagal menutup koleksi. Silakan coba lagi.');
     } finally {
       setIsUpdating(false);
     }
@@ -139,6 +213,65 @@ export default function InvoiceCollection() {
     }
   };
 
+  const handleDeleteCollection = async () => {
+    if (!selectedCollection || isUpdating || profile?.role !== 'superadmin') return;
+    
+    if (!confirm('DANGEROUS ACTION: Anda akan menghapus permanen data IC ini. Pesanan di dalamnya akan kembali ke status PIUTANG (isInCollection: false). Apakah Anda yakin?')) return;
+
+    setIsUpdating(true);
+    try {
+      // 1. Free up orders first
+      const orderPromises = selectedCollection.orderIds.map(id => 
+        updateDoc(doc(db, 'orders', id), { 
+          isInCollection: false 
+        })
+      );
+      await Promise.all(orderPromises);
+
+      // 2. Delete the IC record
+      await deleteDoc(doc(db, 'invoice_collections', selectedCollection.id));
+
+      setIsDetailModalOpen(false);
+      setSelectedCollection(null);
+      alert('Koleksi berhasil dihapus permanen.');
+    } catch (err) {
+      console.error('Error deleting collection:', err);
+      alert('Gagal menghapus koleksi.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleResetOrdersStatus = async () => {
+    if (!profile?.tenantId || isResetting) return;
+    
+    if (!confirm('PERINGATAN: Fitur ini akan mereset status "In Collection" pada SEMUA order Anda agar bisa ditagihkan kembali. Gunakan hanya jika ada data yang "nyangkut". Lanjutkan?')) return;
+
+    setIsResetting(true);
+    try {
+      const ordersSnap = await getDocs(query(
+        collection(db, 'orders'),
+        where('tenantId', '==', profile.tenantId),
+        where('isInCollection', '==', true)
+      ));
+
+      if (ordersSnap.empty) {
+        alert('Tidak ada order yang sedang dalam proses koleksi.');
+        return;
+      }
+
+      const promises = ordersSnap.docs.map(d => updateDoc(d.ref, { isInCollection: false }));
+      await Promise.all(promises);
+      
+      alert(`Berhasil mereset ${ordersSnap.size} order.`);
+    } catch (err) {
+      console.error('Error resetting orders:', err);
+      alert('Gagal mereset status order.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   if (loading) return <div className="p-8 text-center text-gray-500 font-bold animate-pulse text-lg">Memuat rincian penagihan...</div>;
 
   return (
@@ -151,13 +284,15 @@ export default function InvoiceCollection() {
           </h2>
           <p className="text-gray-500 font-medium">Lacak riwayat penagihan masal per pelanggan.</p>
         </div>
+
         {profile?.role === 'superadmin' && (
           <button
-            onClick={handleResetCollections}
-            className="px-4 py-2 bg-red-50 text-red-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all border border-red-100 flex items-center gap-2"
+            onClick={handleResetOrdersStatus}
+            disabled={isResetting}
+            className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black shadow-lg shadow-red-100 hover:bg-red-700 transition-all flex items-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
           >
-            <History className="w-4 h-4" />
-            Reset Data (Admin Only)
+            {isResetting ? <Clock className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+            Reset All Collection Flags
           </button>
         )}
       </div>
@@ -359,20 +494,50 @@ export default function InvoiceCollection() {
                     Daftar Order Tercakup
                   </h4>
                   <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                    <ul className="divide-y divide-gray-50">
-                      {selectedCollection.orderNumbers.map((num, idx) => (
-                        <li key={idx} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                           <span className="text-sm font-black text-gray-900 uppercase">#{num}</span>
-                           <span className="text-xs font-bold text-indigo-600 uppercase bg-indigo-50 px-3 py-1 rounded-full">Tanda Terima</span>
-                        </li>
-                      ))}
+                    <ul className="divide-y divide-gray-50 text-sm">
+                      {selectedCollectionOrders.length > 0 ? (
+                        selectedCollectionOrders.map((order, idx) => (
+                          <li key={idx} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                             <div className="flex flex-col">
+                               <span className="font-black text-gray-900 uppercase">#{order.orderNumber}</span>
+                               <span className="text-[10px] text-gray-400 font-bold tabular-nums">
+                                 {order.date?.toDate().toLocaleDateString('id-ID')}
+                               </span>
+                             </div>
+                             <div className="text-right">
+                               <p className="font-black text-gray-900">Rp.{(order.totalAmount - (order.paidAmount || 0)).toLocaleString()}</p>
+                               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                                 order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
+                                 order.paymentStatus === 'partial' ? 'bg-orange-100 text-orange-700' :
+                                 'bg-red-100 text-red-700'
+                               }`}>
+                                 {order.paymentStatus}
+                               </span>
+                             </div>
+                          </li>
+                        ))
+                      ) : (
+                        selectedCollection.orderNumbers.map((num, idx) => (
+                          <li key={idx} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                             <span className="text-sm font-black text-gray-900 uppercase">#{num}</span>
+                             <span className="text-xs font-bold text-gray-400 uppercase italic">Memuat Detail...</span>
+                          </li>
+                        ))
+                      )}
                     </ul>
                   </div>
                 </div>
               </div>
 
-              <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-between gap-4">
-                <div className="flex gap-4">
+              <div className="p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row justify-between gap-4">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={generatePDF}
+                    className="px-6 py-3 bg-white text-indigo-600 rounded-2xl font-black border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Cetak
+                  </button>
                   {selectedCollection.status === 'open' && (
                     <button
                       disabled={isUpdating}
@@ -393,12 +558,22 @@ export default function InvoiceCollection() {
                       Reopen Collection
                     </button>
                   )}
+                  {profile?.role === 'superadmin' && (
+                    <button
+                      disabled={isUpdating}
+                      onClick={handleDeleteCollection}
+                      className="px-6 py-3 bg-white text-red-600 rounded-2xl font-black border border-red-200 hover:bg-red-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Hapus
+                    </button>
+                  )}
                 </div>
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-8 py-3 bg-white border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-100 transition-all shadow-sm"
+                  className="px-8 py-3 bg-white border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-100 transition-all shadow-sm text-xs uppercase tracking-widest"
                 >
-                  TUTUP RINCIAN
+                  Tutup
                 </button>
               </div>
             </motion.div>

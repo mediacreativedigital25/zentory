@@ -40,6 +40,7 @@ export const AuthProvider = ({ children, domainTenantId }: { children: React.Rea
     let unsubscribeProfile: (() => void) | null = null;
     let unsubscribeRole: (() => void) | null = null;
     let unsubscribeTenant: (() => void) | null = null;
+    let pingInterval: NodeJS.Timeout | null = null;
 
     // Inactivity Logout Logic
     let inactivityTimeout: NodeJS.Timeout | null = null;
@@ -80,7 +81,20 @@ export const AuthProvider = ({ children, domainTenantId }: { children: React.Rea
       }
       
       // Cleanup tenant listener
-      let unsubscribeTenant: (() => void) | null = null;
+      if (unsubscribeTenant) {
+        unsubscribeTenant();
+        unsubscribeTenant = null;
+      }
+
+      const fetchIpAddress = async () => {
+        try {
+          const res = await fetch('https://api.ipify.org?format=json');
+          const data = await res.json();
+          return data.ip;
+        } catch (e) {
+          return null;
+        }
+      };
 
       if (user) {
         // Start inactivity timer
@@ -90,11 +104,23 @@ export const AuthProvider = ({ children, domainTenantId }: { children: React.Rea
         // Initial check and auto-upgrade
         const profileRef = doc(db, 'users', user.uid);
         
-        // Update lastLoginAt and isOnline
-        updateDoc(profileRef, {
-          lastLoginAt: serverTimestamp(),
-          isOnline: true
-        }).catch(err => console.error("Failed to update login status", err));
+        fetchIpAddress().then(ip => {
+          // Update lastLoginAt and isOnline
+          updateDoc(profileRef, {
+            lastLoginAt: serverTimestamp(),
+            lastActive: serverTimestamp(),
+            isOnline: true,
+            ...(ip ? { ipAddress: ip } : {})
+          }).catch(err => console.error("Failed to update login status", err));
+          
+          // Setup Ping interval every 60 seconds to keep online status
+          pingInterval = setInterval(() => {
+            updateDoc(profileRef, {
+              lastActive: serverTimestamp(),
+              isOnline: true
+            }).catch(() => {}); // silent fail for ping
+          }, 60000);
+        });
 
         window.addEventListener('beforeunload', handleOffline);
 
@@ -182,6 +208,7 @@ export const AuthProvider = ({ children, domainTenantId }: { children: React.Rea
       } else {
         // Cleanup inactivity timer if logged out
         if (inactivityTimeout) clearTimeout(inactivityTimeout);
+        if (pingInterval) clearInterval(pingInterval);
         activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
 
         setProfile(null);
@@ -197,6 +224,7 @@ export const AuthProvider = ({ children, domainTenantId }: { children: React.Rea
       if (unsubscribeRole) unsubscribeRole();
       if (unsubscribeTenant) unsubscribeTenant();
       if (inactivityTimeout) clearTimeout(inactivityTimeout);
+      if (pingInterval) clearInterval(pingInterval);
       activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
       window.removeEventListener('beforeunload', handleOffline);
     };

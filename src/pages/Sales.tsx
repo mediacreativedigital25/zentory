@@ -99,8 +99,6 @@ export default function Sales() {
   const [selectedVariantId, setSelectedVariantId] = useState<string>('');
 
   const addToCart = (product: Product, variantId?: string) => {
-    const isService = product.type === 'service';
-    
     if (product.variants && product.variants.length > 0 && !variantId) {
       setSelectedVariantProduct(product);
       setSelectedVariantId(product.variants[0].id);
@@ -108,6 +106,7 @@ export default function Sales() {
     }
 
     const variant = variantId ? product.variants?.find((v: any) => v.id === variantId) : null;
+    const isService = product.type === 'service' || (variant && variant.type === 'non-stock');
     const stockToUse = variant ? variant.stock : product.stock;
     
     if (!isService && stockToUse <= 0) {
@@ -144,13 +143,32 @@ export default function Sales() {
       
       if (currentItemId === cartItemId) {
         const newQty = Math.max(0, item.quantity + delta);
-        const isService = item.product.type === 'service';
-        
         const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+        const isService = item.product.type === 'service' || (variant && variant.type === 'non-stock');
+        
         const stockToUse = variant ? variant.stock : item.product.stock;
 
         if (!isService && newQty > stockToUse) return item;
         return { ...item, quantity: newQty };
+      }
+      return item;
+    }).filter(item => item.quantity > 0));
+  };
+
+  const setQuantity = (cartItemId: string, newQty: number) => {
+    setCart(cart.map(item => {
+      const itemVid = (item as any).variantId;
+      const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+      
+      if (currentItemId === cartItemId) {
+        const qty = Math.max(0, newQty);
+        const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+        const isService = item.product.type === 'service' || (variant && variant.type === 'non-stock');
+        
+        const stockToUse = variant ? variant.stock : item.product.stock;
+
+        const finalQty = (!isService && qty > stockToUse) ? stockToUse : qty;
+        return { ...item, quantity: finalQty };
       }
       return item;
     }).filter(item => item.quantity > 0));
@@ -235,7 +253,9 @@ export default function Sales() {
         dueDate = Timestamp.fromDate(date);
       }
 
-      const status = paymentType === 'cash' ? 'completed' : 'pending';
+      let status = 'pending';
+      let paymentStatus = 'unpaid';
+      let actualPaidAmount = 0;
 
       // 1. Create Order (to ensure it shows in Sales Order Receive)
       const orderData = {
@@ -261,8 +281,8 @@ export default function Sales() {
           };
         }),
         totalAmount: total,
-        paidAmount: paymentType === 'cash' ? total : 0,
-        paymentStatus: paymentType === 'cash' ? 'paid' : 'unpaid',
+        paidAmount: actualPaidAmount,
+        paymentStatus: paymentStatus,
         type: 'pos', // Set to pos so it's clearly identified as POS transaction
         status,
         date: serverTimestamp(),
@@ -274,41 +294,11 @@ export default function Sales() {
 
       const orderRef = await addDoc(collection(db, 'orders'), orderData);
 
-      // 2. Create transaction (as the ledger record)
-      const transData = {
-        tenantId: targetTenantId,
-        type: 'sale',
-        category: 'Sales POS',
-        amount: total,
-        items: cart.map(item => {
-            const itemVid = (item as any).variantId;
-            const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
-            return {
-                productId: item.product.id,
-                variantId: itemVid || null,
-                name: variant ? `${item.product.name} (${variant.name})` : item.product.name,
-                quantity: item.quantity,
-                price: getProductPrice(item.product, itemVid)
-            };
-        }),
-        date: serverTimestamp(),
-        dueDate,
-        status,
-        paymentType,
-        paymentMethod: selectedBankAccountId,
-        customerId: selectedCustomer || null,
-        customerName: currentCustomer?.name || 'Guest',
-        userId: profile?.uid,
-        transactionNumber,
-        orderId: orderRef.id
-      };
-
-      const transRef = await addDoc(collection(db, 'transactions'), transData);
-
       // 3. Update stock
       for (const item of cart) {
-        const isService = item.product.type === 'service';
         const itemVid = (item as any).variantId;
+        const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+        const isService = item.product.type === 'service' || (variant && variant.type === 'non-stock');
         
         if (!isService) {
           if (itemVid && item.product.variants) {
@@ -345,13 +335,17 @@ export default function Sales() {
             currentStock - item.quantity,
             profile?.uid!,
             profile?.displayName || 'System',
-            { id: transRef.id, number: transactionNumber },
+            { id: orderRef.id, number: transactionNumber },
             `Sales POS ${itemVid ? '(Variant)' : ''}`
           );
         }
       }
 
-      setLastTransaction({ id: transRef.id, ...transData, date: { seconds: Date.now() / 1000 } });
+      setLastTransaction({ 
+        id: orderRef.id, 
+        ...orderData, 
+        date: { seconds: Date.now() / 1000 } 
+      });
       setCart([]);
       setIsCheckoutModalOpen(false);
       setSelectedCustomer('');
@@ -532,7 +526,13 @@ export default function Sales() {
                   <button onClick={() => updateQuantity(cartItemId, -1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                     <Minus className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
-                  <span className="text-xs md:text-sm font-black w-4 md:w-6 text-center">{item.quantity}</span>
+                  <input 
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) => setQuantity(cartItemId, parseInt(e.target.value) || 0)}
+                    className="text-xs md:text-sm font-black w-8 md:w-10 text-center bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                    onFocus={(e) => e.target.select()}
+                  />
                   <button onClick={() => updateQuantity(cartItemId, 1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                     <Plus className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
@@ -812,12 +812,18 @@ export default function Sales() {
                 <div className="max-w-4xl mx-auto">
                   <div className="flex justify-between items-start mb-10">
                     <div>
-                      <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
+                      {tenantInfo?.settings?.logoUrl ? (
+                        <img src={tenantInfo.settings.logoUrl} alt="Logo Business" className="h-16 mb-2 object-contain" />
+                      ) : (
+                        <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
+                      )}
                       <p className="text-sm text-gray-500 max-w-xs">{tenantInfo?.settings?.description || 'Business Inventory & Sales Solutions'}</p>
+                      <p className="text-sm text-gray-500 mt-1">{tenantInfo?.settings?.address || ''}</p>
+                      <p className="text-sm text-gray-500">{tenantInfo?.settings?.phone || ''}</p>
                     </div>
                     <div className="text-right">
                       <h2 className="text-3xl font-bold text-gray-900 uppercase tracking-tighter">INVOICE</h2>
-                      <p className="text-sm font-mono text-gray-500">#{lastTransaction.transactionNumber}</p>
+                      <p className="text-sm font-mono text-gray-500">#{lastTransaction.orderNumber}</p>
                       <p className="text-sm text-gray-500 mt-1">
                         {lastTransaction.date ? new Date(lastTransaction.date.seconds * 1000).toLocaleDateString() : ''}
                       </p>
@@ -859,7 +865,7 @@ export default function Sales() {
                       <tr className="border-t-2 border-gray-900">
                         <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Grand Total</td>
                         <td className="py-6 text-right text-2xl font-black text-indigo-600">
-                          Rp.{lastTransaction.amount.toLocaleString()}
+                          Rp.{lastTransaction.totalAmount.toLocaleString()}
                         </td>
                       </tr>
                     </tfoot>
@@ -875,15 +881,20 @@ export default function Sales() {
 
             {printType === 'receipt' && (
               <div className="p-4 text-black font-mono text-[10px] w-[80mm] mx-auto bg-white min-h-screen">
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 flex flex-col items-center">
+                  {tenantInfo?.settings?.logoUrl && (
+                    <img src={tenantInfo.settings.logoUrl} alt="Logo" className="max-w-[40mm] h-10 mb-2 object-contain grayscale" />
+                  )}
                   <h1 className="text-base font-bold uppercase">{tenantInfo?.name || 'ZENTORY'}</h1>
                   <p className="text-[8px]">{tenantInfo?.settings?.description || 'Sales Receipt'}</p>
+                  {tenantInfo?.settings?.address && <p className="text-[8px] mt-1">{tenantInfo?.settings?.address}</p>}
+                  {tenantInfo?.settings?.phone && <p className="text-[8px]">{tenantInfo?.settings?.phone}</p>}
                 </div>
                 
                 <div className="border-t border-dashed border-gray-300 py-2 mb-2">
                   <div className="flex justify-between">
                     <span>Order:</span>
-                    <span>#{lastTransaction.transactionNumber}</span>
+                    <span>#{lastTransaction.orderNumber}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Date:</span>
@@ -912,7 +923,7 @@ export default function Sales() {
                 <div className="border-t border-dashed border-gray-300 py-2 font-bold text-xs">
                   <div className="flex justify-between">
                     <span>TOTAL</span>
-                    <span>Rp.{lastTransaction.amount.toLocaleString()}</span>
+                    <span>Rp.{lastTransaction.totalAmount.toLocaleString()}</span>
                   </div>
                 </div>
 

@@ -231,10 +231,33 @@ export default function GoodsReceipts() {
     });
   };
 
-  const handlePrint = (gr: GoodsReceipt) => {
+  const handlePrint = async (gr: GoodsReceipt) => {
     const supplier = suppliers.find(s => s.id === gr.supplierId);
+    let logoUrl = '';
+    let tenantName = profile?.tenantName || 'Our Warehouse';
+    let address = '';
+    let phone = '';
+    
+    if (profile?.tenantId) {
+      try {
+        const tenantDoc = await getDoc(doc(db, 'tenants', profile.tenantId));
+        if (tenantDoc.exists()) {
+          const tData = tenantDoc.data();
+          logoUrl = tData.settings?.logoUrl || '';
+          tenantName = tData.name || tenantName;
+          address = tData.settings?.address || '';
+          phone = tData.settings?.phone || '';
+        }
+      } catch (e) {
+        console.error('Failed to load tenant info for printing', e);
+      }
+    }
+
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) {
+      alert("Please allow popups for printing");
+      return;
+    }
 
     const itemsHtml = gr.items.map(item => `
       <tr>
@@ -264,6 +287,12 @@ export default function GoodsReceipts() {
               <div>No: ${gr.grNumber}</div>
               <div>PO Ref: ${gr.poNumber || '-'}</div>
               <div>Date: ${new Date(gr.date?.seconds * 1000).toLocaleDateString()}</div>
+            </div>
+            <div style="text-align: right;">
+               ${logoUrl ? `<img src="${logoUrl}" style="max-height: 50px; object-fit: contain; margin-bottom: 8px;" />` : ''}
+               <div style="font-weight: bold; font-size: 16px;">${tenantName}</div>
+               ${address ? `<div style="font-size: 12px; color: #444; margin-top: 4px;">${address}</div>` : ''}
+               ${phone ? `<div style="font-size: 12px; color: #444; margin-top: 2px;">${phone}</div>` : ''}
             </div>
           </div>
           <div style="margin-bottom: 20px;">

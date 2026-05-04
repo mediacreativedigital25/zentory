@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot, orderBy } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
@@ -14,6 +15,7 @@ import { logStockChange } from '../../lib/stock-logger';
 
 export default function Products() {
   const { profile, domainTenantId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -44,9 +46,23 @@ export default function Products() {
     type: 'manual' as const
   }]);
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; type?: 'danger' | 'info' | 'warning' } | null>(null);
-  const [activeTab, setActiveTab] = useState<'products' | 'history'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'history'>(
+    (searchParams.get('tab') as 'products' | 'history') || 'products'
+  );
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'products' || tab === 'history') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: 'products' | 'history') => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
   const [globalStockLogs, setGlobalStockLogs] = useState<StockLog[]>([]);
-  const [historySearch, setHistorySearch] = useState('');
+  const [historySearch, setHistorySearch] = useState(searchParams.get('search') || '');
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
@@ -635,8 +651,8 @@ export default function Products() {
                       {product.type === 'service' ? 'JASA' : 'MANUAL'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400 italic">
-                    {product.type === 'service' ? '-' : `Rp.${(product.hpp || 0).toLocaleString()}`}
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium italic">
+                    Rp.${(product.hpp || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-sm font-bold text-indigo-600">Rp.{(product.price || 0).toLocaleString()}</td>
                   <td className="px-6 py-4">
@@ -1177,7 +1193,7 @@ export default function Products() {
                             ...formData, 
                             type: isService ? 'service' : 'manual',
                             sku: (editingProduct && (editingProduct.type === (isService ? 'service' : 'manual'))) ? formData.sku : (isService ? generateServiceSKU() : generateSKU()),
-                            hpp: isService ? 0 : formData.hpp,
+                            hpp: formData.hpp,
                             stock: isService ? 0 : formData.stock,
                             warehouseId: isService ? '' : formData.warehouseId,
                             variants: t.id === 'variasi' ? (formData.variants.length > 0 ? formData.variants : [{ id: Math.random().toString(36).substr(2, 9), name: 'Default', sku: `${formData.sku}-1`, stock: 0, hpp: 0, price: 0, minStock: 0 }]) : [],
@@ -1308,7 +1324,8 @@ export default function Products() {
                                               stock: 0, 
                                               hpp: 0, 
                                               price: 0, 
-                                              minStock: 0 
+                                              minStock: 0,
+                                              type: 'stock'
                                           }];
                                           setFormData({ ...formData, variants: newVariants });
                                       }}
@@ -1322,7 +1339,9 @@ export default function Products() {
                                   <table className="w-full text-left text-xs border-separate border-spacing-y-2">
                                       <thead>
                                           <tr className="text-gray-400 font-bold uppercase tracking-widest text-[9px]">
+                                              <th className="px-2 pb-1">Foto</th>
                                               <th className="px-2 pb-1">Jenis</th>
+                                              <th className="px-2 pb-1 w-24">Tipe</th>
                                               <th className="px-2 pb-1 w-20">Stock Awal</th>
                                               <th className="px-2 pb-1 w-28">HPP</th>
                                               <th className="px-2 pb-1 w-28">Harga Jual</th>
@@ -1334,6 +1353,17 @@ export default function Products() {
                                           {formData.variants.map((v, idx) => (
                                               <tr key={v.id} className="bg-white rounded-xl shadow-sm border border-gray-100">
                                                   <td className="p-2 first:rounded-l-xl">
+                                                      <ImageUpload
+                                                          value={v.imageUrl || ''}
+                                                          onChange={(url) => {
+                                                              const newVars = [...formData.variants];
+                                                              newVars[idx].imageUrl = url;
+                                                              setFormData({ ...formData, variants: newVars });
+                                                          }}
+                                                          compact
+                                                      />
+                                                  </td>
+                                                  <td className="p-2">
                                                       <input 
                                                           type="text"
                                                           value={v.name}
@@ -1347,15 +1377,34 @@ export default function Products() {
                                                       />
                                                   </td>
                                                   <td className="p-2">
+                                                      <select 
+                                                          value={v.type || 'stock'}
+                                                          onChange={(e) => {
+                                                              const newVars = [...formData.variants];
+                                                              newVars[idx].type = e.target.value as 'stock' | 'non-stock';
+                                                              if (e.target.value === 'non-stock') {
+                                                                  newVars[idx].stock = 0;
+                                                                  newVars[idx].minStock = 0;
+                                                              }
+                                                              setFormData({ ...formData, variants: newVars });
+                                                          }}
+                                                          className="w-full bg-transparent border-none outline-none font-bold text-gray-900 text-xs"
+                                                      >
+                                                          <option value="stock">Stock</option>
+                                                          <option value="non-stock">Non-Stock/Jasa</option>
+                                                      </select>
+                                                  </td>
+                                                  <td className="p-2">
                                                       <input 
                                                           type="number"
                                                           value={v.stock}
+                                                          readOnly={!!editingProduct || v.type === 'non-stock'}
                                                           onChange={(e) => {
                                                               const newVars = [...formData.variants];
                                                               newVars[idx].stock = Number(e.target.value);
                                                               setFormData({ ...formData, variants: newVars });
                                                           }}
-                                                          className="w-full bg-transparent border-none outline-none text-center"
+                                                          className={`w-full bg-transparent border-none outline-none text-center ${(editingProduct || v.type === 'non-stock') ? 'text-gray-400 cursor-not-allowed font-medium' : ''}`}
                                                       />
                                                   </td>
                                                   <td className="p-2">
@@ -1386,12 +1435,13 @@ export default function Products() {
                                                       <input 
                                                           type="number"
                                                           value={v.minStock}
+                                                          readOnly={v.type === 'non-stock'}
                                                           onChange={(e) => {
                                                               const newVars = [...formData.variants];
                                                               newVars[idx].minStock = Number(e.target.value);
                                                               setFormData({ ...formData, variants: newVars });
                                                           }}
-                                                          className="w-full bg-transparent border-none outline-none text-center text-[10px]"
+                                                          className={`w-full bg-transparent border-none outline-none text-center text-[10px] ${v.type === 'non-stock' ? 'text-gray-400 cursor-not-allowed' : ''}`}
                                                       />
                                                   </td>
                                                   <td className="p-2 last:rounded-r-xl">
@@ -1462,9 +1512,15 @@ export default function Products() {
                                 type="number"
                                 required
                                 value={formData.stock || 0}
+                                readOnly={!!editingProduct}
                                 onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                                className={`w-full px-4 py-2 border border-gray-200 rounded-lg outline-none font-bold ${editingProduct ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'focus:ring-2 focus:ring-indigo-500'}`}
                               />
+                              {editingProduct && (
+                                <p className="text-[9px] text-gray-400 mt-1 italic leading-tight">
+                                  * Perubahan stok setelah produk dibuat harus melalui alur Pembelian (PO).
+                                </p>
+                              )}
                             </div>
                           </div>
                         </>
@@ -1536,17 +1592,31 @@ export default function Products() {
                     </>
                   )}
                   {formDisplayType === 'service' && (
-                    <div className="col-span-2 text-green-600">
-                      <label className="block text-sm font-bold mb-1 flex items-center">
-                        Harga Jual <DollarSign className="w-3 h-3 ml-1" />
-                      </label>
-                      <input
-                        type="number"
-                        required
-                        value={formData.price || 0}
-                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                        className="w-full px-4 py-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-bold text-green-700"
-                      />
+                    <div className="col-span-2 grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-bold text-red-600 mb-1 flex items-center">
+                          Harga Modal (HPP) <DollarSign className="w-3 h-3 ml-1" />
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          value={formData.hpp || 0}
+                          onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
+                          className="w-full px-4 py-2 border border-red-100 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-green-600 mb-1 flex items-center">
+                          Harga Jual <DollarSign className="w-3 h-3 ml-1" />
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          value={formData.price || 0}
+                          onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                          className="w-full px-4 py-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-bold text-green-700"
+                        />
+                      </div>
                     </div>
                   )}
                   <div className="col-span-2">

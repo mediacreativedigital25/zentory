@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot, orderBy, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { PurchaseOrder, Supplier, Product, PurchaseRequest } from '../../types';
@@ -228,10 +228,34 @@ export default function PurchaseOrders() {
     });
   };
 
-  const handlePrint = (po: PurchaseOrder) => {
+  const handlePrint = async (po: PurchaseOrder) => {
     const supplier = suppliers.find(s => s.id === po.supplierId);
+    
+    let tenantName = 'Our Warehouse';
+    let logoUrl = '';
+    let address = '';
+    let phone = '';
+    
+    if (profile?.tenantId) {
+      try {
+        const tenantDoc = await getDoc(doc(db, 'tenants', profile.tenantId));
+        if (tenantDoc.exists()) {
+          const tData = tenantDoc.data();
+          tenantName = tData.name || tenantName;
+          logoUrl = tData.settings?.logoUrl || '';
+          address = tData.settings?.address || '';
+          phone = tData.settings?.phone || '';
+        }
+      } catch (e) {
+        console.error('Failed to load tenant info for printing', e);
+      }
+    }
+
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) {
+      alert("Please allow popups for printing");
+      return;
+    }
 
     const itemsHtml = po.items.map(item => `
       <tr>
@@ -263,6 +287,9 @@ export default function PurchaseOrders() {
               <div style="margin-top: 8px;">No: <strong>${po.poNumber}</strong></div>
               <div>Date: ${new Date(po.date?.seconds * 1000).toLocaleDateString()}</div>
             </div>
+            <div style="text-align: right;">
+               ${logoUrl ? `<img src="${logoUrl}" style="max-height: 60px; object-fit: contain; margin-bottom: 8px;" />` : ''}
+            </div>
           </div>
           
           <div class="info-grid">
@@ -274,8 +301,10 @@ export default function PurchaseOrders() {
             </div>
             <div style="text-align: right;">
               <div style="color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 8px;">Ship To:</div>
-              <div style="font-weight: bold; font-size: 16px;">${profile?.tenantName || 'Our Warehouse'}</div>
+              <div style="font-weight: bold; font-size: 16px;">${tenantName}</div>
               <div style="font-size: 14px; margin-top: 4px;">Main Office / Warehouse</div>
+              ${address ? `<div style="font-size: 12px; color: #444; margin-top: 4px;">${address}</div>` : ''}
+              ${phone ? `<div style="font-size: 12px; color: #444; margin-top: 2px;">${phone}</div>` : ''}
             </div>
           </div>
 

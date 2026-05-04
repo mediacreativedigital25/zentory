@@ -62,6 +62,8 @@ export default function Catalog() {
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState('');
+  const [selectedDetailProduct, setSelectedDetailProduct] = useState<Product | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>('');
 
   useEffect(() => {
     if (!isCartOpen) {
@@ -149,8 +151,14 @@ export default function Catalog() {
     });
   }, [products, searchQuery, selectedCategory]);
 
-  const addToCart = (product: Product) => {
-    if (product.stock <= 0 && product.type !== 'service') {
+  const addToCart = (product: Product, variantId?: string) => {
+    if (!variantId && product.variants && product.variants.length > 0) {
+      setSelectedDetailProduct(product);
+      setSelectedVariantId(product.variants[0].id);
+      return;
+    }
+
+    if (product.stock <= 0 && product.type !== 'service' && !variantId) {
       setConfirmModal({
         isOpen: true,
         title: 'Stok Habis',
@@ -161,9 +169,29 @@ export default function Catalog() {
       return;
     }
 
-    const existing = cart.find(item => item.product.id === product.id);
+    const variant = variantId ? product.variants?.find(v => v.id === variantId) : null;
+    const stockToUse = variant ? variant.stock : product.stock;
+
+    if (variant && stockToUse <= 0) {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Stok Habis',
+        message: 'Maaf, variasi ini sedang tidak tersedia.',
+        onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false })),
+        type: 'warning'
+      });
+      return;
+    }
+
+    const cartItemId = variantId ? `${product.id}-${variantId}` : product.id;
+    const existing = cart.find(item => {
+        const itemVid = (item as any).variantId;
+        const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+        return currentItemId === cartItemId;
+    });
+
     if (existing) {
-      if (product.type !== 'service' && existing.quantity >= product.stock) {
+      if (product.type !== 'service' && existing.quantity >= stockToUse) {
         setConfirmModal({
           isOpen: true,
           title: 'Batas Stok',
@@ -173,23 +201,36 @@ export default function Catalog() {
         });
         return;
       }
-      setCart(cart.map(item =>
-        item.product.id === product.id
+      setCart(cart.map(item => {
+        const itemVid = (item as any).variantId;
+        const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+        return currentItemId === cartItemId
           ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
+          : item;
+      }));
     } else {
-      setCart([...cart, { product, quantity: 1 }]);
+      setCart([...cart, { product, quantity: 1, variantId } as any]);
+    }
+    
+    if (variantId) {
+      setSelectedDetailProduct(null);
+      setSelectedVariantId('');
     }
     setIsCartOpen(true);
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
-    const item = cart.find(i => i.product.id === productId);
+  const updateQuantity = (cartItemId: string, delta: number) => {
+    const item = cart.find(i => {
+      const itemVid = (i as any).variantId;
+      return (itemVid ? `${i.product.id}-${itemVid}` : i.product.id) === cartItemId;
+    });
     if (!item) return;
 
-    const product = products.find(p => p.id === productId);
-    if (product && product.type !== 'service' && delta > 0 && item.quantity >= product.stock) {
+    const itemVid = (item as any).variantId;
+    const variant = itemVid ? item.product.variants?.find(v => v.id === itemVid) : null;
+    const stockToUse = variant ? variant.stock : item.product.stock;
+
+    if (item.product.type !== 'service' && delta > 0 && item.quantity >= stockToUse) {
       setConfirmModal({
         isOpen: true,
         title: 'Batas Stok',
@@ -201,7 +242,9 @@ export default function Catalog() {
     }
 
     setCart(cart.map(item => {
-      if (item.product.id === productId) {
+      const itemVid = (item as any).variantId;
+      const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+      if (currentItemId === cartItemId) {
         const newQty = Math.max(1, item.quantity + delta);
         return { ...item, quantity: newQty };
       }
@@ -209,13 +252,52 @@ export default function Catalog() {
     }));
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.product.id !== productId));
+  const setQuantity = (cartItemId: string, value: number) => {
+    const item = cart.find(i => {
+      const itemVid = (i as any).variantId;
+      return (itemVid ? `${i.product.id}-${itemVid}` : i.product.id) === cartItemId;
+    });
+    if (!item) return;
+
+    const newQty = Math.max(1, value);
+    const itemVid = (item as any).variantId;
+    const variant = itemVid ? item.product.variants?.find(v => v.id === itemVid) : null;
+    const stockToUse = variant ? variant.stock : item.product.stock;
+    
+    if (item.product && item.product.type !== 'service' && newQty > stockToUse) {
+      setCart(cart.map(i => {
+        const iVid = (i as any).variantId;
+        const currentItemId = iVid ? `${i.product.id}-${iVid}` : i.product.id;
+        return currentItemId === cartItemId ? { ...i, quantity: stockToUse } : i;
+      }));
+      return;
+    }
+
+    setCart(cart.map(i => {
+      const iVid = (i as any).variantId;
+      const currentItemId = iVid ? `${i.product.id}-${iVid}` : i.product.id;
+      return currentItemId === cartItemId ? { ...i, quantity: newQty } : i;
+    }));
   };
 
-  const getProductPrice = (product: Product, quantity: number) => {
+  const removeFromCart = (cartItemId: string) => {
+    setCart(cart.filter(item => {
+      const itemVid = (item as any).variantId;
+      const currentItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+      return currentItemId !== cartItemId;
+    }));
+  };
+
+  const getProductPrice = (product: Product, quantity: number, variantId?: string) => {
+    let basePrice = product.price;
+
+    if (variantId && product.variants) {
+      const variant = product.variants.find(v => v.id === variantId);
+      if (variant) basePrice = variant.price;
+    }
+
     if (!product.wholesalePrices || product.wholesalePrices.length === 0) {
-      return product.price;
+      return basePrice;
     }
     
     // Sort by minQuantity descending to find the highest applicable tier
@@ -223,10 +305,10 @@ export default function Catalog() {
       .sort((a, b) => b.minQuantity - a.minQuantity)
       .find(tier => quantity >= tier.minQuantity);
       
-    return applicableTier ? applicableTier.price : product.price;
+    return applicableTier ? applicableTier.price : basePrice;
   };
 
-  const subtotal = cart.reduce((acc, item) => acc + (getProductPrice(item.product, item.quantity) * item.quantity), 0);
+  const subtotal = cart.reduce((acc, item) => acc + (getProductPrice(item.product, item.quantity, (item as any).variantId) * item.quantity), 0);
   
   const discount = useMemo(() => {
     if (!appliedCoupon) return 0;
@@ -313,6 +395,11 @@ export default function Catalog() {
       return;
     }
 
+    if (bankAccounts.length > 0 && !selectedBankAccountId) {
+      alert('Silakan pilih metode pembayaran terlebih dahulu.');
+      return;
+    }
+
     setIsCheckingOut(true);
     try {
       const orderNumber = `ORD-${Date.now()}`;
@@ -323,12 +410,17 @@ export default function Catalog() {
         customerEmail: user.email,
         customerAddress: shippingAddress,
         items: cart.map(item => {
-          const unitPrice = getProductPrice(item.product, item.quantity);
+          const itemVid = (item as any).variantId;
+          const unitPrice = getProductPrice(item.product, item.quantity, itemVid);
+          const variant = itemVid ? item.product.variants?.find(v => v.id === itemVid) : null;
+          const name = variant ? `${item.product.name} (${variant.name})` : item.product.name;
+          
           return {
             productId: item.product.id,
-            name: item.product.name,
+            variantId: itemVid || null,
+            name,
             price: unitPrice,
-            hpp: item.product.hpp || 0,
+            hpp: variant ? (variant.hpp || 0) : (item.product.hpp || 0),
             quantity: item.quantity,
             total: unitPrice * item.quantity
           };
@@ -362,13 +454,18 @@ export default function Catalog() {
         category: 'Sales',
         amount: total,
         discountAmount: discount,
-        items: cart.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          price: getProductPrice(item.product, item.quantity),
-          hpp: item.product.hpp || 0,
-          quantity: item.quantity
-        })),
+        items: cart.map(item => {
+          const itemVid = (item as any).variantId;
+          const variant = itemVid ? item.product.variants?.find(v => v.id === itemVid) : null;
+          return {
+            productId: item.product.id,
+            variantId: itemVid || null,
+            name: variant ? `${item.product.name} (${variant.name})` : item.product.name,
+            price: getProductPrice(item.product, item.quantity, itemVid),
+            hpp: variant ? (variant.hpp || 0) : (item.product.hpp || 0),
+            quantity: item.quantity
+          };
+        }),
         description: `Sales from Catalog: ${orderNumber}`,
         orderNumber,
         status: 'pending',
@@ -702,6 +799,74 @@ export default function Catalog() {
         cancelText="Tutup"
       />
 
+      {/* Variant Selection Modal */}
+      <AnimatePresence>
+        {selectedDetailProduct && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+            >
+              <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
+                <div>
+                    <h3 className="text-xl font-bold">{selectedDetailProduct.name}</h3>
+                    <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest mt-1">Pilih Variasi Produk</p>
+                </div>
+                <button onClick={() => setSelectedDetailProduct(null)} className="p-2 hover:bg-white/10 rounded-full">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto no-scrollbar">
+                {selectedDetailProduct.variants?.map((v: any) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setSelectedVariantId(v.id)}
+                    disabled={v.stock <= 0}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                      selectedVariantId === v.id 
+                        ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50' 
+                        : 'border-gray-100 hover:border-indigo-200 bg-white'
+                    } ${v.stock <= 0 ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                  >
+                    <div className="flex items-center gap-4 text-left">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-50">
+                            <img 
+                              src={v.imageUrl || selectedDetailProduct.imageUrl || `https://picsum.photos/seed/${v.id}/200/200`} 
+                              className="w-full h-full object-cover" 
+                              referrerPolicy="no-referrer" 
+                              alt={v.name} 
+                            />
+                        </div>
+                        <div>
+                            <p className={`font-bold ${selectedVariantId === v.id ? 'text-indigo-600' : 'text-gray-900'}`}>{v.name}</p>
+                            <p className="text-[10px] text-gray-500 font-mono">{v.sku}</p>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-black text-indigo-600">Rp.{v.price.toLocaleString()}</p>
+                        <p className={`text-[9px] font-bold ${v.stock <= 5 ? 'text-red-500 animate-pulse' : 'text-gray-400'}`}>
+                            {v.stock > 0 ? `Stok: ${v.stock}` : 'Stok Habis'}
+                        </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => addToCart(selectedDetailProduct, selectedVariantId)}
+                  disabled={!selectedVariantId}
+                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
+                >
+                  MASUKKAN KERANJANG
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Cart Drawer */}
       <AnimatePresence>
         {isCartOpen && (
@@ -759,50 +924,68 @@ export default function Catalog() {
                   </div>
                 ) : cartStep === 1 ? (
                   <div className="space-y-6">
-                    {cart.map((item) => (
-                      <div key={item.product.id} className="flex items-center space-x-4 group">
-                        <div className="w-20 h-24 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
-                          <img src={item.product.imageUrl || `https://picsum.photos/seed/${item.product.id}/200/300`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-gray-900 text-sm mb-1 truncate">{item.product.name}</h4>
-                          <div className="flex flex-col gap-0.5 mb-2">
-                            <p className={`text-sm font-black ${getProductPrice(item.product, item.quantity) < item.product.price ? 'text-green-600' : 'text-indigo-600'}`}>
-                                Rp.{getProductPrice(item.product, item.quantity).toLocaleString()}
-                                {getProductPrice(item.product, item.quantity) < item.product.price && (
-                                    <span className="text-[10px] text-gray-400 line-through ml-2 font-medium">Rp.{item.product.price.toLocaleString()}</span>
-                                )}
-                            </p>
-                            {getProductPrice(item.product, item.quantity) < item.product.price && (
-                                <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded w-fit">Harga Grosir Diterapkan</span>
-                            )}
+                    {cart.map((item) => {
+                      const itemVid = (item as any).variantId;
+                      const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+                      const cartItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
+                      const displayPrice = getProductPrice(item.product, item.quantity, itemVid);
+                      const basePrice = variant ? variant.price : item.product.price;
+                      const isDiscounted = displayPrice < basePrice;
+                      const itemImageUrl = variant?.imageUrl || item.product.imageUrl || `https://picsum.photos/seed/${item.product.id}/200/300`;
+
+                      return (
+                        <div key={cartItemId} className="flex items-center space-x-4 group">
+                          <div className="w-20 h-24 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
+                            <img src={itemImageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           </div>
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                              <button 
-                                onClick={() => updateQuantity(item.product.id, -1)}
-                                className="w-7 h-7 flex items-center justify-center bg-white shadow-sm rounded-md text-gray-600 hover:text-indigo-600 transition-all"
-                              >
-                                -
-                              </button>
-                              <span className="w-8 text-center text-xs font-black">{item.quantity}</span>
-                              <button 
-                                onClick={() => updateQuantity(item.product.id, 1)}
-                                className="w-7 h-7 flex items-center justify-center bg-white shadow-sm rounded-md text-gray-600 hover:text-indigo-600 transition-all"
-                              >
-                                +
-                              </button>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-gray-900 text-sm mb-1 truncate">
+                              {item.product.name}
+                              {variant && <span className="text-indigo-600 ml-1">({variant.name})</span>}
+                            </h4>
+                            <div className="flex flex-col gap-0.5 mb-2">
+                              <p className={`text-sm font-black ${isDiscounted ? 'text-green-600' : 'text-indigo-600'}`}>
+                                  Rp.{displayPrice.toLocaleString()}
+                                  {isDiscounted && (
+                                      <span className="text-[10px] text-gray-400 line-through ml-2 font-medium">Rp.{basePrice.toLocaleString()}</span>
+                                  )}
+                              </p>
+                              {isDiscounted && (
+                                  <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded w-fit">Harga Grosir Diterapkan</span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                                <button 
+                                  onClick={() => updateQuantity(cartItemId, -1)}
+                                  className="w-7 h-7 flex items-center justify-center bg-white shadow-sm rounded-md text-gray-600 hover:text-indigo-600 transition-all"
+                                >
+                                  -
+                                </button>
+                                <input 
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => setQuantity(cartItemId, parseInt(e.target.value) || 0)}
+                                  className="w-10 text-center text-xs font-black bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <button 
+                                  onClick={() => updateQuantity(cartItemId, 1)}
+                                  className="w-7 h-7 flex items-center justify-center bg-white shadow-sm rounded-md text-gray-600 hover:text-indigo-600 transition-all"
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
                           </div>
+                          <button 
+                            onClick={() => removeFromCart(cartItemId)} 
+                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => removeFromCart(item.product.id)} 
-                          className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="space-y-6">

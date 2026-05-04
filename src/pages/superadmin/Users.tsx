@@ -26,11 +26,19 @@ export default function SuperAdminUsers() {
     return () => unsubUsers();
   }, [profile]);
 
+  const checkIsOnline = (user: UserProfile) => {
+    if (!user.isOnline) return false;
+    if (!user.lastActive) return true; // fallback if no lastActive is set but isOnline is true
+    const activeTime = user.lastActive.seconds ? user.lastActive.seconds * 1000 : user.lastActive.toMillis?.() || Date.now();
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+    return activeTime > twoMinutesAgo;
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.displayName?.toLowerCase().includes(userSearch.toLowerCase()) ||
       user.email?.toLowerCase().includes(userSearch.toLowerCase());
-    const matchesFilter = userFilter === 'all' || user.isOnline;
+    const matchesFilter = userFilter === 'all' || checkIsOnline(user);
     return matchesSearch && matchesFilter;
   });
 
@@ -67,7 +75,7 @@ export default function SuperAdminUsers() {
           </div>
           <div className="flex items-center text-sm text-gray-500">
             <Activity className="w-4 h-4 mr-2 text-green-500" />
-            {users.filter(u => u.isOnline).length} users online
+            {users.filter(u => checkIsOnline(u)).length} users online
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -77,8 +85,8 @@ export default function SuperAdminUsers() {
                 <th className="px-6 py-4 font-medium">User</th>
                 <th className="px-6 py-4 font-medium">Tenant ID</th>
                 <th className="px-6 py-4 font-medium">Role</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium">Last Active</th>
+                <th className="px-6 py-4 font-medium">Status / Activity</th>
+                <th className="px-6 py-4 font-medium">IP Address</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -117,17 +125,27 @@ export default function SuperAdminUsers() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {user.isOnline ? (
-                        <span className="flex items-center text-green-600 text-xs font-bold">
-                          <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
-                          ONLINE
-                        </span>
+                      {checkIsOnline(user) ? (
+                        <div className="flex flex-col gap-1">
+                          <span className="flex items-center text-green-600 text-xs font-bold">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+                            ONLINE
+                          </span>
+                          <span className="text-xs text-gray-500">Active Now</span>
+                        </div>
                       ) : (
-                        <span className="text-gray-400 text-xs">OFFLINE</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-gray-400 text-xs font-bold">OFFLINE</span>
+                          <span className="text-xs text-gray-500">
+                            {user.lastActive ? new Date(user.lastActive.seconds * 1000).toLocaleString('id-ID', {
+                               day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'
+                            }) : '-'}
+                          </span>
+                        </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {user.lastActive ? new Date(user.lastActive.seconds * 1000).toLocaleString() : '-'}
+                    <td className="px-6 py-4 text-sm text-gray-700 font-mono">
+                      {user.ipAddress || '-'}
                     </td>
                   </tr>
                 ))

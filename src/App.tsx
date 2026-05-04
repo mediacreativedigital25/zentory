@@ -13,6 +13,9 @@ import SuperAdmin from './pages/SuperAdmin';
 import SuperAdminDashboard from './pages/superadmin/Dashboard';
 import SuperAdminInvoices from './pages/superadmin/Invoices';
 import SuperAdminTenants from './pages/superadmin/Tenants';
+import SuperAdminCoupons from './pages/superadmin/TenantCoupons';
+import SuperAdminNotifications from './pages/superadmin/Notifications';
+import SuperAdminNotificationTemplates from './pages/superadmin/NotificationTemplates';
 import SuperAdminApprovals from './pages/superadmin/Approvals';
 import SuperAdminUsers from './pages/superadmin/Users';
 import SuperAdminResetData from './pages/superadmin/ResetData';
@@ -22,6 +25,7 @@ import SuperAdminServiceTenant from './pages/superadmin/ServiceTenant';
 import DomainManagement from './pages/superadmin/DomainManagement';
 import Catalog from './pages/Catalog';
 import SalesOrder from './pages/SalesOrder';
+import SalesOrderV1 from './pages/SalesOrderV1';
 import SalesOrderReceive from './pages/SalesOrderReceive';
 import Customers from './pages/Customers';
 import Products from './pages/inventory/Products';
@@ -36,6 +40,7 @@ import Sales from './pages/Sales';
 import Coupons from './pages/Coupons';
 import SettingTarget from './pages/analysis/SettingTarget';
 import Achievement from './pages/analysis/Achievement';
+import CostRatio from './pages/analysis/CostRatio';
 import Finance from './pages/Finance';
 import ClaimExpense from './pages/ClaimExpense';
 import FinancialReport from './pages/FinancialReport';
@@ -65,7 +70,9 @@ import LayananSaya from './pages/LayananSaya';
 import Checkout from './pages/Checkout';
 import NoAccess from './pages/NoAccess';
 
-const ProtectedRoute = ({ children, allowedRoles, permission }: { children: React.ReactNode; allowedRoles?: string[]; permission?: string }) => {
+import CustomerCategories from './pages/sales/CustomerCategories';
+
+const ProtectedRoute = ({ children, allowedRoles, permission, menuLabel }: { children: React.ReactNode; allowedRoles?: string[]; permission?: string; menuLabel?: string }) => {
   const { user, profile, tenant, domainTenantId, permissions, loading } = useAuth();
   const location = useLocation();
 
@@ -79,6 +86,11 @@ const ProtectedRoute = ({ children, allowedRoles, permission }: { children: Reac
 
   // Superadmin can access everything
   if (profile?.role === 'superadmin') return <Layout>{children}</Layout>;
+
+  // Check if tenant has disabled this menu
+  if (tenant?.menuSettings && menuLabel && tenant.menuSettings[menuLabel] === false) {
+    return <Navigate to="/no-access" />;
+  }
 
   // Subscription check
   if (tenant && profile?.role !== 'superadmin') {
@@ -189,202 +201,220 @@ export default function App() {
           } />
           
           <Route path="/dashboard" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="dashboard">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="dashboard" menuLabel="Dashboard">
               <Dashboard />
             </ProtectedRoute>
           } />
 
           <Route path="/approvals" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="approvals">
+            <ProtectedRoute allowedRoles={['admin']} permission="approvals" menuLabel="Approval">
               <Approvals />
             </ProtectedRoute>
           } />
 
           <Route path="/inventory/products" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_products">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_products" menuLabel="Inventory">
               <Products />
             </ProtectedRoute>
           } />
 
           <Route path="/inventory/categories" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_categories">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_categories" menuLabel="Inventory">
               <Categories />
             </ProtectedRoute>
           } />
 
           <Route path="/inventory/stock" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_stock">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_stock" menuLabel="Inventory">
               <Stock />
             </ProtectedRoute>
           } />
 
           <Route path="/inventory/warehouses" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_warehouses">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_warehouses" menuLabel="Inventory">
               <Warehouses />
             </ProtectedRoute>
           } />
 
           <Route path="/inventory/report" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_report">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_report" menuLabel="Inventory">
               <InventoryReport />
             </ProtectedRoute>
           } />
 
           <Route path="/inventory/stock-opname" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_stock_opname">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_stock_opname" menuLabel="Inventory">
               <StockOpname />
             </ProtectedRoute>
           } />
 
           <Route path="/sales/order" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order" menuLabel="Sales">
               <SalesOrder />
             </ProtectedRoute>
           } />
 
+          <Route path="/sales/order-v1" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order" menuLabel="Sales">
+              <SalesOrderV1 />
+            </ProtectedRoute>
+          } />
+
           <Route path="/sales/pos" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order" menuLabel="Sales">
               <Sales />
             </ProtectedRoute>
           } />
 
           <Route path="/sales/receive" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_receive">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_receive" menuLabel="Sales">
               <SalesOrderReceive />
             </ProtectedRoute>
           } />
 
           <Route path="/sales/customers" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_customers">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_customers" menuLabel="Sales">
               <Customers />
             </ProtectedRoute>
           } />
 
+          <Route path="/sales/customer-categories" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_customers" menuLabel="Sales">
+              <CustomerCategories />
+            </ProtectedRoute>
+          } />
+
           <Route path="/sales/analysis/target" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order" menuLabel="Sales Analisis">
               <SettingTarget />
             </ProtectedRoute>
           } />
 
           <Route path="/sales/analysis/achievement" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order" menuLabel="Sales Analisis">
               <Achievement />
             </ProtectedRoute>
           } />
 
+          <Route path="/sales/analysis/cost-ratio" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order" menuLabel="Sales Analisis">
+              <CostRatio />
+            </ProtectedRoute>
+          } />
+
           <Route path="/sales/coupons" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="sales_order" menuLabel="Sales">
               <Coupons />
             </ProtectedRoute>
           } />
 
           <Route path="/finance" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="finance_report">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_report" menuLabel="Finance">
               <FinancialReport />
             </ProtectedRoute>
           } />
 
           <Route path="/finance/claim" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="finance_claim">
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="finance_claim" menuLabel="Finance">
               <ClaimExpense />
             </ProtectedRoute>
           } />
 
           <Route path="/finance/invoices" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices" menuLabel="Finance">
               <Invoices />
             </ProtectedRoute>
           } />
 
           <Route path="/finance/receive-payment" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices" menuLabel="Finance">
               <ReceivePayment />
             </ProtectedRoute>
           } />
 
           <Route path="/finance/collections" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices" menuLabel="Finance">
               <InvoiceCollection />
             </ProtectedRoute>
           } />
 
           <Route path="/finance/report" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="finance_report">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_report" menuLabel="Finance">
               <FinancialReport />
             </ProtectedRoute>
           } />
 
           <Route path="/finance/settings" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="finance_settings">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_settings" menuLabel="Finance">
               <ExpenseSettings />
             </ProtectedRoute>
           } />
 
           <Route path="/finance/bank-accounts" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="finance_bank_accounts">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="finance_bank_accounts" menuLabel="Finance">
               <BankAccounts />
             </ProtectedRoute>
           } />
 
           <Route path="/finance/charity" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="finance_charity">
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_charity" menuLabel="Finance">
               <Charity />
             </ProtectedRoute>
           } />
 
           <Route path="/daily-settlement" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="daily_settlement">
+            <ProtectedRoute allowedRoles={['admin']} permission="daily_settlement" menuLabel="Daily Settlement">
               <DailySettlement />
             </ProtectedRoute>
           } />
 
           <Route path="/catalog-editor" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="catalog_editor">
+            <ProtectedRoute allowedRoles={['admin']} permission="catalog_editor" menuLabel="Catalog Editor">
               <CatalogEditor />
             </ProtectedRoute>
           } />
 
           <Route path="/master/users" element={
-            <ProtectedRoute allowedRoles={['admin', 'superadmin']} permission="master_users">
+            <ProtectedRoute allowedRoles={['admin', 'superadmin']} permission="master_users" menuLabel="Master">
               <Users />
             </ProtectedRoute>
           } />
 
           <Route path="/master/roles" element={
-            <ProtectedRoute allowedRoles={['admin', 'superadmin']} permission="master_roles">
+            <ProtectedRoute allowedRoles={['admin', 'superadmin']} permission="master_roles" menuLabel="Master">
               <Roles />
             </ProtectedRoute>
           } />
 
           <Route path="/settings/business" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="tenant_settings">
+            <ProtectedRoute allowedRoles={['admin']} permission="tenant_settings" menuLabel="Profil Bisnis">
               <TenantSettings />
             </ProtectedRoute>
           } />
 
           {/* Purchase */}
           <Route path="/purchase/suppliers" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_suppliers">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_suppliers" menuLabel="Purchase">
               <Suppliers />
             </ProtectedRoute>
           } />
           <Route path="/purchase/requests" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_requests">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_requests" menuLabel="Purchase">
               <PurchaseRequest />
             </ProtectedRoute>
           } />
           <Route path="/purchase/orders" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_orders">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_orders" menuLabel="Purchase">
               <PurchaseOrder />
             </ProtectedRoute>
           } />
           <Route path="/purchase/receipts" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_goods_receipts">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_goods_receipts" menuLabel="Purchase">
               <GoodsReceipt />
             </ProtectedRoute>
           } />
           <Route path="/purchase/invoices" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_invoices">
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_invoices" menuLabel="Purchase">
               <PurchaseInvoice />
             </ProtectedRoute>
           } />
@@ -410,6 +440,24 @@ export default function App() {
           <Route path="/superadmin/services" element={
             <ProtectedRoute allowedRoles={['superadmin']}>
               <SuperAdminServiceTenant />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/coupons" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminCoupons />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/notifications" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminNotifications />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/notification-templates" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminNotificationTemplates />
             </ProtectedRoute>
           } />
 
@@ -456,13 +504,13 @@ export default function App() {
           } />
 
           <Route path="/changelog" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']}>
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} menuLabel="Changelog">
               <Changelog />
             </ProtectedRoute>
           } />
 
           <Route path="/guide" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']}>
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} menuLabel="Panduan">
               <Guide />
             </ProtectedRoute>
           } />
@@ -476,13 +524,13 @@ export default function App() {
           <Route path="/subscription-expired" element={<SubscriptionExpired />} />
 
           <Route path="/layanan/invoice" element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['admin']} menuLabel="Layanan">
               <LayananInvoice />
             </ProtectedRoute>
           } />
 
           <Route path="/layanan/saya" element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['admin']} menuLabel="Layanan">
               <LayananSaya />
             </ProtectedRoute>
           } />

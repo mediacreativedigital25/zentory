@@ -10,7 +10,8 @@
         "ownerId": { "type": "string", "description": "UID of the tenant admin" },
         "subscription": { "type": "string", "enum": ["free", "pro", "enterprise"] },
         "createdAt": { "type": "string", "format": "date-time" },
-        "settings": { "type": "object" }
+        "settings": { "type": "object" },
+        "menuSettings": { "type": "object" }
       },
       "required": ["name", "slug", "ownerId"]
     },
@@ -272,6 +273,18 @@
       },
       "required": ["tenantId", "name", "type"]
     },
+    "customer_category": {
+      "title": "Customer Category",
+      "description": "Customer categories for classifying clients.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "name"]
+    },
     "custom_domain": {
       "title": "Custom Domain",
       "description": "Custom domain mapping for tenants.",
@@ -424,6 +437,38 @@
       },
       "required": ["tenantId", "receiptNumber", "customerId", "amount", "paymentMethod"]
     },
+    "counter": {
+      "title": "Counter",
+      "description": "Sequential counters for various numbering systems.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "prefix": { "type": "string" },
+        "sequence": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "prefix", "sequence"]
+    },
+    "delete_request": {
+      "title": "Delete Request",
+      "description": "Request to delete a document that requires superadmin approval.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "sourceCollection": { "type": "string" },
+        "sourceId": { "type": "string" },
+        "sourceNumber": { "type": "string" },
+        "reason": { "type": "string" },
+        "notes": { "type": "string" },
+        "deadline": { "type": "string", "format": "date" },
+        "requestedBy": { "type": "string" },
+        "requestedByName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "type": { "type": "string" }
+      },
+      "required": ["tenantId", "sourceCollection", "sourceId", "reason", "status"]
+    },
     "system_service": {
       "title": "System Service",
       "description": "Available services and packages in the system.",
@@ -523,6 +568,10 @@
       "schema": "customer",
       "description": "Customer records"
     },
+    "/customer_categories/{categoryId}": {
+      "schema": "customer_category",
+      "description": "Customer categories"
+    },
     "/finance_invoices/{invoiceId}": {
       "schema": "finance_invoice",
       "description": "Subscription invoices"
@@ -546,6 +595,14 @@
     "/payment_receipts/{receiptId}": {
       "schema": "payment_receipt",
       "description": "Payment receipts for customer invoices"
+    },
+    "/counters/{counterId}": {
+      "schema": "counter",
+      "description": "Sequential numbering counters"
+    },
+    "/delete_requests/{requestId}": {
+      "schema": "delete_request",
+      "description": "Requests for document deletion"
     },
     "/system_services/{serviceId}": {
       "schema": "system_service",

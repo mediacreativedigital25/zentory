@@ -64,7 +64,7 @@ export default function SalesOrderReceive() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'manual' | 'catalog' | 'service' | 'pos'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'manual' | 'catalog' | 'service' | 'pos'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -178,10 +178,20 @@ export default function SalesOrderReceive() {
   }, [filter, search, rowsPerPage]);
 
   const filteredOrders = orders.filter(o => {
-    const matchesFilter = filter === 'all' || o.type === filter;
+    let matchesFilter = false;
+    if (filter === 'all') matchesFilter = true;
+    else if (filter === 'pending') {
+      const oDate = o.date?.seconds || (o as any).createdAt?.seconds || 0;
+      const tDate = new Date(oDate * 1000);
+      const isToday = tDate.toDateString() === new Date().toDateString();
+      matchesFilter = o.status === 'pending' && isToday;
+    }
+    else matchesFilter = o.type === filter;
+
     const matchesSearch = 
       o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
       o.customerName.toLowerCase().includes(search.toLowerCase()) ||
+      (o.customerCode && o.customerCode.toLowerCase().includes(search.toLowerCase())) ||
       o.id.toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
@@ -334,6 +344,17 @@ export default function SalesOrderReceive() {
 
   const handleRecordPayment = async () => {
     if (!selectedOrder || !profile || paymentAmount <= 0) return;
+    
+    if (!selectedBankAccountId) {
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Akun Belum Dipilih',
+        message: 'Silakan pilih metode pembayaran / bank terlebih dahulu.',
+        onConfirm: () => setConfirmConfig(null),
+        showCancel: false
+      });
+      return;
+    }
 
     setIsUpdating(true);
     try {
@@ -462,6 +483,16 @@ export default function SalesOrderReceive() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed': return 'RECEIVED';
+      case 'processing': return 'Processing';
+      case 'pending': return 'PENDING';
+      case 'cancelled': return 'CANCELLED';
+      default: return status.toUpperCase();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -472,13 +503,13 @@ export default function SalesOrderReceive() {
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex-1 flex items-center gap-4 overflow-x-auto pb-2 sm:pb-0">
           <div className="flex gap-2">
-            {(['all', 'manual', 'pos', 'catalog', 'service'] as const).map((t) => (
+            {(['all', 'pending', 'manual', 'pos', 'catalog', 'service'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setFilter(t)}
                 className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all ${filter === t ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
               >
-                {t.toUpperCase()}
+                {t === 'pending' ? 'PENDING HARI INI' : t.toUpperCase()}
               </button>
             ))}
           </div>
@@ -539,7 +570,14 @@ export default function SalesOrderReceive() {
                     {order.date || order.createdAt ? new Date((order.date?.seconds || order.createdAt?.seconds || 0) * 1000).toLocaleDateString() : 'Just now...'}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-900">{order.customerName}</p>
+                    <div className="flex items-center gap-2">
+                       {order.customerCode && (
+                        <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-black uppercase border border-indigo-100">
+                          {order.customerCode}
+                        </span>
+                      )}
+                      <p className="text-sm font-medium text-gray-900">{order.customerName}</p>
+                    </div>
                     <p className="text-xs text-gray-500">{order.items.length} items</p>
                   </td>
                   <td className="px-6 py-4">
@@ -558,9 +596,9 @@ export default function SalesOrderReceive() {
                       {(order as any).paymentStatus || 'UNPAID'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-center">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(order.status)}`}>
-                      {order.status}
+                      {getStatusLabel(order.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -693,7 +731,7 @@ export default function SalesOrderReceive() {
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-gray-400 uppercase">Current Status</p>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(selectedOrder.status)}`}>
-                      {selectedOrder.status?.toUpperCase() || 'N/A'}
+                      {getStatusLabel(selectedOrder.status)}
                     </span>
                   </div>
                   <div className="space-y-1">
@@ -720,6 +758,12 @@ export default function SalesOrderReceive() {
                           {bankAccounts.find(b => b.id === selectedOrder.paymentMethod)?.name || 'Unknown Account'}
                         </span>
                       </div>
+                    </div>
+                  )}
+                  {selectedOrder.remark && (
+                    <div className="col-span-2 space-y-1 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                      <p className="text-xs font-bold text-gray-400 uppercase">Remark</p>
+                      <p className="text-sm font-medium text-gray-700">{selectedOrder.remark}</p>
                     </div>
                   )}
                 </div>
@@ -844,7 +888,7 @@ export default function SalesOrderReceive() {
                         className="flex flex-col items-center justify-center p-3 rounded-xl border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 transition-all disabled:opacity-50"
                       >
                         <CheckCircle className="w-5 h-5 mb-1" />
-                        <span className="text-[10px] font-bold">COMPLETE</span>
+                        <span className="text-[10px] font-bold">RECEIVED</span>
                       </button>
                       <button
                         disabled={isUpdating || selectedOrder.status === 'cancelled'}
@@ -928,8 +972,14 @@ export default function SalesOrderReceive() {
                 <div className="max-w-4xl mx-auto">
                   <div className="flex justify-between items-start mb-10">
                     <div>
-                      <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
+                      {tenantInfo?.settings?.logoUrl ? (
+                        <img src={tenantInfo.settings.logoUrl} alt="Logo Business" className="h-16 mb-2 object-contain" />
+                      ) : (
+                        <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
+                      )}
                       <p className="text-sm text-gray-500 max-w-xs">{tenantInfo?.settings?.description || 'Business Inventory & Sales Solutions'}</p>
+                      <p className="text-sm text-gray-500 mt-1">{tenantInfo?.settings?.address || ''}</p>
+                      <p className="text-sm text-gray-500">{tenantInfo?.settings?.phone || ''}</p>
                     </div>
                     <div className="text-right">
                       <h2 className="text-3xl font-bold text-gray-900 uppercase tracking-tighter">INVOICE</h2>
@@ -947,8 +997,8 @@ export default function SalesOrderReceive() {
                       <p className="text-sm text-gray-500 uppercase">{selectedOrder.type} Order</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Status</p>
-                      <p className="text-lg font-bold text-indigo-600 uppercase">{selectedOrder.status}</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Order Status</p>
+                      <p className="text-lg font-bold text-indigo-600 uppercase">{getStatusLabel(selectedOrder.status)}</p>
                     </div>
                   </div>
 
@@ -1007,9 +1057,14 @@ export default function SalesOrderReceive() {
 
             {printType === 'receipt' && (
               <div className="p-4 text-black font-mono text-[10px] w-[80mm] mx-auto bg-white min-h-screen">
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 flex flex-col items-center">
+                  {tenantInfo?.settings?.logoUrl && (
+                    <img src={tenantInfo.settings.logoUrl} alt="Logo" className="max-w-[40mm] h-10 mb-2 object-contain grayscale" />
+                  )}
                   <h1 className="text-base font-bold uppercase">{tenantInfo?.name || 'ZENTORY'}</h1>
                   <p className="text-[8px]">{tenantInfo?.settings?.description || 'Sales Receipt'}</p>
+                  {tenantInfo?.settings?.address && <p className="text-[8px] mt-1">{tenantInfo?.settings?.address}</p>}
+                  {tenantInfo?.settings?.phone && <p className="text-[8px]">{tenantInfo?.settings?.phone}</p>}
                 </div>
                 
                 <div className="border-t border-dashed border-gray-300 py-2 mb-2">
@@ -1188,7 +1243,7 @@ export default function SalesOrderReceive() {
                   </button>
                   <button
                     onClick={handleRecordPayment}
-                    disabled={isUpdating || paymentAmount <= 0}
+                    disabled={isUpdating || paymentAmount <= 0 || !selectedBankAccountId}
                     className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {isUpdating ? 'Memproses...' : 'Simpan Pembayaran'}

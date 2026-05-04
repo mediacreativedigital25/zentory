@@ -14,9 +14,12 @@ import {
   PieChart as PieChartIcon,
   ArrowRight,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  History
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
+
 import { 
   PieChart, 
   Pie, 
@@ -330,11 +333,12 @@ export default function InventoryReport() {
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Terjual</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Penjualan Terakhir</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {paginatedData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group items-center">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -376,6 +380,15 @@ export default function InventoryReport() {
                         {item.movementStatus === 'fast' ? 'Fast' : item.movementStatus === 'slow' ? 'Slow' : 'Dead'}
                       </span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <Link 
+                      to={`/inventory/products?tab=history&search=${item.sku || item.name}`}
+                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest"
+                    >
+                      <History className="w-4 h-4" />
+                      Riwayat
+                    </Link>
                   </td>
                 </tr>
               ))}

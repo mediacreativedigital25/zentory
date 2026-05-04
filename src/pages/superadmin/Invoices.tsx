@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { FileText, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { FileText, CheckCircle2, XCircle, Loader2, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { auth } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
 import ConfirmModal from '../../components/ConfirmModal';
 import { PLANS } from '../../constants/plans';
 import { SubscriptionPlan } from '../../types';
+import { sendPaymentSuccessNotification, sendSubscriptionInfoNotification } from '../../lib/fonnte';
+import { sendPaymentSuccessEmail, sendSubscriptionInfoEmail } from '../../lib/email';
 
 export default function SuperAdminInvoices() {
   const { profile } = useAuth();
   const [allInvoices, setAllInvoices] = useState<any[]>([]);
+  const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [tenants, setTenants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -93,11 +96,81 @@ export default function SuperAdminInvoices() {
                             invoice.paymentMethod === 'tripay' ? 'Otomatis (TriPay)' : invoice.paymentMethod || 'Manual',
           updatedAt: serverTimestamp(),
         });
+
+        // Send WhatsApp & Email Notification to Tenant
+        if (currentTenant) {
+          try {
+            const dateStr = newEndDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            const paymentVarData = {
+              nama_tenant: currentTenant.name,
+              plan_name: invoice.planName || invoice.planId,
+              amount: `Rp ${Number(invoice.total || invoice.amount).toLocaleString('id-ID')}`,
+              invoice_number: invoice.invoiceNumber
+            };
+
+            const subscriptionVarData = {
+              nama_tenant: currentTenant.name,
+              plan_name: invoice.planName || invoice.planId,
+              end_date: dateStr
+            };
+
+            if (currentTenant.phone) {
+              await sendPaymentSuccessNotification(currentTenant.phone, paymentVarData);
+            }
+            if (currentTenant.email) {
+              await sendPaymentSuccessEmail(currentTenant.email, paymentVarData);
+            }
+
+            // Delay a bit before second msg
+            setTimeout(async () => {
+              if (currentTenant.phone) {
+                await sendSubscriptionInfoNotification(currentTenant.phone, subscriptionVarData);
+              }
+              if (currentTenant.email) {
+                await sendSubscriptionInfoEmail(currentTenant.email, subscriptionVarData);
+              }
+            }, 2000);
+          } catch (e) {
+            console.error("Failed to send WA/Email notification", e);
+          }
+        }
       }
 
       await fetchData();
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `finance_invoices/${invoice.id}`, auth, profile);
+    } finally {
+      setProcessingId(null);
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedInvoices.length === allInvoices.length && allInvoices.length > 0) {
+      setSelectedInvoices([]);
+    } else {
+      setSelectedInvoices(allInvoices.map(inv => inv.id));
+    }
+  };
+
+  const toggleSelectInvoice = (id: string) => {
+    if (selectedInvoices.includes(id)) {
+      setSelectedInvoices(selectedInvoices.filter(i => i !== id));
+    } else {
+      setSelectedInvoices([...selectedInvoices, id]);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    setProcessingId('delete-multiple');
+    try {
+      const deletePromises = selectedInvoices.map(id => deleteDoc(doc(db, 'finance_invoices', id)));
+      await Promise.all(deletePromises);
+      setSelectedInvoices([]);
+      await fetchData();
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, 'finance_invoices', auth, profile);
     } finally {
       setProcessingId(null);
       setConfirmModal(prev => ({ ...prev, isOpen: false }));
@@ -119,11 +192,39 @@ export default function SuperAdminInvoices() {
             <FileText className="w-5 h-5 mr-2 text-indigo-600" />
             Daftar Invoice
           </h3>
+          {selectedInvoices.length > 0 && (
+            <button
+              onClick={() => setConfirmModal({
+                isOpen: true,
+                title: 'Hapus Invoice',
+                message: `Apakah Anda yakin ingin menghapus ${selectedInvoices.length} invoice yang dipilih?`,
+                type: 'danger',
+                onConfirm: handleDeleteSelected
+              })}
+              disabled={processingId === 'delete-multiple'}
+              className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold flex items-center shadow-lg hover:bg-red-700 transition"
+            >
+              {processingId === 'delete-multiple' ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              Hapus ({selectedInvoices.length})
+            </button>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                <th className="px-6 py-4">
+                  <input
+                    type="checkbox"
+                    checked={allInvoices.length > 0 && selectedInvoices.length === allInvoices.length}
+                    onChange={toggleSelectAll}
+                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  />
+                </th>
                 <th className="px-6 py-4">Invoice #</th>
                 <th className="px-6 py-4">Tenant</th>
                 <th className="px-6 py-4">Paket</th>
@@ -136,15 +237,23 @@ export default function SuperAdminInvoices() {
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">Memuat data invoice...</td>
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">Memuat data invoice...</td>
                 </tr>
               ) : allInvoices.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">Belum ada invoice.</td>
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">Belum ada invoice.</td>
                 </tr>
               ) : (
                 allInvoices.map((inv) => (
                   <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedInvoices.includes(inv.id)}
+                        onChange={() => toggleSelectInvoice(inv.id)}
+                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                      />
+                    </td>
                     <td className="px-6 py-4 font-mono text-xs font-bold text-indigo-600">{inv.invoiceNumber}</td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">

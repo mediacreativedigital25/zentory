@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot, orderBy, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { PurchaseRequest, Product } from '../../types';
@@ -200,9 +200,32 @@ export default function PurchaseRequests() {
     }
   };
 
-  const handlePrint = (pr: PurchaseRequest) => {
+  const handlePrint = async (pr: PurchaseRequest) => {
+    let logoUrl = '';
+    let tenantName = 'Our Company';
+    let address = '';
+    let phone = '';
+    
+    if (profile?.tenantId) {
+      try {
+        const tenantDoc = await getDoc(doc(db, 'tenants', profile.tenantId));
+        if (tenantDoc.exists()) {
+          const tData = tenantDoc.data();
+          logoUrl = tData.settings?.logoUrl || '';
+          tenantName = tData.name || tenantName;
+          address = tData.settings?.address || '';
+          phone = tData.settings?.phone || '';
+        }
+      } catch (e) {
+        console.error('Failed to load tenant info for printing', e);
+      }
+    }
+
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) {
+      alert("Please allow popups for printing");
+      return;
+    }
 
     const itemsHtml = pr.items.map(item => `
       <tr>
@@ -219,7 +242,7 @@ export default function PurchaseRequests() {
           <title>Purchase Request - ${pr.prNumber}</title>
           <style>
             body { font-family: sans-serif; padding: 40px; }
-            .header { display: flex; justify-between; margin-bottom: 40px; }
+            .header { display: flex; justify-content: space-between; margin-bottom: 40px; }
             .title { font-size: 24px; font-weight: bold; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6; }
@@ -231,6 +254,12 @@ export default function PurchaseRequests() {
               <div class="title">PURCHASE REQUEST</div>
               <div>No: ${pr.prNumber}</div>
               <div>Date: ${new Date(pr.date?.seconds * 1000).toLocaleDateString()}</div>
+            </div>
+            <div style="text-align: right;">
+               ${logoUrl ? `<img src="${logoUrl}" style="max-height: 50px; object-fit: contain; margin-bottom: 8px;" />` : ''}
+               <div style="font-weight: bold; font-size: 16px;">${tenantName}</div>
+               ${address ? `<div style="font-size: 12px; color: #444; margin-top: 4px;">${address}</div>` : ''}
+               ${phone ? `<div style="font-size: 12px; color: #444; margin-top: 2px;">${phone}</div>` : ''}
             </div>
           </div>
           <div style="margin-bottom: 20px;">

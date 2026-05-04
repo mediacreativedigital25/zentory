@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
-import { Plus, Edit2, Trash2, Search, CheckCircle2, XCircle, Info, Zap, Shield, Star, Building2, Sparkles } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, CheckCircle2, XCircle, Info, Zap, Shield, Star, Building2, Sparkles, CheckSquare, Square } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
 import ConfirmModal from '../../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
+import { FEATURE_KEYS } from '../../constants/plans';
 
 interface Service {
   id: string;
@@ -13,11 +14,69 @@ interface Service {
   description: string;
   price: number;
   features: string[];
+  menuPermissions?: string[];
   isEnabled: boolean;
   type: 'subscription' | 'addon';
   icon: string;
   createdAt: any;
 }
+
+const MENU_GROUPS = [
+  {
+    name: 'General & Master',
+    items: [
+      { key: FEATURE_KEYS.DASHBOARD, label: 'Dashboard Utama' },
+      { key: FEATURE_KEYS.TENANT_SETTINGS, label: 'Profil Bisnis & Pengaturan' },
+      { key: FEATURE_KEYS.CATALOG_EDITOR, label: 'Catalog Editor' },
+      { key: FEATURE_KEYS.MASTER_USERS, label: 'Master Users' },
+      { key: FEATURE_KEYS.MASTER_ROLES, label: 'Master Roles' },
+      { key: FEATURE_KEYS.APPROVALS, label: 'Persetujuan / Approvals' },
+      { key: FEATURE_KEYS.CUSTOM_DOMAIN, label: 'Custom Domain' },
+    ]
+  },
+  {
+    name: 'Sales & Penjualan',
+    items: [
+      { key: FEATURE_KEYS.SALES_ORDER, label: 'Sales Order & POS' },
+      { key: FEATURE_KEYS.SALES_RECEIVE, label: 'Sales Order Receive' },
+      { key: FEATURE_KEYS.SALES_CUSTOMERS, label: 'Database Customers' },
+    ]
+  },
+  {
+    name: 'Inventory & Gudang',
+    items: [
+      { key: FEATURE_KEYS.INVENTORY_PRODUCTS, label: 'Daftar Produk & Riwayat' },
+      { key: FEATURE_KEYS.INVENTORY_CATEGORIES, label: 'Kategori Produk' },
+      { key: FEATURE_KEYS.INVENTORY_STOCK, label: 'Stock Produk' },
+      { key: FEATURE_KEYS.INVENTORY_WAREHOUSES, label: 'Manajemen Gudang' },
+      { key: FEATURE_KEYS.MULTI_WAREHOUSE, label: 'Multi Warehouse' },
+      { key: FEATURE_KEYS.INVENTORY_REPORT, label: 'Laporan Inventory' },
+      { key: FEATURE_KEYS.INVENTORY_STOCK_OPNAME, label: 'Stock Opname' },
+    ]
+  },
+  {
+    name: 'Purchase & Pembelian',
+    items: [
+      { key: FEATURE_KEYS.PURCHASE_SUPPLIERS, label: 'Database Supplier' },
+      { key: FEATURE_KEYS.PURCHASE_REQUESTS, label: 'Purchase Request (PR)' },
+      { key: FEATURE_KEYS.PURCHASE_ORDERS, label: 'Purchase Order (PO)' },
+      { key: FEATURE_KEYS.PURCHASE_GOODS_RECEIPTS, label: 'Goods Receipt' },
+      { key: FEATURE_KEYS.PURCHASE_INVOICES, label: 'Purchase Invoice' },
+    ]
+  },
+  {
+    name: 'Finance & Keuangan',
+    items: [
+      { key: FEATURE_KEYS.FINANCE_INVOICES, label: 'Invoice Penjualan' },
+      { key: FEATURE_KEYS.FINANCE_REPORT, label: 'Report Keuangan' },
+      { key: FEATURE_KEYS.FINANCE_CLAIM, label: 'Claim Expense' },
+      { key: FEATURE_KEYS.FINANCE_SETTINGS, label: 'Settings Finance' },
+      { key: FEATURE_KEYS.FINANCE_BANK_ACCOUNTS, label: 'Akun Bank' },
+      { key: FEATURE_KEYS.FINANCE_CHARITY, label: 'Modul Amal / Charity' },
+      { key: FEATURE_KEYS.DAILY_SETTLEMENT, label: 'Daily Settlement' },
+    ]
+  }
+];
 
 export default function ServiceTenant() {
   const { profile } = useAuth();
@@ -34,6 +93,7 @@ export default function ServiceTenant() {
     description: '',
     price: 0,
     features: [''],
+    menuPermissions: [] as string[],
     isEnabled: true,
     type: 'subscription' as 'subscription' | 'addon',
     icon: 'Zap'
@@ -65,6 +125,7 @@ export default function ServiceTenant() {
         description: service.description,
         price: service.price,
         features: service.features.length > 0 ? service.features : [''],
+        menuPermissions: service.menuPermissions || [],
         isEnabled: service.isEnabled,
         type: service.type,
         icon: service.icon
@@ -76,6 +137,7 @@ export default function ServiceTenant() {
         description: '',
         price: 0,
         features: [''],
+        menuPermissions: [],
         isEnabled: true,
         type: 'subscription',
         icon: 'Zap'
@@ -125,6 +187,24 @@ export default function ServiceTenant() {
     const newFeatures = [...formData.features];
     newFeatures[index] = val;
     setFormData(prev => ({ ...prev, features: newFeatures }));
+  };
+
+  const toggleMenuPermission = (key: string) => {
+    setFormData(prev => ({
+      ...prev,
+      menuPermissions: prev.menuPermissions.includes(key)
+        ? prev.menuPermissions.filter(k => k !== key)
+        : [...prev.menuPermissions, key]
+    }));
+  };
+
+  const selectAllPermissions = () => {
+    const allKeys = MENU_GROUPS.flatMap(g => g.items.map(i => i.key));
+    setFormData(prev => ({ ...prev, menuPermissions: allKeys }));
+  };
+
+  const deselectAllPermissions = () => {
+    setFormData(prev => ({ ...prev, menuPermissions: [] }));
   };
 
   const icons = [
@@ -360,6 +440,46 @@ export default function ServiceTenant() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                    <div>
+                      <h4 className="text-sm font-black text-gray-900">Hak Akses Modul & Fitur</h4>
+                      <p className="text-[10px] text-gray-500 font-medium">Pilih modul apa saja yang dapat diakses oleh tenant di paket ini.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={selectAllPermissions} className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded">Pilih Semua</button>
+                      <button type="button" onClick={deselectAllPermissions} className="text-[10px] font-bold text-red-600 hover:text-red-800 bg-red-50 px-2 py-1 rounded">Hapus Semua</button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {MENU_GROUPS.map((group, groupIdx) => (
+                      <div key={groupIdx} className="border border-gray-100 rounded-xl overflow-hidden">
+                        <div className="bg-gray-50 px-3 py-2 border-b border-gray-100 font-black text-gray-700 text-xs uppercase tracking-wider">
+                          {group.name}
+                        </div>
+                        <div className="p-3 divide-y divide-gray-50">
+                          {group.items.map((item, itemIdx) => (
+                            <label key={itemIdx} className="flex items-center gap-3 py-2 cursor-pointer group">
+                              <div className="relative flex items-center">
+                                <input
+                                  type="checkbox"
+                                  className="peer sr-only"
+                                  checked={formData.menuPermissions.includes(item.key)}
+                                  onChange={() => toggleMenuPermission(item.key)}
+                                />
+                                <div className="w-5 h-5 rounded border-2 border-gray-300 peer-checked:bg-indigo-600 peer-checked:border-indigo-600 flex items-center justify-center transition-colors">
+                                  <CheckSquare className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" />
+                                </div>
+                              </div>
+                              <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900">{item.label}</span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>

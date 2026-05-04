@@ -127,6 +127,16 @@ export default function CustomerDashboard() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed': return 'RECEIVED';
+      case 'processing': return 'Processing';
+      case 'pending': return 'PENDING';
+      case 'cancelled': return 'CANCELLED';
+      default: return status.toUpperCase();
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -245,7 +255,7 @@ export default function CustomerDashboard() {
                       </div>
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center gap-1.5 ${getStatusColor(order.status)}`}>
                         {getStatusIcon(order.status)}
-                        {order.status}
+                        {getStatusLabel(order.status)}
                       </span>
                     </div>
                     

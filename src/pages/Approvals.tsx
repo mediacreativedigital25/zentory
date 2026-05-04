@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,10 +18,11 @@ import {
   Eye,
   Info,
   Package,
-  ArrowRight
+  ArrowRight,
+  Trash2
 } from 'lucide-react';
 
-type ApprovalType = 'Sales' | 'Finance' | 'Purchase';
+type ApprovalType = 'Sales' | 'Finance' | 'Purchase' | 'Deletion';
 
 interface ApprovalItem {
   id: string;
@@ -110,13 +111,34 @@ export default function Approvals() {
     });
     unsubscribes.push(unsubPurchase);
 
+    // 4. Delete Requests (status 'pending')
+    const deleteQuery = query(
+      collection(db, 'delete_requests'),
+      where('tenantId', '==', profile.tenantId),
+      where('status', '==', 'pending')
+    );
+    const unsubDelete = onSnapshot(deleteQuery, (snap) => {
+      const deleteItems: ApprovalItem[] = snap.docs.map(d => ({
+        id: d.id,
+        type: 'Deletion' as ApprovalType,
+        title: `Hapus: ${d.data().sourceNumber}`,
+        subtitle: `Alasan: ${d.data().reason} - Oleh: ${d.data().requestedByName}`,
+        status: d.data().status,
+        date: d.data().createdAt,
+        rawData: { ...d.data(), collection: 'delete_requests' }
+      }));
+      updateItems('Deletion', deleteItems);
+    });
+    unsubscribes.push(unsubDelete);
+
     return () => unsubscribes.forEach(unsub => unsub());
   }, [profile]);
 
   const [allData, setAllData] = useState<Record<ApprovalType, ApprovalItem[]>>({
     Sales: [],
     Finance: [],
-    Purchase: []
+    Purchase: [],
+    Deletion: []
   });
 
   const updateItems = (type: ApprovalType, newItems: ApprovalItem[]) => {
@@ -141,6 +163,14 @@ export default function Approvals() {
         status = action === 'approve' ? 'completed' : 'cancelled';
       } else if (item.type === 'Purchase') {
         status = action === 'approve' ? 'approved' : 'rejected';
+      } else if (item.type === 'Deletion') {
+        if (action === 'approve') {
+          // Actual deletion of the source document
+          await deleteDoc(doc(db, item.rawData.sourceCollection, item.rawData.sourceId));
+          status = 'approved';
+        } else {
+          status = 'rejected';
+        }
       }
 
       await updateDoc(docRef, {
@@ -159,7 +189,8 @@ export default function Approvals() {
   const tabs: { type: ApprovalType; icon: any; label: string }[] = [
     { type: 'Sales', icon: ShoppingCart, label: 'Sales' },
     { type: 'Finance', icon: Wallet, label: 'Finance' },
-    { type: 'Purchase', icon: Truck, label: 'Purchase' }
+    { type: 'Purchase', icon: Truck, label: 'Purchase' },
+    { type: 'Deletion', icon: Trash2, label: 'Penghapusan' }
   ];
 
   return (
@@ -209,12 +240,14 @@ export default function Approvals() {
               <div className={`p-6 text-white flex justify-between items-center ${
                 selectedItem.type === 'Sales' ? 'bg-indigo-600' :
                 selectedItem.type === 'Finance' ? 'bg-green-600' :
+                selectedItem.type === 'Deletion' ? 'bg-red-600' :
                 'bg-orange-600'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
                     {selectedItem.type === 'Sales' ? <ShoppingCart className="w-5 h-5" /> :
                      selectedItem.type === 'Finance' ? <Wallet className="w-5 h-5" /> :
+                     selectedItem.type === 'Deletion' ? <Trash2 className="w-5 h-5" /> :
                      <Truck className="w-5 h-5" />}
                   </div>
                   <div>
@@ -333,6 +366,39 @@ export default function Approvals() {
                       </div>
                     </div>
                   )}
+
+                  {selectedItem.type === 'Deletion' && (
+                    <div className="space-y-4">
+                      <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
+                        <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Target Penghapusan</p>
+                        <p className="font-bold text-red-900">{selectedItem.rawData.sourceNumber}</p>
+                        <p className="text-xs text-red-600 mt-1 opacity-70">ID: {selectedItem.rawData.sourceId}</p>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-4 rounded-2xl space-y-4">
+                        <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alasan</p>
+                          <p className="text-sm text-gray-900 font-bold">{selectedItem.rawData.reason}</p>
+                        </div>
+                        {selectedItem.rawData.notes && (
+                          <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Catatan</p>
+                            <p className="text-sm text-gray-900 font-medium">{selectedItem.rawData.notes}</p>
+                          </div>
+                        )}
+                        <div className="pt-2 border-t border-gray-200/50 flex justify-between items-center">
+                          <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Diajukan Oleh</p>
+                            <p className="text-sm text-gray-900 font-bold">{selectedItem.rawData.requestedByName}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deadline</p>
+                            <p className="text-xs font-bold text-red-600">{new Date(selectedItem.rawData.deadline).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -395,10 +461,12 @@ export default function Approvals() {
                   <div className={`p-3 rounded-xl ${
                     item.type === 'Sales' ? 'bg-indigo-50 text-indigo-600' :
                     item.type === 'Finance' ? 'bg-green-50 text-green-600' :
+                    item.type === 'Deletion' ? 'bg-red-50 text-red-600' :
                     'bg-orange-50 text-orange-600'
                   }`}>
                     {item.type === 'Sales' ? <ShoppingCart className="w-6 h-6" /> :
                      item.type === 'Finance' ? <Wallet className="w-6 h-6" /> :
+                     item.type === 'Deletion' ? <Trash2 className="w-6 h-6" /> :
                      <Truck className="w-6 h-6" />}
                   </div>
                   <div>

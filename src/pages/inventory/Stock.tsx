@@ -3,8 +3,9 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Product, Category } from '../../types';
-import { Search, Filter, Package, ArrowRight, AlertCircle, Printer, FileText, FileSpreadsheet } from 'lucide-react';
+import { Search, Filter, Package, ArrowRight, AlertCircle, Printer, FileText, FileSpreadsheet, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -233,12 +234,13 @@ export default function Stock() {
                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kategori</th>
                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Stok</th>
                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Harga Jual</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredProducts.map((product) => (
                 <React.Fragment key={product.id}>
-                  <tr className="hover:bg-gray-50/50 transition-colors group border-b border-gray-50">
+                  <tr className="hover:bg-gray-50/50 transition-colors group border-b border-gray-50 items-center">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
@@ -284,6 +286,15 @@ export default function Stock() {
                     <td className="px-6 py-4 text-right">
                       <p className="text-sm font-black text-indigo-600">Rp.{(product.price || 0).toLocaleString()}</p>
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      <Link 
+                        to={`/inventory/products?tab=history&search=${product.sku || product.name}`}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest"
+                      >
+                        <History className="w-4 h-4" />
+                        Riwayat
+                      </Link>
+                    </td>
                   </tr>
                   
                   {/* Variant Rows */}
@@ -311,6 +322,7 @@ export default function Stock() {
                       <td className="px-6 py-2 text-right">
                         <span className="text-gray-500">Rp.{v.price.toLocaleString()}</span>
                       </td>
+                      <td className="px-6 py-2 text-center"></td>
                     </tr>
                   ))}
                 </React.Fragment>

@@ -20,7 +20,9 @@ export interface UserProfile {
   forceLogoutAt?: any;
   lastLoginAt?: any;
   lastLogoutAt?: any;
+  lastActive?: any;
   isOnline?: boolean;
+  ipAddress?: string;
 }
 
 export interface Tenant {
@@ -47,6 +49,9 @@ export interface Tenant {
     description?: string;
   };
   customDomains?: string[];
+  menuSettings?: {
+    [key: string]: boolean;
+  };
   
   // Cooperation & Business Details
   ownerName?: string;
@@ -122,6 +127,8 @@ export interface ProductVariant {
   price: number;
   stock: number;
   minStock: number;
+  imageUrl?: string;
+  type?: 'stock' | 'non-stock';
 }
 
 export interface WholesalePrice {
@@ -146,6 +153,14 @@ export interface Warehouse {
   createdAt: any;
 }
 
+export interface CustomerCategory {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  createdAt: any;
+}
+
 export interface Customer {
   id: string;
   tenantId: string;
@@ -155,6 +170,7 @@ export interface Customer {
   phone: string;
   address: string;
   type: 'umum' | 'langganan';
+  categoryId?: string;
   allowTempo: boolean;
   tempoLimitDays?: number;
   createdAt: any;
@@ -166,6 +182,7 @@ export interface Order {
   tenantId: string;
   customerId?: string;
   customerName?: string;
+  customerCode?: string;
   type: 'manual' | 'catalog' | 'service' | 'pos';
   items: { 
     productId: string; 
@@ -179,6 +196,7 @@ export interface Order {
   paidAmount?: number;
   paymentStatus?: 'paid' | 'partial' | 'unpaid';
   paymentType?: 'cash' | 'credit';
+  remark?: string;
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   date: any;
   dueDate?: any;

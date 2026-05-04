@@ -10,7 +10,7 @@ import UpgradePrompt from './Subscription/UpgradePrompt';
 import { PLANS } from '../constants/plans';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { profile, permissions: userPermissions } = useAuth();
+  const { profile, permissions: userPermissions, tenant } = useAuth();
   const { hasFeature, plan } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,26 +25,56 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const handleLogout = async () => {
+    if (auth.currentUser) {
+      const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
+      const { db } = await import('../lib/firebase');
+      const profileRef = doc(db, 'users', auth.currentUser.uid);
+      try {
+        await updateDoc(profileRef, {
+          isOnline: false,
+          lastLogoutAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
     await auth.signOut();
     navigate('/login');
   };
 
   const navItems = [
     { 
-      label: 'Superadmin', 
+      label: 'Sistem Super', 
       icon: ShieldCheck, 
       roles: ['superadmin'],
       children: [
-        { label: 'Dashboard', path: '/superadmin/dashboard' },
-        { label: 'Invoice', path: '/superadmin/invoices' },
-        { label: 'Service Tenant', path: '/superadmin/services' },
-        { label: 'Tenant', path: '/superadmin/tenants' },
-        { label: 'Approvals', path: '/superadmin/approvals' },
-        { label: 'Users', path: '/superadmin/users' },
-        { label: 'Reset Data', path: '/superadmin/reset' },
-        { label: 'Roadmaps', path: '/superadmin/roadmap' },
-        { label: 'Global Setting', path: '/superadmin/settings' },
-        { label: 'Domain Management', path: '/superadmin/domains' },
+        { label: 'Dashboard Utama', path: '/superadmin/dashboard' },
+        { label: 'Pengaturan Global', path: '/superadmin/settings' },
+        { label: 'Roadmap Produk', path: '/superadmin/roadmap' },
+        { label: 'Reset Database', path: '/superadmin/reset' },
+      ]
+    },
+    { 
+      label: 'Manajemen Tenant', 
+      icon: Building2, 
+      roles: ['superadmin'],
+      children: [
+        { label: 'Daftar Tenant', path: '/superadmin/tenants' },
+        { label: 'Layanan / Produk', path: '/superadmin/services' },
+        { label: 'Kupon Diskon', path: '/superadmin/coupons' },
+        { label: 'Notifikasi (Fonnte)', path: '/superadmin/notifications' },
+        { label: 'Template Pesan', path: '/superadmin/notification-templates' },
+        { label: 'Tagihan (Invoice)', path: '/superadmin/invoices' },
+        { label: 'Domain & SSL', path: '/superadmin/domains' },
+      ]
+    },
+    { 
+      label: 'Otoritas', 
+      icon: Lock, 
+      roles: ['superadmin'],
+      children: [
+        { label: 'Master Users', path: '/superadmin/users' },
+        { label: 'Persetujuan (Approvals)', path: '/superadmin/approvals' },
       ]
     },
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['admin', 'staff', 'superadmin'], permission: 'dashboard' },
@@ -54,11 +84,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: ShoppingCart, 
       roles: ['admin', 'staff', 'superadmin', 'kasir'],
       children: [
+        { label: 'Sales Order V1', path: '/sales/order-v1', permission: 'sales_order' },
         { label: 'Sales Order', path: '/sales/order', permission: 'sales_order' },
         { label: 'Sales POS', path: '/sales/pos', permission: 'sales_order' },
         { label: 'Sales Order Receive', path: '/sales/receive', permission: 'sales_receive' },
         { label: 'Kupon', path: '/sales/coupons', permission: 'sales_order' },
         { label: 'Customers', path: '/sales/customers', permission: 'sales_customers' },
+        { label: 'Tipe Pelanggan', path: '/sales/customer-categories', permission: 'sales_customers' },
       ]
     },
     { 
@@ -68,6 +100,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       children: [
         { label: 'Setting Target', path: '/sales/analysis/target', permission: 'sales_order' },
         { label: 'Pencapaian', path: '/sales/analysis/achievement', permission: 'sales_order' },
+        { label: 'Operational Cost Ratio', path: '/sales/analysis/cost-ratio', permission: 'sales_order' },
       ]
     },
     { 
@@ -75,7 +108,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: Package, 
       roles: ['admin', 'staff', 'superadmin'],
       children: [
-        { label: 'Produk', path: '/inventory/products', permission: 'inventory_products' },
+        { label: 'Daftar Produk', path: '/inventory/products', permission: 'inventory_products' },
+        { label: 'Riwayat Produk', path: '/inventory/products?tab=history', permission: 'inventory_products' },
         { label: 'Kategori', path: '/inventory/categories', permission: 'inventory_categories' },
         { label: 'Stock', path: '/inventory/stock', permission: 'inventory_stock' },
         { label: 'Gudang', path: '/inventory/warehouses', permission: 'inventory_warehouses' },
@@ -122,29 +156,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     },
     { label: 'Catalog Editor', icon: Store, path: '/catalog-editor', roles: ['admin', 'superadmin'], permission: 'catalog_editor' },
     { label: 'Profil Bisnis', icon: Building2, path: '/settings/business', roles: ['admin'], permission: 'tenant_settings' },
-    { label: 'Paket & Upgrade', icon: Zap, path: '/pricing', roles: ['admin', 'superadmin'] },
     { 
-      label: 'Layanan', 
-      icon: ShieldCheck, 
-      roles: ['admin'],
+      label: 'Paket & Upgrade', 
+      icon: Zap, 
+      roles: ['admin', 'superadmin'],
       children: [
-        { label: 'Invoice', path: '/layanan/invoice' },
+        { label: 'Pilih Paket', path: '/pricing' },
+        { label: 'Invoice Transaksi', path: '/layanan/invoice' },
         { label: 'Layanan Saya', path: '/layanan/saya' },
       ]
     },
     { label: 'Changelog', icon: History, path: '/changelog', roles: ['admin', 'staff', 'superadmin'], permission: 'changelog' },
     { label: 'Panduan', icon: BookOpen, path: '/guide', roles: ['admin', 'staff', 'superadmin'], permission: 'guide' },
-    { 
-      label: 'Super Admin', 
-      icon: ShieldCheck, 
-      roles: ['superadmin'],
-      children: [
-        { label: 'Dashboard', path: '/superadmin/dashboard' },
-        { label: 'Tenants', path: '/superadmin/tenants' },
-        { label: 'Reset Data', path: '/superadmin/reset' },
-        { label: 'Settings', path: '/superadmin/settings' },
-      ]
-    },
   ];
 
   const [roleName, setRoleName] = useState<string>('');
@@ -204,25 +227,52 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return true;
   };
 
-  const filteredNav = navItems.filter(item => {
-    if (profile?.role === 'superadmin') return true;
-    
-    // Always show these basic items
-    if (['Dashboard', 'Changelog', 'Panduan', 'Profil Bisnis'].includes(item.label)) return true;
+  const filteredNav = navItems
+    .map(item => {
+      if (item.children) {
+        const filteredChildren = item.children.filter((child: any) => {
+          // Strict check: if child is superadmin-only, hide from others immediately
+          if (child.roles && child.roles.includes('superadmin') && child.roles.length === 1 && profile?.role !== 'superadmin') {
+            return false;
+          }
 
-    return hasPermission(item);
-  }).map(item => {
-    if (item.children) {
-      return {
-        ...item,
-        children: item.children.filter((child: any) => {
           if (profile?.role === 'superadmin') return true;
+
+          // Check if tenant has disabled this sub-menu
+          if (tenant?.menuSettings && tenant.menuSettings[`${item.label}_${child.label}`] === false) {
+            return false;
+          }
+
           return hasPermission(child);
-        })
-      };
-    }
-    return item;
-  });
+        });
+
+        return { ...item, children: filteredChildren };
+      }
+      return item;
+    })
+    .filter(item => {
+      // Strict check: if item is superadmin-only, hide from others immediately
+      if (item.roles && item.roles.includes('superadmin') && item.roles.length === 1 && profile?.role !== 'superadmin') {
+        return false;
+      }
+
+      if (profile?.role === 'superadmin') return true;
+
+      // Check if tenant has disabled this menu
+      if (tenant?.menuSettings && tenant.menuSettings[item.label] === false) {
+        return false;
+      }
+
+      // Always show these basic items for authenticated users
+      if (['Dashboard', 'Changelog', 'Panduan', 'Profil Bisnis'].includes(item.label)) return true;
+
+      // If it has children, only show if there's at least one accessible child
+      if (item.children) {
+        return item.children.length > 0;
+      }
+
+      return hasPermission(item);
+    });
 
   const isKasir = profile?.role === 'kasir';
 

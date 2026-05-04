@@ -36,10 +36,7 @@ export default function Invoices() {
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isTagihkanModalOpen, setIsTagihkanModalOpen] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
-  const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>('');
 
   useEffect(() => {
     if (!profile?.tenantId) return;
@@ -100,48 +97,6 @@ export default function Invoices() {
     currentPage * rowsPerPage
   );
 
-  const handlePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedOrder || !profile?.tenantId) return;
-
-    try {
-      const newPaidAmount = (selectedOrder.paidAmount || 0) + paymentAmount;
-      const newPaymentStatus = newPaidAmount >= selectedOrder.totalAmount ? 'paid' : 'partial';
-      const newStatus = newPaidAmount >= selectedOrder.totalAmount ? 'completed' : selectedOrder.status;
-
-      // Update Order
-      await updateDoc(doc(db, 'orders', selectedOrder.id), {
-        paidAmount: newPaidAmount,
-        paymentStatus: newPaymentStatus,
-        status: newStatus,
-        updatedAt: serverTimestamp()
-      });
-
-      // Create Financial Transaction
-      await addDoc(collection(db, 'transactions'), {
-        tenantId: profile.tenantId,
-        type: 'sale',
-        category: 'Sales Payment',
-        amount: paymentAmount,
-        date: serverTimestamp(),
-        status: 'completed',
-        userId: profile.uid,
-        orderNumber: selectedOrder.orderNumber,
-        bankAccountId: selectedBankAccountId || null,
-        description: `Payment for Order #${selectedOrder.orderNumber}`,
-        createdAt: serverTimestamp()
-      });
-
-      setIsPaymentModalOpen(false);
-      setIsDetailModalOpen(false);
-      setSelectedOrder(null);
-      setPaymentAmount(0);
-    } catch (err) {
-      console.error('Error processing payment:', err);
-      alert('Gagal memproses pembayaran.');
-    }
-  };
-
   const toggleSelectOrder = (id: string) => {
     setSelectedOrderIds(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -169,7 +124,7 @@ export default function Invoices() {
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'bold');
-    doc.text('INVOICE COLECTION', 105, 15, { align: 'center' });
+    doc.text('INVOICE COLLECTION', 105, 15, { align: 'center' });
     
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
@@ -457,17 +412,6 @@ export default function Invoices() {
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-                        <button
-                          onClick={() => { 
-                            setSelectedOrder(order); 
-                            setPaymentAmount(order.totalAmount - (order.paidAmount || 0));
-                            setIsPaymentModalOpen(true); 
-                          }}
-                          className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                          title="Bayar"
-                        >
-                          <DollarSign className="w-5 h-5" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -704,99 +648,12 @@ export default function Invoices() {
                 >
                   TUTUP
                 </button>
-                <button
-                  onClick={() => {
-                    setPaymentAmount(selectedOrder.totalAmount - (selectedOrder.paidAmount || 0));
-                    setIsPaymentModalOpen(true);
-                  }}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center"
-                >
-                  <DollarSign className="w-5 h-5 mr-2" />
-                  BAYAR SEKARANG
-                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Payment Modal */}
-      <AnimatePresence>
-        {isPaymentModalOpen && selectedOrder && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden"
-            >
-              <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-emerald-600 text-white">
-                <h3 className="text-xl font-black tracking-tight">Input Pembayaran</h3>
-                <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <form onSubmit={handlePayment} className="p-8 space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Sisa Tagihan</label>
-                    <div className="p-4 bg-red-50 rounded-2xl border border-red-100">
-                      <p className="text-xl font-black text-red-600">Rp.{(selectedOrder.totalAmount - (selectedOrder.paidAmount || 0)).toLocaleString()}</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Jumlah Bayar</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</span>
-                      <input
-                        type="number"
-                        required
-                        max={selectedOrder.totalAmount - (selectedOrder.paidAmount || 0)}
-                        value={paymentAmount}
-                        onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-lg font-black text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Rekening/Kas</label>
-                    <select
-                      required
-                      value={selectedBankAccountId}
-                      onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
-                    >
-                      <option value="">Pilih Rekening</option>
-                      {bankAccounts.map(bank => (
-                        <option key={bank.id} value={bank.id}>{bank.name} {bank.accountNumber ? `(${bank.accountNumber})` : ''}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="pt-4 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsPaymentModalOpen(false)}
-                    className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-50 transition-all"
-                  >
-                    BATAL
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-[2] px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95"
-                  >
-                    SIMPAN PEMBAYARAN
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
