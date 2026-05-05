@@ -286,11 +286,12 @@ export interface ApprovalRequest {
   id: string;
   tenantId: string;
   tenantName?: string;
-  type: 'order_status' | 'daily_settlement_open' | 'charity_revision';
+  type: 'order_status' | 'daily_settlement_open' | 'charity_revision' | 'target_revision';
   orderId?: string;
   orderNumber?: string;
   closingId?: string;
   charityId?: string;
+  targetMonth?: string;
   closingDate?: any;
   requestedBy: string;
   requestedAt: any;
@@ -448,6 +449,8 @@ export interface SalesTarget {
   target3: number;
   updatedAt: any;
   updatedBy: string;
+  isUnlocked?: boolean;
+  revisionCount?: number;
 }
 
 export interface PaymentReceipt {

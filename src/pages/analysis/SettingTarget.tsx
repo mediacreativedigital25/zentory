@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, setDoc, doc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, setDoc, doc, onSnapshot, serverTimestamp, addDoc, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
-import { SalesTarget } from '../../types';
-import { Target, Save, X, Edit2, Calendar, ShieldCheck } from 'lucide-react';
+import { SalesTarget, ApprovalRequest } from '../../types';
+import { Target, Save, X, Edit2, Calendar, ShieldCheck, Key, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import ConfirmModal from '../../components/ConfirmModal';
 
 export default function SettingTarget() {
   const { profile } = useAuth();
   const [salesTargets, setSalesTargets] = useState<SalesTarget[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<ApprovalRequest[]>([]);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    showCancel?: boolean;
+    type?: 'danger' | 'warning' | 'info';
+  } | null>(null);
   const getMonthKey = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -19,15 +29,20 @@ export default function SettingTarget() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(getMonthKey(new Date())); // YYYY-MM
   const currentMonthISO = getMonthKey(new Date());
+  
+  const currentTarget = salesTargets.find(t => t.month === selectedMonth);
   const isMonthLocked = selectedMonth <= currentMonthISO;
+  const isUnlockedByAdmin = currentTarget?.isUnlocked === true;
+  const isCurrentMonth = selectedMonth === currentMonthISO;
+  const revisionCount = currentTarget?.revisionCount || 0;
+  
+  const hasPendingRequest = pendingRequests.some(r => r.targetMonth === selectedMonth);
 
   const [formData, setFormData] = useState({
     target1: 0,
     target2: 0,
     target3: 0
   });
-
-  const currentTarget = salesTargets.find(t => t.month === selectedMonth);
 
   useEffect(() => {
     if (!profile?.tenantId) return;
@@ -39,15 +54,24 @@ export default function SettingTarget() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const reqQ = query(collection(db, 'approval_requests'), where('tenantId', '==', profile.tenantId), where('type', '==', 'target_revision'));
+    const unsubReq = onSnapshot(reqQ, (snap) => {
+      const reqs = snap.docs.map(d => ({ id: d.id, ...d.data() } as ApprovalRequest));
+      setPendingRequests(reqs);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubReq();
+    };
   }, [profile]);
 
   useEffect(() => {
     if (currentTarget) {
       setFormData({
-        target1: currentTarget.target1,
-        target2: currentTarget.target2,
-        target3: currentTarget.target3
+        target1: currentTarget.target1 || 0,
+        target2: currentTarget.target2 || 0,
+        target3: currentTarget.target3 || 0
       });
     } else {
       setFormData({
@@ -60,7 +84,7 @@ export default function SettingTarget() {
 
   const handleSave = async () => {
     if (!profile?.tenantId) return;
-    if (isMonthLocked) {
+    if (isMonthLocked && !isUnlockedByAdmin) {
       alert('Maaf, Target untuk bulan berjalan atau bulan yang sudah lewat tidak dapat diubah.');
       return;
     }
@@ -71,11 +95,13 @@ export default function SettingTarget() {
         id: targetId,
         tenantId: profile.tenantId,
         month: selectedMonth,
-        target1: Number(formData.target1),
-        target2: Number(formData.target2),
-        target3: Number(formData.target3),
+        target1: Number(formData.target1) || 0,
+        target2: Number(formData.target2) || 0,
+        target3: Number(formData.target3) || 0,
         updatedAt: serverTimestamp(),
-        updatedBy: profile.uid
+        updatedBy: profile.uid,
+        isUnlocked: false,
+        revisionCount: isUnlockedByAdmin ? revisionCount + 1 : revisionCount
       });
       setIsEditing(false);
       alert(`Target untuk ${new Date(selectedMonth + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })} berhasil disimpan!`);
@@ -83,6 +109,50 @@ export default function SettingTarget() {
       console.error('Error saving target:', err);
       alert('Gagal menyimpan target.');
     }
+  };
+
+  const handleRequestUnlock = async () => {
+    if (!profile?.tenantId) return;
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Ajukan Revisi Target',
+      message: 'Ajukan pembukaan kunci target ke Super Admin? (Maksimal 2 kali per bulan)',
+      type: 'warning',
+      onConfirm: async () => {
+        setConfirmConfig(null);
+        try {
+          const tenantDoc = await getDoc(doc(db, 'tenants', profile.tenantId));
+          const tenantName = tenantDoc.exists() ? tenantDoc.data().name : 'Unknown Tenant';
+
+          await addDoc(collection(db, 'approval_requests'), {
+            tenantId: profile.tenantId,
+            tenantName,
+            type: 'target_revision',
+            targetMonth: selectedMonth,
+            requestedBy: profile.uid,
+            requestedAt: serverTimestamp()
+          });
+          setConfirmConfig({
+            isOpen: true,
+            title: 'Berhasil',
+            message: 'Permintaan berhasil diajukan! Menunggu persetujuan Super Admin.',
+            showCancel: false,
+            type: 'info',
+            onConfirm: () => setConfirmConfig(null)
+          });
+        } catch (err) {
+          console.error(err);
+          setConfirmConfig({
+            isOpen: true,
+            title: 'Gagal',
+            message: 'Gagal mengajukan permintaan.',
+            showCancel: false,
+            type: 'danger',
+            onConfirm: () => setConfirmConfig(null)
+          });
+        }
+      }
+    });
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Memuat Setting Target...</div>;
@@ -124,20 +194,15 @@ export default function SettingTarget() {
             </div>
           </div>
           
-          {isMonthLocked ? (
-            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 italic text-xs font-bold">
-              <ShieldCheck className="w-4 h-4" />
-              Target terkunci (Bulan berjalan/lalu)
-            </div>
-          ) : !isEditing ? (
+          {(!isMonthLocked || isUnlockedByAdmin) && !isEditing ? (
             <button 
               onClick={() => setIsEditing(true)}
               className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
             >
               <Edit2 className="w-4 h-4" />
-              Edit Target
+              Edit Target {isUnlockedByAdmin && '(Revisi Buka)'}
             </button>
-          ) : (
+          ) : isEditing ? (
             <div className="flex gap-3">
               <button 
                 onClick={() => setIsEditing(false)}
@@ -153,6 +218,30 @@ export default function SettingTarget() {
                 <Save className="w-4 h-4" />
                 Simpan Target
               </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 italic text-xs font-bold">
+                <ShieldCheck className="w-4 h-4" />
+                Target terkunci
+              </div>
+              
+              {isMonthLocked && revisionCount < 2 && (
+                hasPendingRequest ? (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 italic text-xs font-bold">
+                    <Clock className="w-4 h-4" />
+                    Menunggu Approval
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleRequestUnlock}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl font-bold shadow-sm hover:bg-red-100 transition-all text-xs"
+                  >
+                    <Key className="w-4 h-4" />
+                    Ajukan Revisi (Sisa {2 - revisionCount}x)
+                  </button>
+                )
+              )}
             </div>
           )}
         </div>
@@ -197,6 +286,18 @@ export default function SettingTarget() {
           Note: Target yang Anda masukkan akan menjadi acuan grafik pencapaian di menu "Pencapaian".
         </div>
       </div>
+
+      {confirmConfig && (
+        <ConfirmModal
+          isOpen={confirmConfig.isOpen}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          onConfirm={confirmConfig.onConfirm}
+          onCancel={() => setConfirmConfig(null)}
+          showCancel={confirmConfig.showCancel}
+          type={confirmConfig.type}
+        />
+      )}
     </div>
   );
 }

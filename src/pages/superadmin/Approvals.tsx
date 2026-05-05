@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, doc, updateDoc, onSnapshot, where, deleteDoc, writeBatch, getDoc, runTransaction } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, updateDoc, onSnapshot, where, deleteDoc, writeBatch, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { ApprovalRequest } from '../../types';
 import { CheckCircle2, XCircle, Clock, Trash2, AlertTriangle } from 'lucide-react';
@@ -107,6 +107,13 @@ export default function SuperAdminApprovals() {
               }
             }
           }
+        } else if (request.type === 'target_revision' && request.targetMonth) {
+          const targetId = `${request.tenantId}_${request.targetMonth}`;
+          await setDoc(doc(db, 'sales_targets', targetId), { 
+            isUnlocked: true,
+            tenantId: request.tenantId,
+            month: request.targetMonth
+          }, { merge: true });
         }
 
         await deleteDoc(requestRef);
@@ -212,11 +219,12 @@ export default function SuperAdminApprovals() {
                       <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
                         {request.type === 'order_status' ? 'Status Order' : 
                          request.type === 'daily_settlement_open' ? 'Buka Tutup Buku' : 
-                         request.type === 'charity_revision' ? 'Revisi Amal' : request.type}
+                         request.type === 'charity_revision' ? 'Revisi Amal' : 
+                         request.type === 'target_revision' ? 'Revisi Target' : request.type}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-gray-900">{request.orderNumber || request.closingId || '-'}</p>
+                      <p className="text-sm font-medium text-gray-900">{request.orderNumber || request.closingId || request.targetMonth || '-'}</p>
                       {request.targetStatus && (
                         <p className="text-xs text-indigo-600 font-bold">Target: {request.targetStatus}</p>
                       )}
