@@ -47,6 +47,7 @@ import FinancialReport from './pages/FinancialReport';
 import InvoiceCollection from './pages/finance/InvoiceCollection';
 import ExpenseSettings from './pages/ExpenseSettings';
 import BankAccounts from './pages/finance/BankAccounts';
+import BankTransfers from './pages/finance/BankTransfers';
 import Charity from './pages/Charity';
 import DailySettlement from './pages/DailySettlement';
 import CatalogEditor from './pages/CatalogEditor';
@@ -353,6 +354,12 @@ export default function App() {
           <Route path="/finance/bank-accounts" element={
             <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="finance_bank_accounts" menuLabel="Finance">
               <BankAccounts />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/finance/bank-transfers" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="finance_bank_accounts" menuLabel="Finance">
+              <BankTransfers />
             </ProtectedRoute>
           } />
 

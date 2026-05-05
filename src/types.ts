@@ -173,6 +173,7 @@ export interface Customer {
   categoryId?: string;
   allowTempo: boolean;
   tempoLimitDays?: number;
+  discount?: number;
   createdAt: any;
 }
 
@@ -451,6 +452,22 @@ export interface SalesTarget {
   updatedBy: string;
   isUnlocked?: boolean;
   revisionCount?: number;
+}
+
+export interface BankTransfer {
+  id: string;
+  tenantId: string;
+  transferNumber: string; 
+  date: any;
+  fromAccountId: string;
+  fromAccountName: string;
+  toAccountId: string;
+  toAccountName: string;
+  amount: number;
+  referenceNumber?: string;
+  description?: string;
+  createdBy: string;
+  createdAt: any;
 }
 
 export interface PaymentReceipt {

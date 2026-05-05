@@ -138,6 +138,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Receive Payment', path: '/finance/receive-payment', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
         { label: 'Invoice Collection', path: '/finance/collections', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
         { label: 'Akun Bank', path: '/finance/bank-accounts', permission: 'finance_bank_accounts' },
+        { label: 'Transfer Kas/Bank', path: '/finance/bank-transfers', permission: 'finance_bank_accounts' },
         { label: 'Claim Expense', path: '/finance/claim', permission: 'finance_claim' },
         { label: 'Amal', path: '/finance/charity', roles: ['admin', 'superadmin'], permission: 'finance_charity' },
         { label: 'Report Keuangan', path: '/finance/report', roles: ['admin', 'superadmin'], permission: 'finance_report' },

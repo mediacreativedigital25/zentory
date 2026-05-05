@@ -43,6 +43,7 @@ export default function Customers() {
     categoryId: '',
     allowTempo: false,
     tempoLimitDays: 30,
+    discount: 0,
   });
 
   const [search, setSearch] = useState('');
@@ -173,7 +174,7 @@ export default function Customers() {
           }
           setIsModalOpen(false);
           setEditingCustomer(null);
-          setFormData({ name: '', code: '', email: '', phone: '', address: '', type: 'umum', categoryId: '', allowTempo: false, tempoLimitDays: 30 });
+          setFormData({ name: '', code: '', email: '', phone: '', address: '', type: 'umum', categoryId: '', allowTempo: false, tempoLimitDays: 30, discount: 0 });
         } catch (err) {
           console.error(err);
         }
@@ -250,6 +251,7 @@ export default function Customers() {
           categoryId: '',
           allowTempo: false,
           tempoLimitDays: 30,
+          discount: 0,
           createdAt: serverTimestamp(),
         };
 
@@ -336,7 +338,8 @@ export default function Customers() {
                 type: 'umum', 
                 categoryId: '',
                 allowTempo: false, 
-                tempoLimitDays: 30 
+                tempoLimitDays: 30,
+                discount: 0
               }); 
               setIsModalOpen(true); 
             }}
@@ -457,7 +460,8 @@ export default function Customers() {
                             type: customer.type || 'umum',
                             categoryId: customer.categoryId || '',
                             allowTempo: customer.allowTempo || false,
-                            tempoLimitDays: customer.tempoLimitDays || 30
+                            tempoLimitDays: customer.tempoLimitDays || 30,
+                            discount: customer.discount || 0
                           }); 
                           setIsModalOpen(true); 
                         }} 
@@ -717,6 +721,24 @@ export default function Customers() {
                           </span>
                         </label>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-gray-100 mt-6">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Diskon Otomatis (Opsional)</label>
+                      <div className="relative group">
+                        <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={formData.discount || ''}
+                          onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                          className="w-full pl-11 pr-12 py-3 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-black text-gray-900"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-[45%] text-gray-500 font-bold">%</span>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-bold px-1 mt-1">Diskon akan diterapkan otomatis pada setiap transaksi customer ini tanpa kode kupon.</p>
                     </div>
                   </div>
 

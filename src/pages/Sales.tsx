@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { collection, query, where, addDoc, serverTimestamp, increment, doc, updateDoc, onSnapshot, Timestamp, getDoc, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
@@ -16,6 +16,11 @@ export default function Sales() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [cart, setCart] = useState<{ product: Product; quantity: number }[]>([]);
+  const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponSuccess, setCouponSuccess] = useState('');
+  const [isLoadingCoupon, setIsLoadingCoupon] = useState(false);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -199,7 +204,81 @@ export default function Sales() {
     return applicableTier ? applicableTier.price : basePrice;
   };
 
-  const total = cart.reduce((acc, item) => acc + (getProductPrice(item.product, (item as any).variantId) * item.quantity), 0);
+  
+  const subtotal = cart.reduce((acc, item) => acc + (getProductPrice(item.product, (item as any).variantId) * item.quantity), 0);
+  const discountAmount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.type === 'percentage') {
+      return (subtotal * appliedCoupon.value) / 100;
+    }
+    return appliedCoupon.value;
+  }, [appliedCoupon, subtotal]);
+  const total = Math.max(0, subtotal - discountAmount);
+
+  
+  const handleApplyCoupon = async () => {
+    const ptId = profile?.tenantId || '';
+    if (!couponCodeInput.trim() || !ptId) return;
+    setIsLoadingCoupon(true);
+    setCouponError('');
+    setCouponSuccess('');
+    try {
+      const code = couponCodeInput.toUpperCase().replace(/\s/g, '');
+      const q = query(
+        collection(db, 'coupons'),
+        where('tenantId', '==', ptId),
+        where('code', '==', code),
+        where('isActive', '==', true)
+      );
+      const snap = await getDocs(q);
+      
+      if (snap.empty) {
+        setCouponError('Kupon tidak valid atau sudah tidak aktif.');
+        return;
+      }
+
+      const couponData = { id: snap.docs[0].id, ...snap.docs[0].data() } as any;
+      
+      // Validations
+      const now = new Date();
+      if (couponData.startDate && now < new Date(couponData.startDate)) {
+        setCouponError('Kupon belum dimulai.');
+        return;
+      }
+      if (couponData.endDate && now > new Date(couponData.endDate)) {
+        setCouponError('Kupon sudah kadaluarsa.');
+        return;
+      }
+      if (couponData.usageLimit > 0 && couponData.usedCount >= couponData.usageLimit) {
+        setCouponError('Kupon sudah mencapai batas penggunaan.');
+        return;
+      }
+      
+      const currentSubtotal = cart.reduce((acc: number, item: any) => acc + (getProductPrice(item.product, (item as any).variantId) * item.quantity), 0);
+
+      if (currentSubtotal < couponData.minPurchase) {
+        setCouponError(`Minimal pembelian Rp ${couponData.minPurchase.toLocaleString()}`);
+        return;
+      }
+      
+      if (couponData.category !== 'all') {
+        const itemArray = cart;
+        const hasValidCategory = itemArray.some((item: any) => (item.product?.category || item.category) === couponData.category);
+        if (!hasValidCategory) {
+          setCouponError('Kupon tidak berlaku untuk produk di keranjang Anda.');
+          return;
+        }
+      }
+
+      setAppliedCoupon(couponData);
+      setCouponSuccess('Kupon berhasil diterapkan!');
+    } catch (err) {
+      console.error('Error applying coupon:', err);
+      setCouponError('Gagal memeriksa kupon.');
+    } finally {
+      setIsLoadingCoupon(false);
+    }
+  };
 
   const handleCheckout = async () => {
     if (cart.length === 0 || isProcessing) return;
@@ -281,6 +360,10 @@ export default function Sales() {
           };
         }),
         totalAmount: total,
+              discountAmount: discountAmount || 0,
+              couponId: appliedCoupon?.id || null,
+              couponCode: appliedCoupon?.code || null,
+
         paidAmount: actualPaidAmount,
         paymentStatus: paymentStatus,
         type: 'pos', // Set to pos so it's clearly identified as POS transaction
@@ -347,6 +430,10 @@ export default function Sales() {
         date: { seconds: Date.now() / 1000 } 
       });
       setCart([]);
+          setAppliedCoupon(null);
+          setCouponCodeInput('');
+          setCouponSuccess('');
+          setCouponError('');
       setIsCheckoutModalOpen(false);
       setSelectedCustomer('');
       setPaymentType('cash');
@@ -731,6 +818,7 @@ export default function Sales() {
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-gray-500 font-bold">Total Tagihan</span>
+                  {appliedCoupon && <span className="text-sm text-green-500 font-bold ml-2">(Telah Dipotong Diskon)</span>}
                     <span className="text-2xl font-black text-indigo-600">Rp.{total.toLocaleString()}</span>
                   </div>
                   <button

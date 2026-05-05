@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, onSnapshot, limit, orderBy, runTransaction } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
@@ -48,6 +48,11 @@ export default function SalesOrderV1() {
     price: number;
     hpp: number;
   }[]>([]);
+  const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponSuccess, setCouponSuccess] = useState('');
+  const [isLoadingCoupon, setIsLoadingCoupon] = useState(false);
   
   const [productSearch, setProductSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -162,7 +167,89 @@ export default function SalesOrderV1() {
     }
   }, [selectedCustomerId, isTempoAllowed, tempoDays]);
 
-  const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  const customerDiscountAmount = useMemo(() => {
+    if (!selectedCustomer?.discount) return 0;
+    return (subtotal * selectedCustomer.discount) / 100;
+  }, [subtotal, selectedCustomer?.discount]);
+
+  const couponDiscountAmount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.type === 'percentage') {
+      return (subtotal * appliedCoupon.value) / 100;
+    }
+    return appliedCoupon.value;
+  }, [appliedCoupon, subtotal]);
+
+  const discountAmount = customerDiscountAmount + couponDiscountAmount;
+  const totalAmount = Math.max(0, subtotal - discountAmount);
+
+  
+  const handleApplyCoupon = async () => {
+    const ptId = profile?.tenantId || '';
+    if (!couponCodeInput.trim() || !ptId) return;
+    setIsLoadingCoupon(true);
+    setCouponError('');
+    setCouponSuccess('');
+    try {
+      const code = couponCodeInput.toUpperCase().replace(/\s/g, '');
+      const q = query(
+        collection(db, 'coupons'),
+        where('tenantId', '==', ptId),
+        where('code', '==', code),
+        where('isActive', '==', true)
+      );
+      const snap = await getDocs(q);
+      
+      if (snap.empty) {
+        setCouponError('Kupon tidak valid atau sudah tidak aktif.');
+        return;
+      }
+
+      const couponData = { id: snap.docs[0].id, ...snap.docs[0].data() } as any;
+      
+      // Validations
+      const now = new Date();
+      if (couponData.startDate && now < new Date(couponData.startDate)) {
+        setCouponError('Kupon belum dimulai.');
+        return;
+      }
+      if (couponData.endDate && now > new Date(couponData.endDate)) {
+        setCouponError('Kupon sudah kadaluarsa.');
+        return;
+      }
+      if (couponData.usageLimit > 0 && couponData.usedCount >= couponData.usageLimit) {
+        setCouponError('Kupon sudah mencapai batas penggunaan.');
+        return;
+      }
+      
+      const currentSubtotal = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+
+      if (currentSubtotal < couponData.minPurchase) {
+        setCouponError(`Minimal pembelian Rp ${couponData.minPurchase.toLocaleString()}`);
+        return;
+      }
+      
+      if (couponData.category !== 'all') {
+        const itemArray = cartItems;
+        const hasValidCategory = itemArray.some((item: any) => (item.product?.category || item.category) === couponData.category);
+        if (!hasValidCategory) {
+          setCouponError('Kupon tidak berlaku untuk produk di keranjang Anda.');
+          return;
+        }
+      }
+
+      setAppliedCoupon(couponData);
+      setCouponSuccess('Kupon berhasil diterapkan!');
+    } catch (err) {
+      console.error('Error applying coupon:', err);
+      setCouponError('Gagal memeriksa kupon.');
+    } finally {
+      setIsLoadingCoupon(false);
+    }
+  };
 
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,6 +357,14 @@ export default function SalesOrderV1() {
           transaction.update(pUpdate.ref, { stock: pUpdate.newStock });
         }
 
+        if (appliedCoupon) {
+          const couponRef = doc(db, 'coupons', appliedCoupon.id);
+          const cDoc = await transaction.get(couponRef);
+          if (cDoc.exists()) {
+            transaction.update(couponRef, { usedCount: (cDoc.data().usedCount || 0) + 1 });
+          }
+        }
+
         transaction.set(orderRef, {
           tenantId: targetTenantId,
           orderNumber: generatedOrderNumber,
@@ -285,6 +380,11 @@ export default function SalesOrderV1() {
             hpp: item.hpp
           })),
           totalAmount,
+          discountAmount: discountAmount || 0,
+          customerDiscountAmount: customerDiscountAmount || 0,
+          couponDiscountAmount: couponDiscountAmount || 0,
+          couponId: appliedCoupon?.id || null,
+          couponCode: appliedCoupon?.code || null,
           paidAmount: actualPaidAmount,
           paymentStatus: finalPaymentStatus,
           paymentType: finalPaymentType,
@@ -592,8 +692,45 @@ export default function SalesOrderV1() {
                 </div>
               </div>
 
+              <div className="space-y-4 pt-4 border-b border-gray-50 pb-4">
+                {customerDiscountAmount > 0 && (
+                  <div className="bg-emerald-50/50 p-4 border border-emerald-100 rounded-xl flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-black text-emerald-700">Diskon Pelanggan ({selectedCustomer?.discount}%)</h4>
+                      <p className="text-[10px] font-bold text-emerald-600/70">Otomatis diterapkan berdasarkan profil</p>
+                    </div>
+                    <span className="text-sm font-black text-emerald-600">- Rp {customerDiscountAmount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="bg-gray-50/50 p-4 border border-gray-100 rounded-xl space-y-3">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kupon Diskon (Opsional)</label>
+                  <div className="flex gap-2">
+                     <input
+                        type="text"
+                        placeholder="Masukkan kode kupon"
+                        value={couponCodeInput}
+                        onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
+                        disabled={!!appliedCoupon || isLoadingCoupon}
+                        className="flex-1 px-4 py-2 border border-gray-200 bg-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                     />
+                     {!appliedCoupon ? (
+                       <button onClick={(e) => { e.preventDefault(); handleApplyCoupon(); }} disabled={isLoadingCoupon || !couponCodeInput} className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold w-24">Pasang</button>
+                     ) : (
+                       <button onClick={(e) => { e.preventDefault(); setAppliedCoupon(null); setCouponSuccess(''); setCouponError(''); setCouponCodeInput(''); }} className="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-sm font-bold w-24">Hapus</button>
+                     )}
+                  </div>
+                  {couponError && <p className="text-xs text-red-500 font-bold">{couponError}</p>}
+                  {couponSuccess && <p className="text-xs text-green-500 font-bold">{couponSuccess}</p>}
+                  {appliedCoupon && (
+                    <div className="text-sm font-bold text-green-600">Diskon Kupon: - Rp {couponDiscountAmount.toLocaleString()}</div>
+                  )}
+                </div>
+              </div>
+
               <div className="pt-6">
-                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 text-right">Total Tagihan</p>
+                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 text-right">Subtotal</p>
+                 <p className="text-lg font-black text-gray-500 text-right">Rp.{subtotal.toLocaleString()}</p>
+                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 text-right mt-2">Total Tagihan {(appliedCoupon || customerDiscountAmount > 0) && <span className="text-green-500">(Telah Dipotong Diskon)</span>}</p>
                  <p className="text-3xl font-black text-indigo-600 text-right">Rp.{totalAmount.toLocaleString()}</p>
               </div>
             </div>
