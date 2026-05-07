@@ -206,7 +206,7 @@ export default function ExpenseSettings() {
               
               <form onSubmit={handleSubmit} className="p-8 space-y-6">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Kategori (Claim Expense)</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Kategori (Claim Expense)</label>
                   <div className="relative">
                     <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -215,13 +215,13 @@ export default function ExpenseSettings() {
                       placeholder="Contoh: Internet dan Telephon"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Aktivitas Otomatis</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Aktivitas Otomatis</label>
                   <div className="relative">
                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -230,7 +230,7 @@ export default function ExpenseSettings() {
                       placeholder="Contoh: Operasional"
                       value={formData.defaultActivity}
                       onChange={(e) => setFormData({ ...formData, defaultActivity: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
                     />
                   </div>
                 </div>
@@ -239,7 +239,7 @@ export default function ExpenseSettings() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-4 border border-gray-100 rounded-2xl text-gray-500 font-bold hover:bg-gray-50 transition-all"
+                    className="flex-1 py-4 border border-gray-100 rounded-lg text-gray-500 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>

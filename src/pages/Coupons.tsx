@@ -224,7 +224,7 @@ export default function Coupons() {
               placeholder="Cari kode kupon..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
             />
           </div>
         </div>
@@ -363,73 +363,73 @@ export default function Coupons() {
               <form onSubmit={handleSubmit} className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Kode Kupon</label>
+                    <label className="text-xs font-semibold text-gray-600">Kode Kupon</label>
                     <input
                       required
                       type="text"
                       placeholder="MISAL: DISKON10"
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-black uppercase outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium uppercase outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Tipe Diskon</label>
+                    <label className="text-xs font-semibold text-gray-600">Tipe Diskon</label>
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                      className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="percentage">Persentase (%)</option>
                       <option value="fixed">Potongan Tetap (Rp)</option>
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Nilai Diskon</label>
+                    <label className="text-xs font-semibold text-gray-600">Nilai Diskon</label>
                     <input
                       required
                       type="number"
                       value={formData.value}
                       onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
-                      className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Min. Pembelian (Rp)</label>
+                    <label className="text-xs font-semibold text-gray-600">Min. Pembelian (Rp)</label>
                     <input
                       required
                       type="number"
                       value={formData.minPurchase}
                       onChange={(e) => setFormData({ ...formData, minPurchase: Number(e.target.value) })}
-                      className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Tanggal Mulai</label>
+                    <label className="text-xs font-semibold text-gray-600">Tanggal Mulai</label>
                     <input
                       required
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                      className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Tanggal Berakhir</label>
+                    <label className="text-xs font-semibold text-gray-600">Tanggal Berakhir</label>
                     <input
                       required
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                      className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Kategori Produk</label>
+                    <label className="text-xs font-semibold text-gray-600">Kategori Produk</label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="all">Semua Kategori</option>
                       {categories.map(cat => (
@@ -438,12 +438,12 @@ export default function Coupons() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Limit Penggunaan (0 = ∞)</label>
+                    <label className="text-xs font-semibold text-gray-600">Limit Penggunaan (0 = ∞)</label>
                     <input
                       type="number"
                       value={formData.usageLimit}
                       onChange={(e) => setFormData({ ...formData, usageLimit: Number(e.target.value) })}
-                      className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                 </div>
@@ -456,7 +456,7 @@ export default function Coupons() {
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                     className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <label htmlFor="isActive" className="text-sm font-bold text-gray-700 cursor-pointer">Aktifkan Kupon Sekarang</label>
+                  <label htmlFor="isActive" className="cursor-pointer text-xs font-semibold text-gray-600">Aktifkan Kupon Sekarang</label>
                 </div>
 
                 <div className="flex gap-4 pt-4">

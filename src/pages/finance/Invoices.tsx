@@ -303,7 +303,7 @@ export default function Invoices() {
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -336,7 +336,7 @@ export default function Invoices() {
                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
                   <input 
                     type="checkbox" 
-                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-lg"
                     checked={selectedOrderIds.length === paginatedOrders.length && paginatedOrders.length > 0}
                     onChange={toggleSelectAll}
                   />
@@ -361,7 +361,7 @@ export default function Invoices() {
                     <td className="px-6 py-4 text-center">
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-lg"
                         checked={isSelected}
                         onChange={() => toggleSelectOrder(order.id)}
                       />
@@ -431,7 +431,7 @@ export default function Invoices() {
 
       {/* Pagination */}
       {filteredOrders.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-lg border border-gray-100 gap-4">
           <p className="text-xs text-gray-500">
             Menampilkan <span className="font-bold text-gray-900">{Math.min(filteredOrders.length, (currentPage - 1) * rowsPerPage + 1)}</span> sampai <span className="font-bold text-gray-900">{Math.min(filteredOrders.length, currentPage * rowsPerPage)}</span> dari <span className="font-bold text-gray-900">{filteredOrders.length}</span> invoice
           </p>
@@ -439,7 +439,7 @@ export default function Invoices() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -461,7 +461,7 @@ export default function Invoices() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -488,21 +488,21 @@ export default function Invoices() {
               
               <div className="p-8 space-y-6">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-100">
                     <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">Total Pesanan</span>
                     <span className="text-lg font-black text-gray-900">{selectedOrderIds.length} Item</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-100">
                     <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">Total Nominal</span>
                     <span className="text-lg font-black text-gray-900">Rp.{totalSelectedNominal.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between items-center p-6 bg-red-50 rounded-2xl border border-red-100">
+                  <div className="flex justify-between items-center p-6 bg-red-50 rounded-lg border border-red-100">
                     <span className="text-sm font-black text-red-700 uppercase tracking-widest">Total Sisa Tagihan</span>
                     <span className="text-2xl font-black text-red-600">Rp.{totalSelectedSisa.toLocaleString()}</span>
                   </div>
                 </div>
 
-                <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-start gap-3">
+                <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-indigo-700 font-medium leading-relaxed">
                     Anda akan mencetak ringkasan tagihan untuk {selectedOrderIds.length} pesanan yang dipilih. Pastikan data sudah benar sebelum mencetak.
@@ -513,7 +513,7 @@ export default function Invoices() {
               <div className="p-8 bg-gray-50 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <button
                   onClick={() => setIsTagihkanModalOpen(false)}
-                  className="col-span-2 sm:col-span-1 px-6 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-100 transition-all text-xs"
+                  className="col-span-2 sm:col-span-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all text-xs"
                 >
                   BATAL
                 </button>
@@ -599,7 +599,7 @@ export default function Invoices() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-3">
+                <div className="bg-white p-6 rounded-lg border border-gray-100 space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500 font-bold">Total Tagihan</span>
                     <span className="font-black text-gray-900">Rp.{selectedOrder.totalAmount.toLocaleString()}</span>
@@ -616,7 +616,7 @@ export default function Invoices() {
 
                 <div className="space-y-4">
                   <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Item Pesanan</h4>
-                  <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                  <div className="border border-gray-100 rounded-lg overflow-hidden">
                     <table className="w-full text-left border-collapse">
                       <thead className="bg-gray-50">
                         <tr>
@@ -644,7 +644,7 @@ export default function Invoices() {
               <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-6 py-3 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-100 transition-all"
+                  className="px-6 py-3 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
                 >
                   TUTUP
                 </button>

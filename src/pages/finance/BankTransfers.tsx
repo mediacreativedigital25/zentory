@@ -195,7 +195,7 @@ export default function BankTransfers() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
           <div className="relative flex-1 max-w-md">
             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -204,7 +204,7 @@ export default function BankTransfers() {
               placeholder="Cari referensi, akun, atau deskripsi..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
         </div>
@@ -323,24 +323,24 @@ export default function BankTransfers() {
 
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Tanggal</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Tanggal</label>
                   <input
                     type="date"
                     required
                     value={formData.date}
                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Dari Rekening/Kas</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Dari Rekening/Kas</label>
                     <select
                       required
                       value={formData.fromAccountId}
                       onChange={(e) => setFormData(prev => ({ ...prev, fromAccountId: e.target.value }))}
-                      className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="">Pilih Asal...</option>
                       {bankAccounts.map(b => (
@@ -349,12 +349,12 @@ export default function BankTransfers() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Ke Rekening/Kas</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Ke Rekening/Kas</label>
                     <select
                       required
                       value={formData.toAccountId}
                       onChange={(e) => setFormData(prev => ({ ...prev, toAccountId: e.target.value }))}
-                      className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="">Pilih Tujuan...</option>
                       {bankAccounts.map(b => (
@@ -365,7 +365,7 @@ export default function BankTransfers() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Jumlah Transfer</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Jumlah Transfer</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium tracking-widest text-xs uppercase">Rp</span>
                     <input
@@ -374,7 +374,7 @@ export default function BankTransfers() {
                       min="1"
                       value={formData.amount}
                       onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                      className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-lg font-black font-mono tracking-wider text-right"
+                      className="w-full pl-12 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-lg font-medium font-mono tracking-wider text-right"
                       placeholder="0"
                     />
                   </div>
@@ -382,27 +382,27 @@ export default function BankTransfers() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">No. Referensi <span className="font-normal text-gray-400">(Opsional)</span></label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">No. Referensi <span className="font-normal text-gray-400">(Opsional)</span></label>
                     <input
                       type="text"
                       value={formData.referenceNumber}
                       onChange={(e) => setFormData(prev => ({ ...prev, referenceNumber: e.target.value }))}
-                      className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase font-mono"
+                      className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase font-mono"
                       placeholder="TRX-123"
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
-                     <label className="block text-sm text-transparent mb-1 hidden sm:block">Space</label>
+                     <label className="block text-transparent mb-1 hidden sm:block text-xs font-semibold text-gray-600">Space</label>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Keterangan <span className="font-normal text-gray-400">(Opsional)</span></label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Keterangan <span className="font-normal text-gray-400">(Opsional)</span></label>
                   <textarea
                     rows={2}
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Contoh: Pindah dana operasional mingguan"
                   />
                 </div>
@@ -461,11 +461,11 @@ export default function BankTransfers() {
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4 border-b border-gray-100 pb-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ID Transaksi</label>
+                    <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">ID Transaksi</label>
                     <div className="font-mono text-gray-900">{viewingTransfer.transferNumber}</div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tanggal</label>
+                    <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">Tanggal</label>
                     <div className="text-gray-900">
                       {viewingTransfer.date?.seconds ? format(new Date(viewingTransfer.date.seconds * 1000), 'dd MMM yyyy', { locale: id }) : '-'}
                     </div>
@@ -474,13 +474,13 @@ export default function BankTransfers() {
 
                 <div className="grid grid-cols-2 gap-4 border-b border-gray-100 pb-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Dari Kas / Bank</label>
+                    <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">Dari Kas / Bank</label>
                     <div className="text-gray-900 font-medium px-3 py-1 bg-red-50 text-red-700 rounded-lg inline-block text-sm">
                       {viewingTransfer.fromAccountName}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Ke Kas / Bank</label>
+                    <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">Ke Kas / Bank</label>
                     <div className="text-gray-900 font-medium px-3 py-1 bg-green-50 text-green-700 rounded-lg inline-block text-sm">
                       {viewingTransfer.toAccountName}
                     </div>
@@ -488,17 +488,17 @@ export default function BankTransfers() {
                 </div>
 
                 <div className="border-b border-gray-100 pb-4">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Jumlah</label>
+                  <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">Jumlah</label>
                   <div className="text-2xl font-black text-gray-900">Rp. {viewingTransfer.amount.toLocaleString('id-ID')}</div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">No REFERENSI</label>
+                    <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">No REFERENSI</label>
                     <div className="text-gray-900">{viewingTransfer.referenceNumber || '-'}</div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">REMARK / KETERANGAN</label>
+                    <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">REMARK / KETERANGAN</label>
                     <div className="text-gray-900 max-h-24 overflow-y-auto whitespace-pre-wrap">{viewingTransfer.description || '-'}</div>
                   </div>
                 </div>

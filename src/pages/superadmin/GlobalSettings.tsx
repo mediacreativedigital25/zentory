@@ -86,7 +86,7 @@ export default function SuperAdminGlobalSettings() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Manual Payment Settings */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
@@ -113,7 +113,7 @@ export default function SuperAdminGlobalSettings() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Nama Bank</label>
+              <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Bank</label>
               <input
                 type="text"
                 value={globalSettings.paymentMethods?.manual?.bankName || ''}
@@ -125,11 +125,11 @@ export default function SuperAdminGlobalSettings() {
                   }
                 })}
                 placeholder="Contoh: Bank BCA"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Nomor Rekening</label>
+              <label className="block mb-1 text-xs font-semibold text-gray-600">Nomor Rekening</label>
               <input
                 type="text"
                 value={globalSettings.paymentMethods?.manual?.accountNumber || ''}
@@ -141,11 +141,11 @@ export default function SuperAdminGlobalSettings() {
                   }
                 })}
                 placeholder="Contoh: 1234567890"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Nama Pemilik Rekening</label>
+              <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Pemilik Rekening</label>
               <input
                 type="text"
                 value={globalSettings.paymentMethods?.manual?.accountHolder || ''}
@@ -157,11 +157,11 @@ export default function SuperAdminGlobalSettings() {
                   }
                 })}
                 placeholder="Contoh: PT Zentory Indonesia"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">URL QRIS (Opsional)</label>
+              <label className="block mb-1 text-xs font-semibold text-gray-600">URL QRIS (Opsional)</label>
               <input
                 type="text"
                 value={globalSettings.paymentMethods?.manual?.qrisUrl || ''}
@@ -173,14 +173,14 @@ export default function SuperAdminGlobalSettings() {
                   }
                 })}
                 placeholder="https://example.com/qris.jpg"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
         </div>
 
         {/* TriPay Settings */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <Zap className="w-5 h-5 mr-2 text-indigo-600" />
@@ -208,7 +208,7 @@ export default function SuperAdminGlobalSettings() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Mode</label>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">Mode</label>
                 <select
                   value={globalSettings.paymentMethods?.tripay?.mode || 'sandbox'}
                   onChange={(e) => setGlobalSettings({
@@ -218,14 +218,14 @@ export default function SuperAdminGlobalSettings() {
                       tripay: { ...globalSettings.paymentMethods?.tripay, mode: e.target.value }
                     }
                   })}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="sandbox">Sandbox (Testing)</option>
                   <option value="production">Production (Live)</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Merchant Code</label>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">Merchant Code</label>
                 <input
                   type="text"
                   value={globalSettings.paymentMethods?.tripay?.merchantCode || ''}
@@ -237,12 +237,12 @@ export default function SuperAdminGlobalSettings() {
                     }
                   })}
                   placeholder="T12345"
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">API Key</label>
+              <label className="block mb-1 text-xs font-semibold text-gray-600">API Key</label>
               <div className="relative">
                 <input
                   type="password"
@@ -254,13 +254,13 @@ export default function SuperAdminGlobalSettings() {
                       tripay: { ...globalSettings.paymentMethods?.tripay, apiKey: e.target.value }
                     }
                   })}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
                 />
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Private Key</label>
+              <label className="block mb-1 text-xs font-semibold text-gray-600">Private Key</label>
               <div className="relative">
                 <input
                   type="password"
@@ -272,7 +272,7 @@ export default function SuperAdminGlobalSettings() {
                       tripay: { ...globalSettings.paymentMethods?.tripay, privateKey: e.target.value }
                     }
                   })}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
                 />
                 <Unlock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
               </div>

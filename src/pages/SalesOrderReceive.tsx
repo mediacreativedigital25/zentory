@@ -119,7 +119,33 @@ export default function SalesOrderReceive() {
         );
 
     const unsubscribe = onSnapshot(q, (snap) => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+      const data = snap.docs.map(d => {
+        const orderData = d.data();
+        let { paymentType, paidAmount, paymentStatus, status, totalAmount } = orderData;
+        
+        paidAmount = paidAmount || 0;
+        paymentStatus = paymentStatus || 'unpaid';
+        status = status || 'pending';
+        
+        // Fix legacy cash orders
+        if (paymentType === 'cash' && paidAmount === 0 && paymentStatus !== 'paid') {
+           paidAmount = totalAmount || 0;
+           paymentStatus = 'paid';
+        }
+        
+        // Auto convert to completed if fully paid
+        if (paymentStatus === 'paid' && status !== 'completed') {
+           status = 'completed';
+        }
+        
+        return { 
+          id: d.id, 
+          ...orderData,
+          paidAmount,
+          paymentStatus,
+          status
+        } as Order;
+      });
       data.sort((a, b) => {
         const dateA = a.date?.seconds || (a as any).createdAt?.seconds || 0;
         const dateB = b.date?.seconds || (b as any).createdAt?.seconds || 0;
@@ -500,7 +526,7 @@ export default function SalesOrderReceive() {
         <p className="text-gray-500">View and manage all incoming orders from various channels.</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
         <div className="flex-1 flex items-center gap-4 overflow-x-auto pb-2 sm:pb-0">
           <div className="flex gap-2">
             {(['all', 'pending', 'manual', 'pos', 'catalog', 'service'] as const).map((t) => (
@@ -539,7 +565,7 @@ export default function SalesOrderReceive() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -637,7 +663,7 @@ export default function SalesOrderReceive() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -674,7 +700,7 @@ export default function SalesOrderReceive() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -761,7 +787,7 @@ export default function SalesOrderReceive() {
                     </div>
                   )}
                   {selectedOrder.remark && (
-                    <div className="col-span-2 space-y-1 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div className="col-span-2 space-y-1 bg-white p-3 rounded-lg border border-gray-100">
                       <p className="text-xs font-bold text-gray-400 uppercase">Remark</p>
                       <p className="text-sm font-medium text-gray-700">{selectedOrder.remark}</p>
                     </div>
@@ -774,7 +800,7 @@ export default function SalesOrderReceive() {
                     <Package className="w-5 h-5 mr-2 text-indigo-600" />
                     Order Items
                   </h4>
-                  <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+                  <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-gray-100 text-gray-500 uppercase text-[10px] tracking-wider">
                         <tr>
@@ -830,7 +856,7 @@ export default function SalesOrderReceive() {
                   </h4>
                   
                   {selectedOrder.status !== 'cancelled' && (selectedOrder as any).paymentStatus !== 'paid' && (
-                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-3">
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg space-y-3">
                       <div className="flex justify-between items-center">
                         <h5 className="text-sm font-bold text-indigo-900">Sisa Tagihan</h5>
                         <p className="text-lg font-black text-indigo-600">
@@ -851,7 +877,7 @@ export default function SalesOrderReceive() {
                   )}
 
                   {selectedOrder.status === 'cancelled' ? (
-                    <div className="p-4 bg-red-50 border border-red-100 rounded-xl space-y-3">
+                    <div className="p-4 bg-red-50 border border-red-100 rounded-lg space-y-3">
                       <p className="text-xs text-red-700 font-medium">
                         Pesanan ini telah dibatalkan dan tidak dapat diubah secara langsung. 
                         Silakan hubungi Super Admin atau kirim permintaan aktivasi kembali.
@@ -869,7 +895,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'pending'}
                         onClick={() => updateStatus(selectedOrder.id, 'pending')}
-                        className="flex flex-col items-center justify-center p-3 rounded-xl border border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-all disabled:opacity-50"
                       >
                         <Clock className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">PENDING</span>
@@ -877,7 +903,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'processing'}
                         onClick={() => updateStatus(selectedOrder.id, 'processing')}
-                        className="flex flex-col items-center justify-center p-3 rounded-xl border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all disabled:opacity-50"
                       >
                         <Package className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">PROCESS</span>
@@ -885,7 +911,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'completed'}
                         onClick={() => updateStatus(selectedOrder.id, 'completed')}
-                        className="flex flex-col items-center justify-center p-3 rounded-xl border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 transition-all disabled:opacity-50"
                       >
                         <CheckCircle className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">RECEIVED</span>
@@ -893,7 +919,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'cancelled'}
                         onClick={() => updateStatus(selectedOrder.id, 'cancelled')}
-                        className="flex flex-col items-center justify-center p-3 rounded-xl border border-red-100 bg-red-50 text-red-700 hover:bg-red-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-red-100 bg-red-50 text-red-700 hover:bg-red-100 transition-all disabled:opacity-50"
                       >
                         <X className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">CANCEL</span>
@@ -924,7 +950,7 @@ export default function SalesOrderReceive() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
-                          className="absolute bottom-full right-0 mb-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[60]"
+                          className="absolute bottom-full right-0 mb-2 w-56 bg-white rounded-lg shadow-2xl border border-gray-100 overflow-hidden z-[60]"
                         >
                           <div className="p-2 bg-gray-50 border-b border-gray-100">
                             <p className="text-[10px] font-bold text-gray-400 uppercase px-3 py-1">Opsi Cetak</p>
@@ -1141,11 +1167,11 @@ export default function SalesOrderReceive() {
                   Apakah anda yakin untuk mengubah transaksi cancel ini?
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Mau di ubah menjadi apa transaksi ini?</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Mau di ubah menjadi apa transaksi ini?</label>
                   <select
                     value={requestTargetStatus}
                     onChange={(e) => setRequestTargetStatus(e.target.value as any)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="pending">PENDING</option>
                     <option value="processing">PROCESS</option>
@@ -1153,18 +1179,18 @@ export default function SalesOrderReceive() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Alasan Perubahan</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Alasan Perubahan</label>
                   <textarea
                     value={requestReason}
                     onChange={(e) => setRequestReason(e.target.value)}
                     placeholder="Contoh: Salah input status, pelanggan ingin lanjut..."
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
                   />
                 </div>
                 <div className="flex space-x-3 pt-4">
                   <button
                     onClick={() => setIsRequestModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-600 font-bold hover:bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
@@ -1210,23 +1236,23 @@ export default function SalesOrderReceive() {
               </div>
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Jumlah Pembayaran</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Jumlah Pembayaran</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</span>
                     <input
                       type="number"
                       value={paymentAmount}
                       onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Metode Pembayaran / Bank</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Metode Pembayaran / Bank</label>
                   <select
                     value={selectedBankAccountId}
                     onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 bg-white border border-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Pilih Bank / Kas</option>
                     {bankAccounts.map(b => (
@@ -1237,7 +1263,7 @@ export default function SalesOrderReceive() {
                 <div className="pt-4 flex gap-3">
                   <button
                     onClick={() => setIsPaymentModalOpen(false)}
-                    className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50"
+                    className="flex-1 py-3 border border-gray-200 rounded-lg font-medium text-gray-600 hover:bg-white"
                   >
                     Batal
                   </button>

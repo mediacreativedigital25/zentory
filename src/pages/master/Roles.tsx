@@ -149,7 +149,7 @@ export default function Roles() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {roles.map((role) => (
-          <div key={role.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+          <div key={role.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center">
                 <div className="p-2 bg-indigo-50 rounded-lg mr-3">
@@ -209,19 +209,19 @@ export default function Roles() {
               
               <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Nama Role</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Nama Role</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Contoh: Supervisor, Kasir, Warehouse Manager"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-4">Pilih Hak Akses Fitur</label>
+                  <label className="block mb-4 text-xs font-semibold text-gray-600">Pilih Hak Akses Fitur</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {FEATURES.map((feature) => (
                       <button
@@ -250,7 +250,7 @@ export default function Roles() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition-all"
+                  className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
                 >
                   Batal
                 </button>

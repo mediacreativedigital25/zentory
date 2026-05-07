@@ -78,7 +78,7 @@ export default function SuperAdminNotifications() {
         
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
           <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">Notifikasi WhatsApp (Fonnte)</h2>
-          <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+          <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
             <input
               type="checkbox"
               id="isActive"
@@ -87,7 +87,7 @@ export default function SuperAdminNotifications() {
               className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
             />
             <div>
-              <label htmlFor="isActive" className="font-bold text-gray-900 cursor-pointer">
+              <label htmlFor="isActive" className="cursor-pointer text-xs font-semibold text-gray-600">
                 Aktifkan Notifikasi WhatsApp
               </label>
               <p className="text-xs text-indigo-700 font-medium">Jika diaktifkan, sistem akan mengirimkan notifikasi WA ke tenant</p>
@@ -95,12 +95,12 @@ export default function SuperAdminNotifications() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase">Token Fonnte</label>
+            <label className="text-xs font-semibold text-gray-600">Token Fonnte</label>
             <input
               type="password"
               value={token}
               onChange={e => setToken(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+              className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
               placeholder="Masukkan token dari Fonnte..."
             />
             <p className="text-xs text-gray-500 flex items-center mt-2">
@@ -112,7 +112,7 @@ export default function SuperAdminNotifications() {
 
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
           <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">Notifikasi Email</h2>
-          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-2xl border border-green-100">
+          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-100">
             <input
               type="checkbox"
               id="isEmailActive"
@@ -121,7 +121,7 @@ export default function SuperAdminNotifications() {
               className="w-5 h-5 text-green-600 rounded focus:ring-green-500 border-gray-300"
             />
             <div>
-              <label htmlFor="isEmailActive" className="font-bold text-gray-900 cursor-pointer">
+              <label htmlFor="isEmailActive" className="cursor-pointer text-xs font-semibold text-gray-600">
                 Aktifkan Notifikasi Email
               </label>
               <p className="text-xs text-green-700 font-medium">

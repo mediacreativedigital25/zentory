@@ -73,7 +73,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScann
             </div>
             
             <div className="p-6">
-              <div id="reader" className="w-full overflow-hidden rounded-xl border-2 border-dashed border-gray-200"></div>
+              <div id="reader" className="w-full overflow-hidden rounded-lg border-2 border-dashed border-gray-200"></div>
               <p className="mt-4 text-center text-sm text-gray-500">
                 Posisikan barcode di dalam kotak untuk memindai secara otomatis.
               </p>
@@ -82,7 +82,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScann
             <div className="p-4 bg-gray-50 flex justify-center">
               <button
                 onClick={onClose}
-                className="px-6 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 font-bold hover:bg-gray-100 transition-all"
+                className="px-6 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
               >
                 Batal
               </button>

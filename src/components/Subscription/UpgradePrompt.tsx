@@ -32,7 +32,7 @@ export default function UpgradePrompt({ featureName, requiredPlan = 'lite', onCl
 
       <div className="p-8 space-y-6">
         <div className="space-y-4">
-          <div className="flex items-start gap-4 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+          <div className="flex items-start gap-4 p-4 bg-amber-50 rounded-lg border border-amber-100">
             <Sparkles className="w-5 h-5 text-amber-600 shrink-0 mt-1" />
             <div>
               <p className="text-sm font-black text-amber-900 mb-1">Kenapa Harus Upgrade?</p>
@@ -42,7 +42,7 @@ export default function UpgradePrompt({ featureName, requiredPlan = 'lite', onCl
             </div>
           </div>
 
-          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+          <div className="p-6 bg-white rounded-lg border border-gray-100 flex items-center justify-between">
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mulai Dari</p>
               <p className="text-2xl font-black text-gray-900">{planInfo.price}<span className="text-sm text-gray-500 font-bold">/bulan</span></p>

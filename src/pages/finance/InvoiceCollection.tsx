@@ -320,7 +320,7 @@ export default function InvoiceCollection() {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -493,7 +493,7 @@ export default function InvoiceCollection() {
                     <TrendingUp className="w-4 h-4 text-indigo-500" />
                     Daftar Order Tercakup
                   </h4>
-                  <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="border border-gray-100 rounded-lg overflow-hidden shadow-sm">
                     <ul className="divide-y divide-gray-50 text-sm">
                       {selectedCollectionOrders.length > 0 ? (
                         selectedCollectionOrders.map((order, idx) => (
@@ -533,7 +533,7 @@ export default function InvoiceCollection() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={generatePDF}
-                    className="px-6 py-3 bg-white text-indigo-600 rounded-2xl font-black border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
+                    className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-medium border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
                   >
                     <Printer className="w-4 h-4" />
                     Cetak
@@ -542,7 +542,7 @@ export default function InvoiceCollection() {
                     <button
                       disabled={isUpdating}
                       onClick={handleCloseCollection}
-                      className="px-6 py-3 bg-red-100 text-red-600 rounded-2xl font-black border border-red-200 hover:bg-red-200 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2 group"
+                      className="px-6 py-3 bg-red-100 text-red-600 rounded-lg font-medium border border-red-200 hover:bg-red-200 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2 group"
                     >
                       <XCircle className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                       Close Collection
@@ -552,7 +552,7 @@ export default function InvoiceCollection() {
                     <button
                       disabled={isUpdating}
                       onClick={handleReopenCollection}
-                      className="px-6 py-3 bg-indigo-100 text-indigo-600 rounded-2xl font-black border border-indigo-200 hover:bg-indigo-200 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
+                      className="px-6 py-3 bg-indigo-100 text-indigo-600 rounded-lg font-medium border border-indigo-200 hover:bg-indigo-200 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
                     >
                       <History className="w-4 h-4" />
                       Reopen Collection
@@ -562,7 +562,7 @@ export default function InvoiceCollection() {
                     <button
                       disabled={isUpdating}
                       onClick={handleDeleteCollection}
-                      className="px-6 py-3 bg-white text-red-600 rounded-2xl font-black border border-red-200 hover:bg-red-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
+                      className="px-6 py-3 bg-white text-red-600 rounded-lg font-medium border border-red-200 hover:bg-red-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
                     >
                       <Trash2 className="w-4 h-4" />
                       Hapus
@@ -571,7 +571,7 @@ export default function InvoiceCollection() {
                 </div>
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-8 py-3 bg-white border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-100 transition-all shadow-sm text-xs uppercase tracking-widest"
+                  className="px-8 py-3 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all shadow-sm text-xs uppercase tracking-widest"
                 >
                   Tutup
                 </button>

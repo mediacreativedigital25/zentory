@@ -180,7 +180,7 @@ export default function Stock() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col lg:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -195,7 +195,7 @@ export default function Stock() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 font-medium"
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
           >
             <option value="all">Semua Kategori</option>
             {categories.map(cat => (
@@ -240,10 +240,10 @@ export default function Stock() {
             <tbody className="divide-y divide-gray-50">
               {filteredProducts.map((product) => (
                 <React.Fragment key={product.id}>
-                  <tr className="hover:bg-gray-50/50 transition-colors group border-b border-gray-50 items-center">
+                  <tr className="hover:bg-white/50 transition-colors group border-b border-gray-50 items-center">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-white border border-gray-100 shrink-0">
                           <img
                             src={product.imageUrl || `https://picsum.photos/seed/${product.id}/100/100`}
                             alt={product.name}
@@ -360,14 +360,14 @@ export default function Stock() {
                   <div className="grid grid-cols-2 gap-4">
                     <button
                       onClick={handleExportPDF}
-                      className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-gray-100 hover:border-indigo-600 hover:bg-indigo-50 transition-all group"
+                      className="flex flex-col items-center justify-center p-6 rounded-lg border-2 border-gray-100 hover:border-indigo-600 hover:bg-indigo-50 transition-all group"
                     >
                       <FileText className="w-10 h-10 text-red-500 mb-3 group-hover:scale-110 transition-transform" />
                       <span className="font-bold text-gray-900">PDF Document</span>
                     </button>
                     <button
                       onClick={handleExportExcel}
-                      className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-gray-100 hover:border-green-600 hover:bg-green-50 transition-all group"
+                      className="flex flex-col items-center justify-center p-6 rounded-lg border-2 border-gray-100 hover:border-green-600 hover:bg-green-50 transition-all group"
                     >
                       <FileSpreadsheet className="w-10 h-10 text-green-500 mb-3 group-hover:scale-110 transition-transform" />
                       <span className="font-bold text-gray-900">Excel Sheet</span>
@@ -375,7 +375,7 @@ export default function Stock() {
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="bg-white p-4 rounded-lg border border-gray-100">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Informasi Laporan</p>
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">

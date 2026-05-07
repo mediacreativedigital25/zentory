@@ -123,7 +123,7 @@ export default function SuperAdminDashboard() {
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Superadmin Dashboard</h2>
           <p className="text-gray-500 font-medium">Monitoring sistem & aliran pendapatan global.</p>
         </div>
-        <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-2xl flex items-center border border-emerald-100 font-bold text-sm shadow-sm">
+        <div className="bg-emerald-50 text-emerald-700 p-2 rounded-lg flex items-center border border-emerald-100 font-medium text-sm shadow-sm">
           <ShieldCheck className="w-4 h-4 mr-2" />
           Sistem Online & Optimal
         </div>
@@ -239,7 +239,7 @@ export default function SuperAdminDashboard() {
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-white p-3 rounded-xl shadow-xl border border-gray-100">
+                        <div className="bg-white p-3 rounded-lg shadow-xl border border-gray-100">
                           <p className="text-xs font-black text-gray-900 uppercase tracking-widest leading-none mb-1">{payload[0].payload.name}</p>
                           <p className="text-lg font-black text-indigo-600">{payload[0].value} <span className="text-[10px] text-gray-400 font-bold">Tenants</span></p>
                         </div>

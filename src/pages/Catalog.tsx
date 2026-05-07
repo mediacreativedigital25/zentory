@@ -567,7 +567,7 @@ export default function Catalog() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari produk..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-none rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-600 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-600 transition-all"
               />
             </div>
 
@@ -966,7 +966,7 @@ export default function Catalog() {
                                   type="number"
                                   value={item.quantity}
                                   onChange={(e) => setQuantity(cartItemId, parseInt(e.target.value) || 0)}
-                                  className="w-10 text-center text-xs font-black bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  className="w-10 text-center text-xs font-medium bg-transparent border border-gray-200 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                                 <button 
                                   onClick={() => updateQuantity(cartItemId, 1)}
@@ -992,20 +992,20 @@ export default function Catalog() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Alamat Pengiriman</label>
+                          <label className="text-xs font-semibold text-gray-600">Alamat Pengiriman</label>
                           <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Wajib</span>
                         </div>
                         <textarea
                           value={shippingAddress}
                           onChange={(e) => setShippingAddress(e.target.value)}
                           placeholder="Masukkan alamat lengkap (Jalan, No. Rumah, RT/RW, Kec, Kab/Kota, Prov)..."
-                          className="w-full p-4 bg-white border-2 border-gray-100 rounded-2xl text-sm outline-none focus:border-indigo-600 transition-all min-h-[120px] resize-none shadow-sm"
+                          className="w-full p-4 bg-white border-2 border-gray-100 rounded-lg text-sm outline-none focus:border-indigo-600 transition-all min-h-[120px] resize-none shadow-sm"
                         />
                       </div>
 
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Metode Pembayaran</label>
+                          <label className="text-xs font-semibold text-gray-600">Metode Pembayaran</label>
                           <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Pilih Satu</span>
                         </div>
                         <div className="grid grid-cols-1 gap-2">
@@ -1038,7 +1038,7 @@ export default function Catalog() {
                             </button>
                           ))}
                           {bankAccounts.length === 0 && (
-                            <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-700 text-xs font-bold flex items-center">
+                            <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 text-xs font-medium flex items-center">
                               <X className="w-4 h-4 mr-2" />
                               Belum ada metode pembayaran tersedia.
                             </div>
@@ -1059,7 +1059,7 @@ export default function Catalog() {
                   </div>
                   
                   {appliedCoupon ? (
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-indigo-100 shadow-sm">
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-indigo-100 shadow-sm">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center">
                           <Tag className="w-4 h-4" />
@@ -1088,7 +1088,7 @@ export default function Catalog() {
                         placeholder="Kode kupon..."
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-600 transition-all"
+                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-600 transition-all"
                       />
                       <button
                         onClick={validateCoupon}

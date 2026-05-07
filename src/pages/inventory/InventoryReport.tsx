@@ -168,7 +168,7 @@ export default function InventoryReport() {
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Inventory Report</h2>
           <p className="text-gray-500 font-medium">Analisis pergerakan produk dan efisiensi stok.</p>
         </div>
-        <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-3 bg-white p-1.5 rounded-lg border border-gray-100 shadow-sm">
           <span className="text-xs font-black text-gray-400 uppercase tracking-widest ml-3">Periode:</span>
           {[7, 30, 60, 90].map(d => (
             <button
@@ -307,13 +307,13 @@ export default function InventoryReport() {
                 placeholder="Cari SKU atau Nama..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="px-4 py-2 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-600 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="all">Semua Status</option>
               <option value="fast">Fast Moving</option>
@@ -403,7 +403,7 @@ export default function InventoryReport() {
               <p className="text-xs text-gray-500 font-bold">
                 Menampilkan <span className="text-gray-900">{Math.min(filteredData.length, (currentPage - 1) * rowsPerPage + 1)}</span> - <span className="text-gray-900">{Math.min(filteredData.length, currentPage * rowsPerPage)}</span> dari <span className="text-gray-900">{filteredData.length}</span> produk
               </p>
-              <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
                 <span className="font-black uppercase tracking-widest">Baris:</span>
                 <select 
                   value={rowsPerPage} 
@@ -420,7 +420,7 @@ export default function InventoryReport() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -450,7 +450,7 @@ export default function InventoryReport() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="p-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

@@ -112,7 +112,10 @@ export default function ReceivePayment() {
     if (isSelected) {
       setSelectedCollections(prev => prev.filter(i => i.collectionId !== col.id));
     } else {
-      const sisa = col.totalSisa || (col.totalAmount - col.totalPaid);
+      const colTotalAmount = Number(col.totalAmount) || 0;
+      const colTotalPaid = Number(col.totalPaid) || 0;
+      const colSisa = Number(col.totalSisa) || (colTotalAmount - colTotalPaid);
+      const sisa = Math.max(0, colSisa);
       setSelectedCollections(prev => [...prev, { 
         collectionId: col.id, 
         collectionNumber: col.collectionNumber, 
@@ -180,9 +183,11 @@ export default function ReceivePayment() {
         });
 
         const colRef = doc(db, 'invoice_collections', item.collectionId);
-        const currentPaid = colDoc.totalPaid || 0;
-        const newTotalPaid = currentPaid + item.amountToPay;
-        const newSisa = colDoc.totalAmount - newTotalPaid;
+        const currentPaid = Number(colDoc.totalPaid) || 0;
+        const currentAmountToPay = Number(item.amountToPay) || 0;
+        const newTotalPaid = currentPaid + currentAmountToPay;
+        const colTotalAmount = Number(colDoc.totalAmount) || 0;
+        const newSisa = Math.max(0, colTotalAmount - newTotalPaid);
         const colStatus = newSisa <= 0 ? 'completed' : 'open';
 
         await updateDoc(colRef, {
@@ -192,7 +197,7 @@ export default function ReceivePayment() {
         });
 
         // Distribution logic for underlying orders
-        let remainingPayment = item.amountToPay;
+        let remainingPayment = currentAmountToPay;
         for (const orderId of colDoc.orderIds) {
           const orderRef = doc(db, 'orders', orderId);
           // If collection is completed, free all its orders from "isInCollection" flag
@@ -205,18 +210,25 @@ export default function ReceivePayment() {
           const orderSnap = await getDoc(orderRef);
           if (orderSnap.exists()) {
             const orderData = orderSnap.data();
-            const orderTotal = orderData.totalAmount;
-            const orderPaid = orderData.paidAmount || 0;
-            const orderSisa = orderTotal - orderPaid;
+            const orderTotal = Number(orderData.totalAmount) || Number(orderData.total) || 0;
+            const orderPaid = Number(orderData.paidAmount) || 0;
+            const orderSisa = Math.max(0, orderTotal - orderPaid);
 
             if (orderSisa > 0) {
               const payToThisOrder = Math.min(orderSisa, remainingPayment);
               const orderNewPaid = orderPaid + payToThisOrder;
               
-              await updateDoc(orderRef, {
+              const isFullyPaid = orderNewPaid >= orderTotal;
+              const updateData: any = {
                 paidAmount: increment(payToThisOrder),
-                paymentStatus: orderNewPaid >= orderTotal ? 'paid' : 'partial'
-              });
+                paymentStatus: isFullyPaid ? 'paid' : 'partial'
+              };
+              
+              if (isFullyPaid && orderData.status !== 'completed') {
+                updateData.status = 'completed';
+              }
+              
+              await updateDoc(orderRef, updateData);
 
               orderAllocations.push({
                 orderId: orderId,
@@ -257,19 +269,39 @@ export default function ReceivePayment() {
 
       await addDoc(collection(db, 'payment_receipts'), receiptData);
 
-      // 3. Create Transaction
-      await addDoc(collection(db, 'transactions'), {
-        tenantId: targetTenantId,
-        type: 'sale',
-        amount: totalPaid,
-        date: serverTimestamp(),
-        status: 'completed',
-        userId: profile.uid,
-        description: `Receive Payment dari ${customer?.name} - ${receiptNumber}`,
-        transactionNumber: `TRX-RP-${receiptNumber}`,
-        bankAccountId: paymentMethod === 'Bank Transfer' ? selectedBankAccountId : null,
-        createdAt: serverTimestamp()
-      });
+      // 3. Create Transaction Records (One per Order so it links properly on Sales Order view)
+      if (orderAllocations.length > 0) {
+        for (const alloc of orderAllocations) {
+          await addDoc(collection(db, 'transactions'), {
+            tenantId: targetTenantId,
+            type: 'sale',
+            amount: alloc.amountPaid,
+            date: serverTimestamp(),
+            status: 'completed',
+            userId: profile.uid,
+            description: `Receive Payment dari ${customer?.name} - ${receiptNumber} (Order ${alloc.orderNumber})`,
+            transactionNumber: `TRX-RP-${receiptNumber}-${alloc.orderNumber}`,
+            orderId: alloc.orderId,
+            orderNumber: alloc.orderNumber,
+            bankAccountId: paymentMethod === 'Bank Transfer' ? selectedBankAccountId : null,
+            createdAt: serverTimestamp()
+          });
+        }
+      } else {
+        // Fallback if no order allocations were mapped (should be rare)
+        await addDoc(collection(db, 'transactions'), {
+          tenantId: targetTenantId,
+          type: 'sale',
+          amount: totalPaid,
+          date: serverTimestamp(),
+          status: 'completed',
+          userId: profile.uid,
+          description: `Receive Payment dari ${customer?.name} - ${receiptNumber}`,
+          transactionNumber: `TRX-RP-${receiptNumber}`,
+          bankAccountId: paymentMethod === 'Bank Transfer' ? selectedBankAccountId : null,
+          createdAt: serverTimestamp()
+        });
+      }
 
       alert(`Berhasil menyimpan pembayaran #${receiptNumber}`);
       setIsAddModalOpen(false);
@@ -343,7 +375,7 @@ export default function ReceivePayment() {
               placeholder="Cari No. Bukti atau Pelanggan..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2.5 w-full border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+              className="pl-10 pr-4 py-2.5 w-full border border-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
             />
           </div>
         </div>
@@ -443,11 +475,11 @@ export default function ReceivePayment() {
                 {step === 1 ? (
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Pelanggan</label>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Pilih Pelanggan</label>
                       <select
                         value={selectedCustomerId}
                         onChange={(e) => { setSelectedCustomerId(e.target.value); setSelectedCollections([]); }}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                        className="w-full p-2 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                       >
                         <option value="">-- Pilih Nama Pelanggan --</option>
                         {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.type})</option>)}
@@ -456,10 +488,10 @@ export default function ReceivePayment() {
 
                     {selectedCustomerId && (
                       <div className="space-y-4">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Pilih Koleksi Tagihan Yang Akan Dibayar</label>
+                        <label className="block text-xs font-semibold text-gray-600">Pilih Koleksi Tagihan Yang Akan Dibayar</label>
                         <div className="space-y-2">
                           {unpaidCollections.length === 0 ? (
-                            <p className="p-8 text-center text-gray-400 font-bold bg-gray-50 rounded-2xl border border-dashed border-gray-200">Tidak ada koleksi tagihan untuk pelanggan ini.</p>
+                            <p className="p-8 text-center text-gray-400 font-medium bg-white rounded-lg border border-dashed border-gray-200">Tidak ada koleksi tagihan untuk pelanggan ini.</p>
                           ) : unpaidCollections.map(col => {
                             const selected = selectedCollections.find(i => i.collectionId === col.id);
                             const sisa = col.totalSisa || (col.totalAmount - col.totalPaid);
@@ -502,7 +534,7 @@ export default function ReceivePayment() {
                       </h4>
                       <div className="space-y-4">
                         {selectedCollections.map(item => (
-                          <div key={item.collectionId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-2xl border border-indigo-50">
+                          <div key={item.collectionId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-lg border border-indigo-50">
                             <div>
                               <p className="text-xs font-black text-gray-900 uppercase">#{item.collectionNumber}</p>
                               <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">Sisa: Rp.{item.remaining.toLocaleString()}</p>
@@ -513,7 +545,7 @@ export default function ReceivePayment() {
                                 type="number"
                                 value={item.amountToPay}
                                 onChange={(e) => handleAmountChange(item.collectionId, Number(e.target.value))}
-                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-black outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-indigo-600"
+                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-indigo-600"
                               />
                             </div>
                           </div>
@@ -523,7 +555,7 @@ export default function ReceivePayment() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Metode Pembayaran</label>
+                        <label className="block text-xs font-semibold text-gray-600">Metode Pembayaran</label>
                         <div className="grid grid-cols-2 gap-3">
                           <button
                             onClick={() => setPaymentMethod('Tunai')}
@@ -548,11 +580,11 @@ export default function ReceivePayment() {
 
                       {paymentMethod === 'Bank Transfer' && (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Pilih Akun Bank</label>
+                          <label className="block text-xs font-semibold text-gray-600">Pilih Akun Bank</label>
                           <select
                             value={selectedBankAccountId}
                             onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                            className="w-full p-2 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                           >
                             <option value="">-- Pilih Bank --</option>
                             {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name} - {b.accountNumber}</option>)}
@@ -562,13 +594,13 @@ export default function ReceivePayment() {
                     </div>
 
                     <div className="space-y-4">
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Catatan Tambahan (Opsional)</label>
+                      <label className="block text-xs font-semibold text-gray-600">Catatan Tambahan (Opsional)</label>
                       <textarea
                         rows={2}
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                         placeholder="Contoh: Titipan pembayaran bulan Januari..."
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
+                        className="w-full p-2 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
                       />
                     </div>
                   </div>
@@ -590,7 +622,7 @@ export default function ReceivePayment() {
                   <>
                     <button
                       onClick={() => setStep(1)}
-                      className="px-8 py-4 bg-white border border-gray-200 text-gray-600 rounded-2xl font-black hover:bg-gray-100 transition-all text-sm uppercase tracking-widest"
+                      className="px-8 py-4 bg-white border border-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-100 transition-all text-sm uppercase tracking-widest"
                     >
                       KEMBALI
                     </button>
@@ -670,7 +702,7 @@ export default function ReceivePayment() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="bg-white/60 backdrop-blur-md px-4 py-2 rounded-xl border border-emerald-100 inline-block">
+                      <div className="bg-white/60 backdrop-blur-md p-2 rounded-lg border border-emerald-100 inline-block">
                         <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">Payment Method</p>
                         <p className="text-sm font-black text-emerald-700 uppercase">{viewReceipt.paymentMethod}</p>
                         {viewReceipt.bankAccountName && (

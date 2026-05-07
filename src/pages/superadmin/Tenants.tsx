@@ -324,7 +324,7 @@ export default function SuperAdminTenants() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <h3 className="text-lg font-semibold">Tenants</h3>
@@ -486,29 +486,29 @@ export default function SuperAdminTenants() {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Nama Bisnis</label>
+                        <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Bisnis</label>
                         {isEditingTenant ? (
                           <input
                             type="text"
                             value={tenantFormData.name || ''}
                             onChange={(e) => setTenantFormData({ ...tenantFormData, name: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className="text-gray-900 font-medium">{selectedTenantForDetail.name}</p>
                         )}
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Slug / URL</label>
+                        <label className="block mb-1 text-xs font-semibold text-gray-600">Slug / URL</label>
                         <p className="text-gray-600">zentory.app/catalog/{selectedTenantForDetail.slug}</p>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Alamat</label>
+                        <label className="block mb-1 text-xs font-semibold text-gray-600">Alamat</label>
                         {isEditingTenant ? (
                           <textarea
                             value={tenantFormData.address || ''}
                             onChange={(e) => setTenantFormData({ ...tenantFormData, address: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-20"
+                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-20"
                           />
                         ) : (
                           <p className="text-gray-600 flex items-start">
@@ -518,7 +518,7 @@ export default function SuperAdminTenants() {
                         )}
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Masa Aktif</label>
+                        <label className="block mb-1 text-xs font-semibold text-gray-600">Masa Aktif</label>
                         {isEditingTenant ? (
                           <input
                             type="date"
@@ -530,7 +530,7 @@ export default function SuperAdminTenants() {
                               ...tenantFormData, 
                               subscriptionEndDate: e.target.value ? new Date(e.target.value) : null 
                             })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className={`font-black text-sm ${
@@ -546,28 +546,28 @@ export default function SuperAdminTenants() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Siklus</label>
+                          <label className="block mb-1 text-xs font-semibold text-gray-600">Siklus</label>
                           {isEditingTenant ? (
                             <input
                               type="text"
                               value={tenantFormData.billingCycle || ''}
                               placeholder="e.g. 30 Hari"
                               onChange={(e) => setTenantFormData({ ...tenantFormData, billingCycle: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                           ) : (
                             <p className="text-gray-900 font-medium">{selectedTenantForDetail.billingCycle || '-'}</p>
                           )}
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Metode Bayar</label>
+                          <label className="block mb-1 text-xs font-semibold text-gray-600">Metode Bayar</label>
                           {isEditingTenant ? (
                             <input
                               type="text"
                               value={tenantFormData.lastPaymentMethod || ''}
                               placeholder="e.g. QRIS"
                               onChange={(e) => setTenantFormData({ ...tenantFormData, lastPaymentMethod: e.target.value })}
-                              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                           ) : (
                             <p className="text-gray-900 font-medium">{selectedTenantForDetail.lastPaymentMethod || '-'}</p>
@@ -585,13 +585,13 @@ export default function SuperAdminTenants() {
                     </h4>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">WhatsApp</label>
+                        <label className="block mb-1 text-xs font-semibold text-gray-600">WhatsApp</label>
                         {isEditingTenant ? (
                           <input
                             type="text"
                             value={tenantFormData.whatsapp || ''}
                             onChange={(e) => setTenantFormData({ ...tenantFormData, whatsapp: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className="text-gray-600 flex items-center">
@@ -601,13 +601,13 @@ export default function SuperAdminTenants() {
                         )}
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Email</label>
+                        <label className="block mb-1 text-xs font-semibold text-gray-600">Email</label>
                         {isEditingTenant ? (
                           <input
                             type="email"
                             value={tenantFormData.email || ''}
                             onChange={(e) => setTenantFormData({ ...tenantFormData, email: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className="text-gray-600 flex items-center">
@@ -673,7 +673,7 @@ export default function SuperAdminTenants() {
                       const hasSubMenus = menu.children && menu.children.length > 0;
                       
                       return (
-                        <div key={menu.label} className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden transition-all">
+                        <div key={menu.label} className="bg-white border-2 border-gray-100 rounded-lg overflow-hidden transition-all">
                           <div className={`p-4 flex items-center justify-between ${isEnabled ? 'bg-indigo-50/50' : 'bg-gray-50/50'}`}>
                             <div className="flex items-center gap-3">
                               <div className={`p-2 rounded-xl ${isEnabled ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
@@ -814,7 +814,7 @@ export default function SuperAdminTenants() {
 
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Business Name</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Business Name</label>
                   <input
                     type="text"
                     value={newTenantData.name}
@@ -823,38 +823,38 @@ export default function SuperAdminTenants() {
                       const slug = name.toLowerCase().replace(/\s+/g, '-');
                       setNewTenantData({ ...newTenantData, name, slug });
                     }}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="e.g. My Awesome Shop"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Slug / URL Identifier</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Slug / URL Identifier</label>
                   <input
                     type="text"
                     value={newTenantData.slug}
                     onChange={(e) => setNewTenantData({ ...newTenantData, slug: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
                     placeholder="e.g. awesome-shop"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Owner User ID (UID)</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Owner User ID (UID)</label>
                   <input
                     type="text"
                     value={newTenantData.ownerId}
                     onChange={(e) => setNewTenantData({ ...newTenantData, ownerId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
                     placeholder="User UID from Auth"
                   />
                   <p className="text-[10px] text-gray-400 mt-1">Leave blank if you want to assign it later or create user separately.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Plan</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Plan</label>
                     <select
                       value={newTenantData.subscription}
                       onChange={(e) => setNewTenantData({ ...newTenantData, subscription: e.target.value as SubscriptionPlan })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       {Object.values(PLANS).map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
@@ -862,12 +862,12 @@ export default function SuperAdminTenants() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Expiry Date</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Expiry Date</label>
                     <input
                       type="date"
                       value={newTenantData.subscriptionEndDate}
                       onChange={(e) => setNewTenantData({ ...newTenantData, subscriptionEndDate: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>

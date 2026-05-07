@@ -342,13 +342,13 @@ export default function CustomerDashboard() {
 
                 <form onSubmit={handleUpdateAddress} className="space-y-6">
                   <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Alamat Lengkap</label>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Alamat Lengkap</label>
                     <textarea
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Masukkan alamat lengkap Anda..."
                       rows={4}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
+                      className="w-full p-2 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
                     />
                   </div>
 

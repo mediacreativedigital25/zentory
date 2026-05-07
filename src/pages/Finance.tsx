@@ -115,7 +115,7 @@ export default function Finance() {
 
       {/* Financial Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-indigo-100 text-indigo-600 rounded-lg">
               <Wallet className="w-6 h-6" />
@@ -129,7 +129,7 @@ export default function Finance() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-green-100 text-green-600 rounded-lg">
               <TrendingUp className="w-6 h-6" />
@@ -143,7 +143,7 @@ export default function Finance() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-red-100 text-red-600 rounded-lg">
               <TrendingDown className="w-6 h-6" />
@@ -159,7 +159,7 @@ export default function Finance() {
       </div>
 
       {/* Transaction History */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <h3 className="text-lg font-semibold">Transaction History</h3>
@@ -187,10 +187,10 @@ export default function Finance() {
                 className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <button className="p-2 border border-gray-200 rounded-lg hover:bg-white">
               <Calendar className="w-5 h-5 text-gray-500" />
             </button>
-            <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <button className="p-2 border border-gray-200 rounded-lg hover:bg-white">
               <Filter className="w-5 h-5 text-gray-500" />
             </button>
           </div>
@@ -331,21 +331,21 @@ export default function Finance() {
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Rp.)</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Amount (Rp.)</label>
                   <input
                     type="number"
                     required
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Category</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Select Category</option>
                     <option value="Rent">Rent</option>
@@ -357,12 +357,12 @@ export default function Finance() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Description</label>
                   <textarea
                     required
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                     placeholder="What was this expense for?"
                   />
                 </div>
@@ -370,7 +370,7 @@ export default function Finance() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-white"
                   >
                     Cancel
                   </button>

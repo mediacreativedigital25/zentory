@@ -49,7 +49,7 @@ export default function SuperAdminRoadmaps() {
         <p className="text-gray-500">Track development progress and upcoming features.</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-900 flex items-center">
             <ListChecks className="w-5 h-5 mr-2 text-indigo-600" />
@@ -61,7 +61,7 @@ export default function SuperAdminRoadmaps() {
             {loading ? (
               <p className="text-center py-8 text-gray-500">Memuat roadmap...</p>
             ) : roadmapItems.map((item) => (
-              <div key={item.id} className="flex items-start p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors group">
+              <div key={item.id} className="flex items-start p-4 border border-gray-100 rounded-lg hover:bg-white transition-colors group">
                 <button 
                   onClick={() => toggleRoadmapStatus(item.id, item.status)}
                   className={`mt-1 p-1 rounded-full border-2 transition-colors ${

@@ -178,7 +178,7 @@ export default function Users() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -316,7 +316,7 @@ export default function Users() {
                 {!editingUser && (
                   <>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                      <label className="block mb-1 text-xs font-semibold text-gray-600">Email</label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
@@ -330,7 +330,7 @@ export default function Users() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
+                      <label className="block mb-1 text-xs font-semibold text-gray-600">Password</label>
                       <input
                         type="password"
                         required
@@ -338,26 +338,26 @@ export default function Users() {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         placeholder="Min. 6 karakter"
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>
                   </>
                 )}
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Lengkap</label>
                   <input
                     type="text"
                     required
                     value={formData.displayName}
                     onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                     placeholder="John Doe"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Role</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Role</label>
                   <div className="relative">
                     <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <select
@@ -384,7 +384,7 @@ export default function Users() {
 
                 {profile?.role === 'superadmin' && (
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Tenant</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Tenant</label>
                     <div className="relative">
                       <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <select
@@ -405,7 +405,7 @@ export default function Users() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-600 font-bold hover:bg-gray-50 transition-all"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>

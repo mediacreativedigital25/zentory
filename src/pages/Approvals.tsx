@@ -202,7 +202,7 @@ export default function Approvals() {
         </div>
         
         <div className="relative inline-block text-left">
-          <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
             {tabs.map((tab) => (
               <button
                 key={tab.type}
@@ -285,7 +285,7 @@ export default function Approvals() {
                   
                   {selectedItem.type === 'Sales' && (
                     <div className="space-y-3">
-                      <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                      <div className="border border-gray-100 rounded-lg overflow-hidden">
                         <table className="w-full text-sm">
                           <thead className="bg-gray-50 text-gray-500">
                             <tr>
@@ -339,7 +339,7 @@ export default function Approvals() {
 
                   {selectedItem.type === 'Purchase' && (
                     <div className="space-y-3">
-                      <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                      <div className="border border-gray-100 rounded-lg overflow-hidden">
                         <table className="w-full text-sm">
                           <thead className="bg-gray-50 text-gray-500">
                             <tr>
@@ -369,7 +369,7 @@ export default function Approvals() {
 
                   {selectedItem.type === 'Deletion' && (
                     <div className="space-y-4">
-                      <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
+                      <div className="bg-red-50 p-4 rounded-lg border border-red-100">
                         <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Target Penghapusan</p>
                         <p className="font-bold text-red-900">{selectedItem.rawData.sourceNumber}</p>
                         <p className="text-xs text-red-600 mt-1 opacity-70">ID: {selectedItem.rawData.sourceId}</p>
@@ -406,7 +406,7 @@ export default function Approvals() {
                 <button
                   onClick={() => { handleAction(selectedItem, 'reject'); setSelectedItem(null); }}
                   disabled={isProcessing === selectedItem.id}
-                  className="flex-1 py-3 border border-red-100 text-red-600 font-bold rounded-2xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 py-3 border border-red-100 text-red-600 font-medium rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
                 >
                   <XCircle className="w-5 h-5" /> Tolak
                 </button>
@@ -440,7 +440,7 @@ export default function Approvals() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="py-20 bg-white rounded-2xl border border-dashed border-gray-200 text-center"
+              className="py-20 bg-white rounded-lg border border-dashed border-gray-200 text-center"
             >
               <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8" />
@@ -455,7 +455,7 @@ export default function Approvals() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
+                className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
               >
                 <div className="flex items-start gap-4">
                   <div className={`p-3 rounded-xl ${
@@ -501,7 +501,7 @@ export default function Approvals() {
                   <button
                     onClick={() => handleAction(item, 'reject')}
                     disabled={isProcessing === item.id}
-                    className="flex-1 md:flex-none px-6 py-2.5 border border-red-100 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 md:flex-none px-6 py-2.5 border border-red-100 text-red-600 font-medium rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
                   >
                     <XCircle className="w-4 h-4" />
                     Tolak

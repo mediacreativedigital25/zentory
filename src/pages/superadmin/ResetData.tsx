@@ -105,9 +105,9 @@ export default function SuperAdminResetData() {
         <p className="text-gray-500">Hapus data spesifik untuk tenant tertentu. Gunakan dengan sangat hati-hati.</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8">
         <div className="max-w-2xl space-y-8">
-          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start">
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex items-start">
             <AlertTriangle className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-bold text-amber-800">Peringatan Kritis</p>
@@ -116,11 +116,11 @@ export default function SuperAdminResetData() {
           </div>
 
           <div className="space-y-4">
-            <label className="block text-sm font-bold text-gray-700">1. Pilih Tenant</label>
+            <label className="block text-xs font-semibold text-gray-600">1. Pilih Tenant</label>
             <select
               value={selectedResetTenant}
               onChange={(e) => setSelectedResetTenant(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">-- Pilih Tenant --</option>
               {tenants.map(t => (
@@ -130,10 +130,10 @@ export default function SuperAdminResetData() {
           </div>
 
           <div className="space-y-4">
-            <label className="block text-sm font-bold text-gray-700">2. Pilih Data yang Akan Dihapus</label>
+            <label className="block text-xs font-semibold text-gray-600">2. Pilih Data yang Akan Dihapus</label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {collectionsToReset.map(coll => (
-                <label key={coll.id} className="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                <label key={coll.id} className="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-white cursor-pointer transition-colors text-xs font-medium text-gray-600">
                   <input
                     type="checkbox"
                     checked={resetCollections.includes(coll.id)}

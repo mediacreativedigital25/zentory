@@ -232,25 +232,25 @@ export default function TenantCoupons() {
 
               <form onSubmit={handleSave} className="p-6 space-y-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Kode Kupon</label>
+                  <label className="text-xs font-semibold text-gray-600">Kode Kupon</label>
                   <input
                     type="text"
                     required
                     value={formData.code}
                     onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase().replace(/\s/g, '') })}
                     disabled={!!editingId}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase font-mono font-bold"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase font-mono font-medium"
                     placeholder="Contoh: PROMO100"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Tipe</label>
+                    <label className="text-xs font-semibold text-gray-600">Tipe</label>
                     <select
                       value={formData.type}
                       onChange={e => setFormData({ ...formData, type: e.target.value as any })}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium"
                     >
                       <option value="percentage">Diskon Persentase (%)</option>
                       <option value="nominal">Diskon Nominal (Rp)</option>
@@ -258,37 +258,37 @@ export default function TenantCoupons() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Nilai</label>
+                    <label className="text-xs font-semibold text-gray-600">Nilai</label>
                     <input
                       type="number"
                       required
                       min="1"
                       value={formData.value || ''}
                       onChange={e => setFormData({ ...formData, value: Number(e.target.value) })}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
                       placeholder="Contoh: 10"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Maksimal Penggunaan (0 untuk unlimited)</label>
+                  <label className="text-xs font-semibold text-gray-600">Maksimal Penggunaan (0 untuk unlimited)</label>
                   <input
                     type="number"
                     min="0"
                     value={formData.maxUses || 0}
                     onChange={e => setFormData({ ...formData, maxUses: Number(e.target.value) })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Keterangan (opsional)</label>
+                  <label className="text-xs font-semibold text-gray-600">Keterangan (opsional)</label>
                   <input
                     type="text"
                     value={formData.notes || ''}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
                     placeholder="Promo Kemerdekaan"
                   />
                 </div>

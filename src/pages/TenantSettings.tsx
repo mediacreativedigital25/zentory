@@ -77,7 +77,7 @@ export default function TenantSettings() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <Zap className="w-5 h-5 mr-2 text-indigo-600" />
@@ -112,7 +112,7 @@ export default function TenantSettings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <Building2 className="w-5 h-5 mr-2 text-indigo-600" />
@@ -122,7 +122,7 @@ export default function TenantSettings() {
           
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2 space-y-2">
-              <label className="text-sm font-bold text-gray-700">Logo Bisnis</label>
+              <label className="text-xs font-semibold text-gray-600">Logo Bisnis</label>
               <div className="w-48">
                 <ImageUpload
                   value={formData.settings?.logoUrl || ''}
@@ -139,7 +139,7 @@ export default function TenantSettings() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Nama Bisnis</label>
+              <label className="text-xs font-semibold text-gray-600">Nama Bisnis</label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -147,62 +147,62 @@ export default function TenantSettings() {
                   required
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Nama Toko / Perusahaan"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Nama Owner / Penanggung Jawab</label>
+              <label className="text-xs font-semibold text-gray-600">Nama Owner / Penanggung Jawab</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={formData.ownerName || ''}
                   onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Nama Lengkap"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Email Bisnis</label>
+              <label className="text-xs font-semibold text-gray-600">Email Bisnis</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="email"
                   value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="email@bisnis.com"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Nomor Telepon / WA</label>
+              <label className="text-xs font-semibold text-gray-600">Nomor Telepon / WA</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={formData.phone || ''}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="0812..."
                 />
               </div>
             </div>
 
             <div className="md:col-span-2 space-y-2">
-              <label className="text-sm font-bold text-gray-700">Alamat Lengkap</label>
+              <label className="text-xs font-semibold text-gray-600">Alamat Lengkap</label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <textarea
                   value={formData.address || ''}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
                   placeholder="Alamat Kantor / Toko"
                 />
               </div>
@@ -210,7 +210,7 @@ export default function TenantSettings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <Briefcase className="w-5 h-5 mr-2 text-indigo-600" />
@@ -220,28 +220,28 @@ export default function TenantSettings() {
           
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Jenis Usaha</label>
+              <label className="text-xs font-semibold text-gray-600">Jenis Usaha</label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={formData.businessType || ''}
                   onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Contoh: Retail, Kuliner, Jasa"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">NPWP / Tax ID</label>
+              <label className="text-xs font-semibold text-gray-600">NPWP / Tax ID</label>
               <div className="relative">
                 <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={formData.taxId || ''}
                   onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Nomor NPWP"
                 />
               </div>
@@ -249,7 +249,7 @@ export default function TenantSettings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <ImageIcon className="w-5 h-5 mr-2 text-indigo-600" />
@@ -259,23 +259,23 @@ export default function TenantSettings() {
           
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Cloud Name</label>
+              <label className="text-xs font-semibold text-gray-600">Cloud Name</label>
               <input
                 type="text"
                 value={formData.cloudinaryCloudName || ''}
                 onChange={(e) => setFormData({ ...formData, cloudinaryCloudName: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 placeholder="Cloud Name dari Cloudinary"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700">Upload Preset</label>
+              <label className="text-xs font-semibold text-gray-600">Upload Preset</label>
               <input
                 type="text"
                 value={formData.cloudinaryUploadPreset || ''}
                 onChange={(e) => setFormData({ ...formData, cloudinaryUploadPreset: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 placeholder="Unsigned Upload Preset"
               />
             </div>

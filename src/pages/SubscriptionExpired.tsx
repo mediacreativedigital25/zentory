@@ -40,7 +40,7 @@ export default function SubscriptionExpired() {
             Masa berlaku langganan bisnis <span className="text-indigo-600 font-bold uppercase">{tenant?.name}</span> telah berakhir pada <span className="text-red-600 font-bold">{expiryDate}</span>.
           </p>
 
-          <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-left space-y-3 border border-gray-100">
+          <div className="bg-white rounded-lg p-6 mb-8 text-left space-y-3 border border-gray-100">
             <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-400">
               <span>Status Paket</span>
               <span className="text-red-500">EXPIRED</span>

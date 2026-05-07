@@ -160,7 +160,7 @@ export default function Pricing() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fitur & Limit:</p>
                 <ul className="space-y-3 font-sans">
                   {/* Limits first */}
-                  <li className="flex items-start gap-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <li className="flex items-start gap-4 p-3 bg-white rounded-lg border border-gray-100">
                     <Zap className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[10px] font-black text-gray-400 uppercase">Kapasitas Produk</p>
@@ -169,7 +169,7 @@ export default function Pricing() {
                       </p>
                     </div>
                   </li>
-                  <li className="flex items-start gap-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <li className="flex items-start gap-4 p-3 bg-white rounded-lg border border-gray-100">
                     <Shield className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[10px] font-black text-gray-400 uppercase">Limit Transaksi</p>
@@ -178,7 +178,7 @@ export default function Pricing() {
                       </p>
                     </div>
                   </li>
-                  <li className="flex items-start gap-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                  <li className="flex items-start gap-4 p-3 bg-white rounded-lg border border-gray-100">
                     <Star className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[10px] font-black text-gray-400 uppercase">Akses Pengguna</p>
@@ -232,15 +232,15 @@ export default function Pricing() {
               Kami memahami bahwa setiap bisnis memiliki kebutuhan yang unik. Jika Anda memerlukan fitur khusus, integrasi API, atau skala yang lebih besar dari paket Business, tim kami siap membantu.
             </p>
             <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-3 px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-lg border border-gray-100">
                 <Check className="w-5 h-5 text-green-600" />
                 <span className="text-sm font-bold text-gray-700">Custom Features</span>
               </div>
-              <div className="flex items-center gap-3 px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-lg border border-gray-100">
                 <Check className="w-5 h-5 text-green-600" />
                 <span className="text-sm font-bold text-gray-700">Dedicated Support</span>
               </div>
-              <div className="flex items-center gap-3 px-6 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-lg border border-gray-100">
                 <Check className="w-5 h-5 text-green-600" />
                 <span className="text-sm font-bold text-gray-700">SLA Guarantee</span>
               </div>

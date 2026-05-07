@@ -50,7 +50,7 @@ export default function ConfirmModal({
                 {showCancel && (
                   <button
                     onClick={onCancel}
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-colors"
                   >
                     {cancelText}
                   </button>

@@ -497,7 +497,7 @@ export default function StockOpnamePage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -519,7 +519,7 @@ export default function StockOpnamePage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="p-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -555,12 +555,12 @@ export default function StockOpnamePage() {
               <form onSubmit={handleCreatePlanning} className="p-8 space-y-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Periode</label>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Periode</label>
                     <select
                       required
                       value={formData.period}
                       onChange={(e) => setFormData({ ...formData, period: e.target.value as any })}
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="Harian">Harian</option>
                       <option value="Mingguan">Mingguan</option>
@@ -569,12 +569,12 @@ export default function StockOpnamePage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Kategori</label>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Kategori</label>
                     <select
                       required
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="all">Semua Kategori</option>
                       {categories.map(cat => (
@@ -584,12 +584,12 @@ export default function StockOpnamePage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Gudang (Warehouse)</label>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Gudang (Warehouse)</label>
                     <select
                       required
                       value={formData.warehouseId}
                       onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="">Pilih Gudang</option>
                       {warehouses.map(wh => (
@@ -599,12 +599,12 @@ export default function StockOpnamePage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Remark (Catatan)</label>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Remark (Catatan)</label>
                     <textarea
                       value={formData.remark}
                       onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
                       placeholder="Contoh: Pemeriksaan stok akhir bulan..."
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all h-32 resize-none"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all h-32 resize-none"
                     />
                   </div>
                 </div>
@@ -613,7 +613,7 @@ export default function StockOpnamePage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-50 transition-all"
+                    className="flex-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     BATAL
                   </button>
@@ -654,30 +654,30 @@ export default function StockOpnamePage() {
               
               <div className="flex-1 overflow-y-auto p-8 space-y-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 font-mono">
+                  <div className="bg-white p-4 rounded-lg border border-gray-100 font-mono">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">No. Stock Opname</p>
                     <p className="text-sm font-black text-indigo-600">{selectedRecord.soNumber || '-'}</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <div className="bg-white p-4 rounded-lg border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Periode</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.period}</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <div className="bg-white p-4 rounded-lg border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Kategori</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.category}</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <div className="bg-white p-4 rounded-lg border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Gudang</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.warehouseName}</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <div className="bg-white p-4 rounded-lg border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Dibuat Oleh</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.createdByName}</p>
                   </div>
                 </div>
 
                 {selectedRecord.remark && (
-                  <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                  <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Remark</p>
                     <p className="text-sm font-medium text-indigo-900">{selectedRecord.remark}</p>
                   </div>
@@ -688,7 +688,7 @@ export default function StockOpnamePage() {
                     <FileText className="w-5 h-5 text-indigo-600" />
                     <h4 className="font-black text-gray-900 uppercase tracking-wider text-sm">Daftar Produk ({selectedRecord.items.length})</h4>
                   </div>
-                  <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                  <div className="border border-gray-100 rounded-lg overflow-hidden">
                     <table className="w-full text-left border-collapse">
                       <thead className="bg-gray-50">
                         <tr>
@@ -721,7 +721,7 @@ export default function StockOpnamePage() {
               <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-6 py-3 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-100 transition-all"
+                  className="px-6 py-3 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
                 >
                   TUTUP
                 </button>

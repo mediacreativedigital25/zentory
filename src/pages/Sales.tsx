@@ -495,7 +495,7 @@ export default function Sales() {
               placeholder="Cari produk..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
           </div>
         </div>
@@ -507,7 +507,7 @@ export default function Sales() {
                 key={product.id}
                 onClick={() => addToCart(product)}
                 disabled={product.stock <= 0}
-                className="flex flex-col text-left group bg-white border border-gray-100 rounded-xl p-2 sm:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
+                className="flex flex-col text-left group bg-white border border-gray-100 rounded-lg p-2 sm:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
               >
                 <div className="aspect-square bg-gray-50 rounded-lg mb-2 sm:mb-3 overflow-hidden relative">
                   <img
@@ -590,7 +590,7 @@ export default function Sales() {
             const cartItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
 
             return (
-              <div key={cartItemId} className="flex items-center justify-between bg-gray-50 p-2 md:p-3 rounded-xl border border-gray-100 hover:border-indigo-100 transition-colors">
+              <div key={cartItemId} className="flex items-center justify-between bg-white p-2 md:p-3 rounded-lg border border-gray-100 hover:border-indigo-100 transition-colors">
                 <div className="flex-1 min-w-0 mr-2 md:mr-4">
                   <p className="text-xs md:text-sm font-bold text-gray-900 truncate">
                     {item.product.name}
@@ -617,7 +617,7 @@ export default function Sales() {
                     type="number"
                     value={item.quantity}
                     onChange={(e) => setQuantity(cartItemId, parseInt(e.target.value) || 0)}
-                    className="text-xs md:text-sm font-black w-8 md:w-10 text-center bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                    className="text-xs md:text-sm font-medium w-8 md:w-10 text-center bg-transparent border border-gray-200 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
                     onFocus={(e) => e.target.select()}
                   />
                   <button onClick={() => updateQuantity(cartItemId, 1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
@@ -763,7 +763,7 @@ export default function Sales() {
 
               <div className="p-4 md:p-6 space-y-4 md:space-y-6">
                 <div className="space-y-2 md:space-y-3">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Metode Pembayaran</label>
+                  <label className="block tracking-wider text-xs font-semibold text-gray-600">Metode Pembayaran</label>
                   <div className="flex gap-2 md:gap-3">
                     <button
                       onClick={() => setPaymentMethodType('tunai')}
@@ -783,7 +783,7 @@ export default function Sales() {
                 </div>
 
                 <div className="space-y-2 md:space-y-3">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tipe Transaksi</label>
+                  <label className="block tracking-wider text-xs font-semibold text-gray-600">Tipe Transaksi</label>
                   <div className="flex gap-2 md:gap-3">
                     <button
                       onClick={() => setPaymentType('cash')}
@@ -865,14 +865,14 @@ export default function Sales() {
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <button
                   onClick={() => handlePrint('invoice')}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
                 >
                   <FileText className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
                   <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Faktur (A4)</span>
                 </button>
                 <button
                   onClick={() => handlePrint('receipt')}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
                 >
                   <Printer className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
                   <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Struk (80mm)</span>

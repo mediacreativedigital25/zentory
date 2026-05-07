@@ -353,7 +353,7 @@ export default function ClaimExpense() {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row gap-4">
+      <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -361,10 +361,10 @@ export default function ClaimExpense() {
             placeholder="Cari pengeluaran, aktivitas, atau deskripsi..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
-        <button className="px-4 py-3 border border-gray-100 rounded-xl hover:bg-gray-50 flex items-center text-gray-600 font-bold text-sm">
+        <button className="p-2 border border-gray-100 rounded-lg hover:bg-white flex items-center text-gray-600 font-medium text-sm">
           <Filter className="w-4 h-4 mr-2" />
           Filter
         </button>
@@ -475,7 +475,7 @@ export default function ClaimExpense() {
                       <Landmark className="w-5 h-5" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Sumber Dana / Bank</label>
+                      <label className="block text-xs font-semibold text-gray-600">Sumber Dana / Bank</label>
                       <p className="text-[10px] text-gray-400 mt-1">Pilih akun bank yang digunakan untuk pengeluaran ini.</p>
                     </div>
                   </div>
@@ -483,7 +483,7 @@ export default function ClaimExpense() {
                     required
                     value={formData.bankAccountId}
                     onChange={(e) => setFormData({ ...formData, bankAccountId: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-indigo-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold appearance-none"
+                    className="w-full p-2 bg-white border border-indigo-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium appearance-none"
                   >
                     <option value="">Pilih Akun Bank</option>
                     {bankAccounts.map((bank) => (
@@ -498,7 +498,7 @@ export default function ClaimExpense() {
                 <div className="space-y-6">
                   <div className="flex justify-between items-center border-b border-gray-100 pb-4">
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Daftar Pengeluaran</label>
+                      <label className="block text-xs font-semibold text-gray-600">Daftar Pengeluaran</label>
                       <p className="text-[10px] text-gray-400 mt-1">Tambahkan satu atau lebih rincian pengeluaran.</p>
                     </div>
                     <button
@@ -530,14 +530,14 @@ export default function ClaimExpense() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2 sm:col-span-1">
-                          <label className="block text-[8px] font-black text-gray-400 uppercase mb-1 ml-1">Claim Expense</label>
+                          <label className="block mb-1 ml-1 text-xs font-semibold text-gray-600">Claim Expense</label>
                           <div className="relative">
                             <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                             <select
                               required
                               value={item.category}
                               onChange={(e) => updateItem(index, 'category', e.target.value)}
-                              className="w-full pl-9 pr-10 py-2.5 bg-white border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-bold appearance-none"
+                              className="w-full pl-9 pr-10 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium appearance-none"
                             >
                               <option value="">Pilih Kategori</option>
                               {rules.map((rule) => (
@@ -554,7 +554,7 @@ export default function ClaimExpense() {
                           </div>
                         </div>
                         <div className="col-span-2 sm:col-span-1">
-                          <label className="block text-[8px] font-black text-gray-400 uppercase mb-1 ml-1">Activity</label>
+                          <label className="block mb-1 ml-1 text-xs font-semibold text-gray-600">Activity</label>
                           <div className="relative">
                             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                             <input
@@ -563,7 +563,7 @@ export default function ClaimExpense() {
                               placeholder="Operasional, dll"
                               value={item.activity}
                               onChange={(e) => updateItem(index, 'activity', e.target.value)}
-                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-bold"
+                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
                             />
                           </div>
                         </div>
@@ -571,7 +571,7 @@ export default function ClaimExpense() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2 sm:col-span-1">
-                          <label className="block text-[8px] font-black text-gray-400 uppercase mb-1 ml-1">Nominal (Rp.)</label>
+                          <label className="block mb-1 ml-1 text-xs font-semibold text-gray-600">Nominal (Rp.)</label>
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                             <input
@@ -579,12 +579,12 @@ export default function ClaimExpense() {
                               required
                               value={item.amount}
                               onChange={(e) => updateItem(index, 'amount', Number(e.target.value))}
-                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-bold"
+                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
                             />
                           </div>
                         </div>
                         <div className="col-span-2 sm:col-span-1">
-                          <label className="block text-[8px] font-black text-gray-400 uppercase mb-1 ml-1">Deskripsi</label>
+                          <label className="block mb-1 ml-1 text-xs font-semibold text-gray-600">Deskripsi</label>
                           <div className="relative">
                             <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                             <input
@@ -593,7 +593,7 @@ export default function ClaimExpense() {
                               placeholder="Keterangan singkat"
                               value={item.description}
                               onChange={(e) => updateItem(index, 'description', e.target.value)}
-                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-bold"
+                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
                             />
                           </div>
                         </div>
@@ -627,7 +627,7 @@ export default function ClaimExpense() {
                       setIsModalOpen(false);
                       setEditingExpense(null);
                     }}
-                    className="flex-1 py-4 border border-gray-100 rounded-2xl text-gray-500 font-bold hover:bg-gray-50 transition-all"
+                    className="flex-1 py-4 border border-gray-100 rounded-lg text-gray-500 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>
@@ -744,7 +744,7 @@ export default function ClaimExpense() {
               <div className="p-8 bg-gray-50/50 border-t border-gray-100 flex justify-end">
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-8 py-3 bg-white border border-gray-200 rounded-2xl text-gray-600 font-bold hover:bg-gray-100 transition-all"
+                  className="px-8 py-3 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
                 >
                   Tutup
                 </button>

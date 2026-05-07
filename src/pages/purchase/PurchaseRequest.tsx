@@ -315,7 +315,7 @@ export default function PurchaseRequests() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -424,7 +424,7 @@ export default function PurchaseRequests() {
                     {formData.items.map((item, index) => {
                       const selectedProduct = products.find(p => p.id === item.productId);
                       return (
-                        <div key={index} className="flex flex-col gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <div key={index} className="flex flex-col gap-2 bg-white p-3 rounded-lg border border-gray-100">
                           <div className="flex gap-3 items-start">
                             <div className="flex-1">
                               <select
@@ -464,7 +464,7 @@ export default function PurchaseRequests() {
                                 required
                                 value={item.variantId || ''}
                                 onChange={(e) => updateVariant(index, e.target.value)}
-                                className="flex-1 px-3 py-1.5 border border-indigo-100 bg-indigo-50/30 rounded-lg text-xs font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="flex-1 px-3 py-1.5 border border-indigo-100 bg-indigo-50/30 rounded-lg text-xs font-medium text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500"
                               >
                                 <option value="">Pilih Variasi</option>
                                 {selectedProduct.variants.map(v => (
@@ -480,11 +480,11 @@ export default function PurchaseRequests() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Alasan / Catatan</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Alasan / Catatan</label>
                   <textarea
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24 text-sm"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24 text-sm"
                     placeholder="Contoh: Stok menipis, permintaan khusus pelanggan..."
                   />
                 </div>
@@ -493,7 +493,7 @@ export default function PurchaseRequests() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>

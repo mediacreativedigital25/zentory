@@ -152,7 +152,7 @@ export default function ImageUpload({
   return (
     <div className={`space-y-1.5 ${className}`}>
       {label && !compact && (
-        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+        <label className="block ml-1 text-xs font-semibold text-gray-600">
           {label}
         </label>
       )}
@@ -160,7 +160,7 @@ export default function ImageUpload({
       <div className="relative">
         {/* Loading Overlay */}
         {isUploading && (
-          <div className="absolute inset-0 z-20 bg-white/90 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center gap-2 border border-indigo-100 shadow-inner">
+          <div className="absolute inset-0 z-20 bg-white/90 backdrop-blur-[2px] rounded-lg flex flex-col items-center justify-center gap-2 border border-indigo-100 shadow-inner">
             <Loader2 className={`${compact ? 'w-5 h-5' : 'w-8 h-8'} text-indigo-600 animate-spin`} />
             {!compact && (
               <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest animate-pulse">
@@ -214,7 +214,7 @@ export default function ImageUpload({
           ref={fileInputRef}
           onChange={handleFileChange}
           accept="image/*"
-          className="hidden"
+          className="hidden p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium"
         />
       </div>
 

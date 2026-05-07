@@ -445,7 +445,7 @@ export default function Charity() {
               <div className="p-10 border-t border-gray-100 bg-gray-50 flex gap-4">
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="flex-1 px-8 py-4 border border-gray-200 rounded-2xl font-black text-gray-600 hover:bg-gray-100 transition-all"
+                  className="flex-1 px-8 py-4 border border-gray-200 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-all"
                 >
                   Tutup
                 </button>
@@ -479,18 +479,18 @@ export default function Charity() {
               </div>
               <div className="p-8 space-y-6">
                 <div>
-                  <label className="block text-sm font-black text-gray-700 mb-2">Alasan Revisi</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Alasan Revisi</label>
                   <textarea
                     value={requestReason}
                     onChange={(e) => setRequestReason(e.target.value)}
                     placeholder="Contoh: Ada kesalahan perhitungan profit, koreksi data transaksi..."
-                    className="w-full px-5 py-4 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px] text-sm"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px] text-sm"
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => setIsRequestModalOpen(false)}
-                    className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-50 transition-all"
+                    className="flex-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>

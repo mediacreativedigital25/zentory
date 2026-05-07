@@ -127,7 +127,7 @@ export default function PrintBarcodeModal({ isOpen, onClose, products }: PrintBa
             <div className="p-6 bg-gray-50 flex gap-3 border-t border-gray-100">
               <button
                 onClick={onClose}
-                className="flex-1 px-6 py-3 bg-white border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition-all"
+                className="flex-1 px-6 py-3 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
               >
                 Batal
               </button>

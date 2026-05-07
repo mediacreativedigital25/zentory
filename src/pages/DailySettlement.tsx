@@ -366,7 +366,7 @@ export default function DailySettlement() {
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Daily Settlement</h2>
           <p className="text-gray-500 mt-1">Proses tutup buku harian untuk merangkum aktivitas keuangan.</p>
         </div>
-        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
           <Calendar className="w-5 h-5 text-indigo-600" />
           <span className="font-bold text-gray-700">
             {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -387,7 +387,7 @@ export default function DailySettlement() {
           </div>
           
           {pendingRequest ? (
-            <div className="px-6 py-3 bg-white border border-amber-200 rounded-2xl flex items-center gap-2 text-amber-600 font-bold text-sm">
+            <div className="px-6 py-3 bg-white border border-amber-200 rounded-lg flex items-center gap-2 text-amber-600 font-medium text-sm">
               <Send className="w-4 h-4" />
               Request Open Pending...
             </div>
@@ -518,7 +518,7 @@ export default function DailySettlement() {
                     <button
                       onClick={() => handleDoClosing(false)}
                       disabled={isClosing}
-                      className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-50 transition-all"
+                      className="flex-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
                     >
                       Tidak
                     </button>
@@ -621,22 +621,22 @@ export default function DailySettlement() {
                 </button>
               </div>
               <div className="p-8 space-y-6">
-                <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl text-xs text-amber-700 leading-relaxed">
+                <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-700 leading-relaxed">
                   Membuka kembali settlement akan memungkinkan Anda untuk mengubah data transaksi hari ini. Pastikan Anda memiliki alasan yang valid.
                 </div>
                 <div>
-                  <label className="block text-sm font-black text-gray-700 mb-2">Alasan Pembukaan Kembali</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Alasan Pembukaan Kembali</label>
                   <textarea
                     value={requestReason}
                     onChange={(e) => setRequestReason(e.target.value)}
                     placeholder="Contoh: Ada transaksi yang terlewat, salah input nominal..."
-                    className="w-full px-5 py-4 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px] text-sm"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px] text-sm"
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => setIsRequestModalOpen(false)}
-                    className="flex-1 px-6 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-50 transition-all"
+                    className="flex-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>

@@ -74,23 +74,23 @@ export default function CatalogEditor() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Settings Form */}
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-4">
             <h3 className="text-lg font-semibold flex items-center">
               <Store className="w-5 h-5 mr-2 text-indigo-600" />
               General Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">Store Name</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Store URL Slug</label>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">Store URL Slug</label>
                 <div className="flex">
                   <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-500 text-xs">
                     /catalog/
@@ -99,23 +99,23 @@ export default function CatalogEditor() {
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-r-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-r-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">Store Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                   placeholder="Describe your store to your customers..."
                 />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-4">
             <h3 className="text-lg font-semibold flex items-center">
               <Palette className="w-5 h-5 mr-2 text-indigo-600" />
               Branding & Style
@@ -129,7 +129,7 @@ export default function CatalogEditor() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Theme Color</label>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">Theme Color</label>
                 <div className="flex items-center gap-4">
                   <input
                     type="color"
@@ -157,7 +157,7 @@ export default function CatalogEditor() {
 
         {/* Preview Card */}
         <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 sticky top-8">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Globe className="w-5 h-5 mr-2 text-indigo-600" />
               Live Preview
@@ -190,7 +190,7 @@ export default function CatalogEditor() {
                 href={`/catalog/${formData.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2 border border-indigo-600 text-indigo-600 rounded-lg text-sm font-bold flex items-center justify-center hover:bg-indigo-50 transition-colors"
+                className="w-full py-2 border border-indigo-600 text-indigo-600 rounded-lg text-sm font-medium flex items-center justify-center hover:bg-indigo-50 transition-colors"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 View Public Store

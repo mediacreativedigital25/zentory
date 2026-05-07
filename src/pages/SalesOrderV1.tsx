@@ -38,9 +38,13 @@ export default function SalesOrderV1() {
   // Form State
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [customerCodeSearch, setCustomerCodeSearch] = useState('');
+  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+  const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
   const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
   const [remark, setRemark] = useState('');
+  const [salesName, setSalesName] = useState(profile?.displayName || profile?.email || 'N/A');
+  const [poNumber, setPoNumber] = useState('');
   const [cartItems, setCartItems] = useState<{
     productId: string;
     productName: string;
@@ -50,6 +54,7 @@ export default function SalesOrderV1() {
   }[]>([]);
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [coupons, setCoupons] = useState<any[]>([]);
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
   const [isLoadingCoupon, setIsLoadingCoupon] = useState(false);
@@ -70,6 +75,11 @@ export default function SalesOrderV1() {
       where('tenantId', '==', targetTenantId),
       where('isActive', '==', true)
     );
+    const couponsQuery = query(
+      collection(db, 'coupons'), 
+      where('tenantId', '==', targetTenantId),
+      where('isActive', '==', true)
+    );
 
     const unsubCustomers = onSnapshot(customersQuery, (snap) => {
       const customerData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Customer));
@@ -85,10 +95,15 @@ export default function SalesOrderV1() {
       setLoading(false);
     });
 
+    const unsubCoupons = onSnapshot(couponsQuery, (snap) => {
+      setCoupons(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
     return () => {
       unsubCustomers();
       unsubProducts();
       unsubBanks();
+      unsubCoupons();
     };
   }, [targetTenantId]);
 
@@ -143,14 +158,17 @@ export default function SalesOrderV1() {
     }
   };
 
-  const handleCustomerSelect = (id: string) => {
+  const handleCustomerSelect = (id: string, name: string = '') => {
     setSelectedCustomerId(id);
     const customer = customers.find(c => c.id === id);
     if (customer) {
       setCustomerCodeSearch(customer.code || '');
+      setCustomerSearchTerm(name || customer.name);
     } else {
       setCustomerCodeSearch('');
+      setCustomerSearchTerm('');
     }
+    setIsCustomerDropdownOpen(false);
   };
 
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
@@ -273,9 +291,9 @@ export default function SalesOrderV1() {
     if (!targetTenantId || !profile) return;
 
     const finalPaymentType = isTempoAllowed ? 'credit' : 'cash';
-    let finalPaymentStatus = 'unpaid';
-    let finalStatus = 'pending';
-    let actualPaidAmount = 0;
+    let finalPaymentStatus = finalPaymentType === 'cash' ? 'paid' : 'unpaid';
+    let actualPaidAmount = finalPaymentType === 'cash' ? totalAmount : 0;
+    let finalStatus = finalPaymentType === 'cash' ? 'completed' : 'pending';
 
     setIsSubmitting(true);
     let generatedOrderNumber = '';
@@ -368,6 +386,8 @@ export default function SalesOrderV1() {
         transaction.set(orderRef, {
           tenantId: targetTenantId,
           orderNumber: generatedOrderNumber,
+          poNumber: poNumber || null,
+          salesName: salesName,
           customerId: selectedCustomerId,
           customerName: customer?.name || 'Unknown',
           customerCode: customer?.code || '',
@@ -439,7 +459,7 @@ export default function SalesOrderV1() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="w-6 h-6 text-gray-600" />
           </button>
@@ -453,99 +473,202 @@ export default function SalesOrderV1() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Side: Form */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-8">
+        {/* Main Form */}
+        <div className="space-y-6">
           {/* Customer & Date */}
           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="space-y-2">
+                <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-600">
+                  <User className="w-3 h-3" />
+                  Nama Sales
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nama Sales"
+                  value={salesName}
+                  onChange={(e) => setSalesName(e.target.value)}
+                  className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-600">
                   <User className="w-3 h-3" />
                   Pilih Pelanggan
                 </label>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <select
-                      value={selectedCustomerId}
-                      onChange={(e) => handleCustomerSelect(e.target.value)}
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans"
-                    >
-                      <option value="">-- Pilih Customer --</option>
-                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="w-40">
-                    <input
-                      type="text"
-                      placeholder="Cek Kode..."
-                      value={customerCodeSearch}
-                      onChange={(e) => handleCustomerCodeSearch(e.target.value)}
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all uppercase placeholder:normal-case"
-                    />
-                  </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cari Pelanggan..."
+                    value={customerSearchTerm}
+                    onChange={(e) => {
+                       setCustomerSearchTerm(e.target.value);
+                       setIsCustomerDropdownOpen(true);
+                       if (!e.target.value) {
+                         setSelectedCustomerId('');
+                         setCustomerCodeSearch('');
+                       }
+                    }}
+                    onFocus={() => setIsCustomerDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setIsCustomerDropdownOpen(false), 200)}
+                    className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans"
+                  />
+                  {isCustomerDropdownOpen && (
+                     <div className="absolute top-full left-0 z-50 w-[300px] bg-white border border-gray-100 rounded-lg mt-2 max-h-60 overflow-y-auto shadow-xl py-2">
+                        {customers.filter(c => c.name.toLowerCase().includes(customerSearchTerm.toLowerCase())).map(c => (
+                            <div 
+                               key={c.id} 
+                               onClick={() => handleCustomerSelect(c.id, c.name)}
+                               className="p-2 hover:bg-gray-50 cursor-pointer text-sm font-medium text-gray-700 transition-colors"
+                            >
+                               {c.name}
+                            </div>
+                        ))}
+                        {customers.filter(c => c.name.toLowerCase().includes(customerSearchTerm.toLowerCase())).length === 0 && (
+                            <div className="p-2 text-sm text-gray-400 italic">Tidak ditemukan</div>
+                        )}
+                     </div>
+                  )}
                 </div>
               </div>
+
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
-                  <Calendar className="w-3 h-3" />
-                  Tanggal Order
+                <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-600">
+                  Customer Code
                 </label>
                 <input
-                  type="date"
-                  value={orderDate}
+                  type="text"
+                  placeholder="Kode Customer"
+                  value={customerCodeSearch}
                   readOnly
-                  className="w-full px-5 py-4 bg-gray-100 border-none rounded-2xl text-sm font-black text-gray-400 outline-none cursor-not-allowed"
+                  className="w-full text-gray-400 outline-none cursor-not-allowed uppercase p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-600">
+                  No PO
+                </label>
+                <input
+                  type="text"
+                  placeholder="No PO (Opsional)"
+                  value={poNumber}
+                  onChange={(e) => setPoNumber(e.target.value)}
+                  className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all uppercase"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1 text-orange-500">
+                <label className="mb-2 flex items-center gap-2 text-orange-500 text-xs font-semibold text-gray-600">
                   <Clock className="w-3 h-3" />
                   Term Of Payment (TOP)
                 </label>
                 {!selectedCustomerId ? (
-                  <div className="w-full px-5 py-4 bg-gray-50 border border-dashed border-gray-200 rounded-2xl text-[10px] font-bold text-gray-400 italic flex items-center justify-center">
+                  <div className="w-full p-2 bg-white border border-dashed border-gray-200 rounded-lg text-[10px] font-medium text-gray-400 italic flex items-center justify-center">
                     Pilih pelanggan dahulu
                   </div>
                 ) : isTempoAllowed ? (
                   <div className="space-y-3">
-                    <div className="w-full px-5 py-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-between">
+                    <div className="w-full p-2 bg-orange-50 border border-orange-100 rounded-lg flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-black text-orange-400 uppercase tracking-tighter">Term Of Payment</span>
-                        <span className="text-sm font-black text-orange-600">{tempoDays} Hari</span>
+                        <span className="text-sm font-semibold text-orange-600">{tempoDays} Hari</span>
                       </div>
-                      <span className="text-[10px] font-mono text-orange-400 font-bold bg-white px-2 py-1 rounded-lg">CREDIT</span>
+                      <span className="text-[10px] font-mono text-orange-400 font-medium bg-white px-2 py-1 rounded-lg">CREDIT</span>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[9px] font-bold text-gray-400 px-1 uppercase tracking-widest">Tanggal Jatuh Tempo</label>
+                      <label className="text-xs font-semibold text-gray-600">Tanggal Jatuh Tempo</label>
                       <input
                         type="date"
                         value={dueDate}
                         readOnly
-                        className="w-full px-5 py-3 bg-gray-100 border border-gray-200 rounded-xl text-xs font-bold text-gray-400 outline-none cursor-not-allowed font-sans"
+                        className="w-full text-gray-400 outline-none cursor-not-allowed p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium"
                       />
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full px-5 py-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-between">
+                  <div className="w-full p-2 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black text-emerald-400 uppercase tracking-tighter">Term Of Payment</span>
-                      <span className="text-sm font-black text-emerald-600 uppercase">Cash</span>
+                      <span className="text-sm font-semibold text-emerald-600 uppercase">Cash</span>
                     </div>
-                    <span className="text-[10px] font-mono text-emerald-400 font-bold bg-white px-2 py-1 rounded-lg">PAID</span>
+                    <span className="text-[10px] font-mono text-emerald-400 font-medium bg-white px-2 py-1 rounded-lg">PAID</span>
                   </div>
                 )}
               </div>
+
+              <div className="space-y-2">
+                <label className="mb-2 flex items-center gap-2 text-indigo-500 text-xs font-semibold text-gray-600">
+                  <Package className="w-3 h-3" />
+                  Program Diskon (Kupon)
+                </label>
+                <select
+                     value={appliedCoupon?.id || ''}
+                     onChange={(e) => {
+                         if (!e.target.value) {
+                             setAppliedCoupon(null);
+                             return;
+                         }
+                         const cp = coupons.find(c => c.id === e.target.value);
+                         setAppliedCoupon(cp || null);
+                     }}
+                     className="w-full p-2 bg-indigo-50 border border-indigo-100 rounded-lg text-sm font-medium text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans appearance-none cursor-pointer"
+                  >
+                     <option value="">-- Tidak Menggunakan Diskon --</option>
+                     {coupons.map(c => (
+                         <option key={c.id} value={c.id}>{c.code} - {c.type === 'percentage' ? `${c.value}%` : `Rp ${c.value.toLocaleString()}`}</option>
+                     ))}
+                </select>
+                {customerDiscountAmount > 0 && (
+                   <div className="mt-4 bg-emerald-50/50 p-2 border border-emerald-100 rounded-lg flex items-center justify-between">
+                     <div>
+                       <h4 className="text-xs font-black text-emerald-700">Diskon Pelanggan ({selectedCustomer?.discount}%)</h4>
+                       <p className="text-[10px] font-medium text-emerald-600/70">Otomatis diterapkan berdasarkan profil</p>
+                     </div>
+                   </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-gray-50">
+               <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-600 mb-1 ">Total Produk</p>
+                  <div className="p-2 bg-gray-50 rounded-lg text-base font-semibold text-gray-900">
+                     {cartItems.length}
+                  </div>
+               </div>
+               <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-600 mb-1 ">Total Item</p>
+                  <div className="p-2 bg-gray-50 rounded-lg text-base font-semibold text-gray-900">
+                     {cartItems.reduce((s, i) => s + i.quantity, 0)}
+                  </div>
+               </div>
+               <div className="space-y-2 relative h-full">
+                  <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-600">
+                    Remark / Keterangan (Maks 25 karakter)
+                  </label>
+                  <textarea
+                    value={remark}
+                    onChange={(e) => setRemark(e.target.value.substring(0, 25))}
+                    maxLength={25}
+                    className="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-gray-700 resize-none h-full min-h-[80px]"
+                    placeholder="Keterangan opsional..."
+                  />
+                  <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-lg">
+                    <span className="text-[10px] font-medium text-gray-400">{remark.length}/25</span>
+                  </div>
+               </div>
             </div>
           </div>
 
           {/* Product Picker */}
           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
             <div className="space-y-4">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
+              <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-600">
                 <Package className="w-3 h-3" />
                 Cari & Tambah Produk
               </label>
@@ -556,24 +679,24 @@ export default function SalesOrderV1() {
                   placeholder="Ketik nama produk atau SKU..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-10 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 />
               </div>
 
               {productSearch && (
-                <div className="grid grid-cols-1 gap-2 p-2 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="grid grid-cols-1 gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
                   {filteredProducts.map(p => (
                     <button
                       key={p.id}
                       onClick={() => { addToCart(p); setProductSearch(''); }}
-                      className="flex items-center justify-between p-3 hover:bg-white rounded-xl transition-all group"
+                      className="flex items-center justify-between p-3 hover:bg-white rounded-lg transition-all group"
                     >
                       <div className="text-left">
-                        <p className="text-sm font-bold text-gray-900">{p.name}</p>
+                        <p className="text-sm font-medium text-gray-900">{p.name}</p>
                         <div className="flex items-center gap-2">
                           <p className="text-[10px] text-gray-400 font-mono">{p.sku}</p>
                           {p.type !== 'service' && (
-                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                               (p.stock || 0) > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                             }`}>
                               STOK: {p.stock || 0}
@@ -581,8 +704,8 @@ export default function SalesOrderV1() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm font-black text-indigo-600">Rp.{p.price.toLocaleString()}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-indigo-600">Rp.{p.price.toLocaleString()}</span>
                         <Plus className="w-5 h-5 text-gray-300 group-hover:text-indigo-600 group-hover:rotate-90 transition-all" />
                       </div>
                     </button>
@@ -597,18 +720,18 @@ export default function SalesOrderV1() {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-gray-50/50">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Produk</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Harga</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Qty</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Subtotal</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center"></th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-600 mb-1">Produk</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-600 mb-1 text-center">Harga</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-600 mb-1 text-center">Qty</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-600 mb-1 text-right">Subtotal</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-600 mb-1 text-center"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {cartItems.map(item => (
                     <tr key={item.productId} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4">
-                        <p className="text-sm font-bold text-gray-900">{item.productName}</p>
+                        <p className="text-sm font-medium text-gray-900">{item.productName}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-[10px] text-gray-400 font-mono">
                             {products.find(p => p.id === item.productId)?.sku}
@@ -621,11 +744,11 @@ export default function SalesOrderV1() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className="text-xs font-bold text-gray-600">Rp.{item.price.toLocaleString()}</span>
+                        <span className="text-xs font-medium text-gray-600">Rp.{item.price.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-3">
-                          <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-1 hover:bg-gray-100 rounded-md transition-colors">
+                          <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                             <Minus className="w-3 h-3" />
                           </button>
                           <input 
@@ -635,15 +758,15 @@ export default function SalesOrderV1() {
                               const val = parseInt(e.target.value);
                               if (!isNaN(val)) updateQuantity(item.productId, val);
                             }}
-                            className="text-sm font-black text-gray-900 w-12 text-center bg-gray-50 border-none rounded-lg focus:ring-1 focus:ring-indigo-500 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="text-sm font-medium text-gray-900 w-12 text-center bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-1 hover:bg-gray-100 rounded-md transition-colors">
+                          <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="text-sm font-black text-indigo-600">Rp.{(item.price * item.quantity).toLocaleString()}</span>
+                        <span className="text-sm font-semibold text-indigo-600">Rp.{(item.price * item.quantity).toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button onClick={() => removeFromCart(item.productId)} className="text-red-400 hover:text-red-600 transition-colors">
@@ -663,105 +786,17 @@ export default function SalesOrderV1() {
           </div>
         </div>
 
-        {/* Right Side: Summary */}
-        <div className="space-y-6">
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm sticky top-6">
-            <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 px-1">Ringkasan Pesanan</h3>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-3 border-b border-gray-50">
-                <span className="text-xs font-bold text-gray-500">Total Items</span>
-                <span className="text-sm font-black text-gray-900">{cartItems.reduce((s, i) => s + i.quantity, 0)}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-50">
-                <span className="text-xs font-bold text-gray-500">Total Produk</span>
-                <span className="text-sm font-black text-gray-900">{cartItems.length}</span>
-              </div>
-
-              <div className="py-3 border-b border-gray-50">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Remark / Keterangan (Maks 50 karakter)</label>
-                <textarea
-                  value={remark}
-                  onChange={(e) => setRemark(e.target.value.substring(0, 50))}
-                  maxLength={50}
-                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-gray-700 resize-none h-20"
-                  placeholder="Keterangan pesanan..."
-                />
-                <div className="text-right mt-1">
-                  <span className="text-[10px] font-bold text-gray-400">{remark.length}/50</span>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-4 border-b border-gray-50 pb-4">
-                {customerDiscountAmount > 0 && (
-                  <div className="bg-emerald-50/50 p-4 border border-emerald-100 rounded-xl flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-black text-emerald-700">Diskon Pelanggan ({selectedCustomer?.discount}%)</h4>
-                      <p className="text-[10px] font-bold text-emerald-600/70">Otomatis diterapkan berdasarkan profil</p>
-                    </div>
-                    <span className="text-sm font-black text-emerald-600">- Rp {customerDiscountAmount.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className="bg-gray-50/50 p-4 border border-gray-100 rounded-xl space-y-3">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kupon Diskon (Opsional)</label>
-                  <div className="flex gap-2">
-                     <input
-                        type="text"
-                        placeholder="Masukkan kode kupon"
-                        value={couponCodeInput}
-                        onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
-                        disabled={!!appliedCoupon || isLoadingCoupon}
-                        className="flex-1 px-4 py-2 border border-gray-200 bg-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                     />
-                     {!appliedCoupon ? (
-                       <button onClick={(e) => { e.preventDefault(); handleApplyCoupon(); }} disabled={isLoadingCoupon || !couponCodeInput} className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold w-24">Pasang</button>
-                     ) : (
-                       <button onClick={(e) => { e.preventDefault(); setAppliedCoupon(null); setCouponSuccess(''); setCouponError(''); setCouponCodeInput(''); }} className="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-sm font-bold w-24">Hapus</button>
-                     )}
-                  </div>
-                  {couponError && <p className="text-xs text-red-500 font-bold">{couponError}</p>}
-                  {couponSuccess && <p className="text-xs text-green-500 font-bold">{couponSuccess}</p>}
-                  {appliedCoupon && (
-                    <div className="text-sm font-bold text-green-600">Diskon Kupon: - Rp {couponDiscountAmount.toLocaleString()}</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-6">
-                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 text-right">Subtotal</p>
-                 <p className="text-lg font-black text-gray-500 text-right">Rp.{subtotal.toLocaleString()}</p>
-                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 text-right mt-2">Total Tagihan {(appliedCoupon || customerDiscountAmount > 0) && <span className="text-green-500">(Telah Dipotong Diskon)</span>}</p>
-                 <p className="text-3xl font-black text-indigo-600 text-right">Rp.{totalAmount.toLocaleString()}</p>
-              </div>
-            </div>
-
-            <div className="mt-8 space-y-3">
-              <button
-                disabled={isSubmitting || cartItems.length === 0}
-                onClick={handlePreSubmit}
-                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                SIMPAN PESANAN
-              </button>
-              <p className="text-[9px] text-center text-gray-400 font-bold uppercase tracking-tighter">
-                * Data akan langsung masuk ke Sales Order Receive
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100 flex items-start gap-4">
-            <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
-            <p className="text-xs text-amber-700 font-bold leading-relaxed">
-              Pesanan V1 akan otomatis mengikuti setting pelanggan. Jika CASH maka status PAID, jika TEMPO maka status UNPAID.
-            </p>
-          </div>
+        <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100 flex items-start gap-2">
+          <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
+          <p className="text-xs text-amber-700 font-medium leading-relaxed">
+            Pesanan V1 akan otomatis mengikuti setting pelanggan. Jika CASH maka status PAID, jika TEMPO maka status UNPAID.
+          </p>
         </div>
       </div>
 
       <AnimatePresence>
         {isBankModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/50 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -775,7 +810,7 @@ export default function SalesOrderV1() {
                   </div>
                   <div>
                     <h3 className="text-xl font-black">Pilih Akun Kas/Bank</h3>
-                    <p className="text-xs text-white/70 font-bold uppercase tracking-widest">Pembayaran Tunai (Cash)</p>
+                    <p className="text-xs text-white/70 font-medium uppercase tracking-widest">Pembayaran Tunai (Cash)</p>
                   </div>
                 </div>
                 <button onClick={() => setIsBankModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -784,27 +819,27 @@ export default function SalesOrderV1() {
               </div>
 
               <div className="p-8 space-y-6">
-                <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-start gap-3">
+                <div className="bg-amber-50 p-2 rounded-lg border border-amber-100 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-700 font-bold leading-relaxed">
+                  <p className="text-xs text-amber-700 font-medium leading-relaxed">
                     Pesanan ini dibayar tunai. Silakan pilih akun bank atau kas yang akan menerima dana ini.
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Daftar Akun Aktif</label>
+                  <label className="mb-1 text-xs font-semibold text-gray-600">Daftar Akun Aktif</label>
                   <div className="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                     {bankAccounts.map((bank) => (
                       <button
                         key={bank.id}
                         onClick={() => setSelectedBankId(bank.id)}
-                        className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group ${
+                        className={`w-full p-2 rounded-lg border-2 text-left transition-all flex items-center gap-2 group ${
                           selectedBankId === bank.id
                             ? 'border-indigo-600 bg-indigo-50 shadow-md'
                             : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
                         }`}
                       >
-                        <div className={`p-3 rounded-xl transition-colors ${
+                        <div className={`p-3 rounded-lg transition-colors ${
                           selectedBankId === bank.id ? 'bg-indigo-600 text-white' : 'bg-white text-gray-400 group-hover:text-gray-600'
                         }`}>
                           <Landmark className="w-5 h-5" />
@@ -813,7 +848,7 @@ export default function SalesOrderV1() {
                           <p className={`font-black text-sm uppercase ${selectedBankId === bank.id ? 'text-indigo-900' : 'text-gray-700'}`}>
                             {bank.name}
                           </p>
-                          <p className="text-[10px] font-bold text-gray-400">{bank.type} - {bank.accountNumber || 'No Acc'}</p>
+                          <p className="text-[10px] font-medium text-gray-400">{bank.type} - {bank.accountNumber || 'No Acc'}</p>
                         </div>
                         {selectedBankId === bank.id && (
                           <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
@@ -828,7 +863,7 @@ export default function SalesOrderV1() {
                 <div className="pt-4 flex gap-3">
                   <button
                     onClick={() => setIsBankModalOpen(false)}
-                    className="flex-1 py-4 border border-gray-200 rounded-2xl text-gray-600 font-black hover:bg-gray-50 transition-all font-sans"
+                    className="flex-1 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all font-sans"
                   >
                     BATAL
                   </button>
@@ -838,7 +873,7 @@ export default function SalesOrderV1() {
                       setIsBankModalOpen(false);
                       processSubmit(selectedBankId);
                     }}
-                    className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
+                    className="flex-[2] py-4 bg-indigo-600 text-white rounded-lg font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                     KONFIRMASI & SIMPAN
@@ -850,7 +885,7 @@ export default function SalesOrderV1() {
         )}
 
         {showSuccess && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-white/80 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -865,6 +900,38 @@ export default function SalesOrderV1() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Sticky Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-white border-t border-gray-200 p-2 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40">
+        <div className="max-w-6xl mx-auto flex flex-row items-center justify-between gap-2">
+          <div className="flex gap-2 sm:gap-12 flex-1 w-full sm:w-auto">
+             <div className="hidden sm:block">
+                <p className="text-xs font-semibold text-gray-600 mb-1 text-left">Subtotal</p>
+                <p className="text-lg font-black text-gray-500 text-left">Rp.{subtotal.toLocaleString()}</p>
+             </div>
+             <div className="hidden sm:block">
+                <p className="text-xs font-semibold text-gray-600 mb-1 text-left">Diskon</p>
+                <p className="text-lg font-black text-emerald-500 text-left">- Rp.{discountAmount.toLocaleString()}</p>
+             </div>
+             <div>
+                <p className="text-xs font-semibold text-gray-600 mb-1 text-left">Netto {(appliedCoupon || customerDiscountAmount > 0) && <span className="hidden sm:inline text-emerald-500">(Dipotong Diskon)</span>}</p>
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
+                   <p className="text-2xl font-black text-indigo-600 text-left">Rp.{totalAmount.toLocaleString()}</p>
+                   {discountAmount > 0 && <p className="text-xs font-medium text-emerald-500 sm:hidden">- Rp.{discountAmount.toLocaleString()} (Diskon)</p>}
+                </div>
+             </div>
+          </div>
+          <button
+                disabled={isSubmitting || cartItems.length === 0}
+                onClick={handlePreSubmit}
+                className="w-auto px-6 sm:2 py-4 bg-indigo-600 text-white rounded-lg font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                {isSubmitting ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                <span className="hidden sm:inline">SIMPAN PESANAN</span>
+                <span className="sm:hidden">SIMPAN</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

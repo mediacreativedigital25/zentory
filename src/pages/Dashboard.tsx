@@ -118,8 +118,19 @@ export default function Dashboard() {
       paymentMethods[methodName] = (paymentMethods[methodName] || 0) + order.totalAmount;
 
       // Payment Status
-      if (order.paymentType === 'credit') paymentStatus.tempo += order.totalAmount;
-      else paymentStatus.lunas += order.totalAmount;
+      let paid = order.paidAmount > 0 ? order.paidAmount : (order.paymentStatus === 'paid' ? order.totalAmount : 0);
+      
+      // Fix for legacy V1 bug where cash orders were saved with 0 paidAmount and unpaid status
+      if (order.paymentType === 'cash' && paid === 0) {
+         paid = order.totalAmount;
+      }
+      
+      const remainingTempo = order.totalAmount - paid;
+      
+      paymentStatus.lunas += paid;
+      if (remainingTempo > 0) {
+        paymentStatus.tempo += remainingTempo;
+      }
 
       // Products
       order.items?.forEach((item: any) => {
@@ -173,7 +184,7 @@ export default function Dashboard() {
   }, [allTransactions]);
 
   const StatCard = ({ title, value, icon: Icon, trend, color }: any) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${color}`}>
           <Icon className="w-6 h-6 text-white" />
@@ -211,7 +222,7 @@ export default function Dashboard() {
 
       {/* Payment Status Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-100 text-green-600 rounded-xl">
               <CheckCircle2 className="w-6 h-6" />
@@ -225,7 +236,7 @@ export default function Dashboard() {
             <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">PAID</span>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-orange-100 text-orange-600 rounded-xl">
               <Wallet className="w-6 h-6" />
@@ -269,7 +280,7 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales vs Expenses */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6">Sales vs Expenses</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -286,7 +297,7 @@ export default function Dashboard() {
         </div>
 
         {/* Payment Methods */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6">Metode Pembayaran</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -319,7 +330,7 @@ export default function Dashboard() {
         </div>
 
         {/* Top Products */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Produk Terlaris</h3>
             <Tag className="w-5 h-5 text-gray-400" />
@@ -346,7 +357,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Transactions */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Transaksi Terakhir</h3>
             <TrendingUp className="w-5 h-5 text-gray-400" />

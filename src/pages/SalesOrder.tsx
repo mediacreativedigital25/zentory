@@ -665,7 +665,7 @@ export default function SalesOrder() {
 
   return (
     <div className={`flex flex-col lg:flex-row gap-6 ${isKasir ? 'h-[calc(100vh-73px)]' : 'lg:h-[calc(100vh-120px)]'} overflow-hidden lg:overflow-visible ${isKasir ? 'p-4' : ''}`}>
-      <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[500px] lg:min-h-0">
+      <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden min-h-[500px] lg:min-h-0">
         {isSettledToday && (
           <div className="p-4 bg-red-50 border-b border-red-100 flex items-center text-red-700 text-sm font-bold animate-pulse">
             <AlertCircle className="w-5 h-5 mr-2" />
@@ -695,7 +695,7 @@ export default function SalesOrder() {
                 placeholder="Scan Barcode / SKU..."
                 value={barcodeSearch}
                 onChange={(e) => setBarcodeSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-2.5 lg:py-3 bg-indigo-50 border border-indigo-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-indigo-900 placeholder:text-indigo-300 text-sm"
+                className="w-full pl-12 pr-4 py-2.5 lg:py-3 bg-indigo-50 border border-indigo-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-indigo-900 placeholder:text-indigo-300 text-sm"
               />
             </form>
             <div className="flex-1 relative">
@@ -705,7 +705,7 @@ export default function SalesOrder() {
                 placeholder="Search items..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-2.5 lg:py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full pl-12 pr-4 py-2.5 lg:py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
             </div>
           </div>
@@ -737,7 +737,7 @@ export default function SalesOrder() {
                 key={product.id}
                 onClick={() => addToCart(product)}
                 disabled={orderType === 'manual' && product.stock <= 0}
-                className="flex flex-col text-left group bg-white border border-gray-100 rounded-xl p-2 lg:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
+                className="flex flex-col text-left group bg-white border border-gray-100 rounded-lg p-2 lg:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
               >
                 <div className="aspect-square bg-gray-50 rounded-lg mb-2 lg:mb-3 overflow-hidden relative">
                   <img src={product.imageUrl || `https://picsum.photos/seed/${product.id}/200/200`} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -779,7 +779,7 @@ export default function SalesOrder() {
         </div>
       </div>
 
-      <div className="w-full lg:w-96 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:h-[calc(100vh-120px)] lg:sticky lg:top-0">
+      <div className="w-full lg:w-96 flex flex-col bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden lg:h-[calc(100vh-120px)] lg:sticky lg:top-0">
         <div className="p-3 lg:p-4 border-b border-gray-100 space-y-3">
           <h3 className="text-base lg:text-lg font-bold flex items-center">
             <ShoppingCart className="w-5 h-5 mr-2 text-indigo-600" />
@@ -787,11 +787,11 @@ export default function SalesOrder() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
             <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Select Customer</label>
+              <label className="block mb-1 text-xs font-semibold text-gray-600">Select Customer</label>
               <select 
                 value={selectedCustomer}
                 onChange={(e) => setSelectedCustomer(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs lg:text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-white border border-gray-100 rounded-lg text-xs lg:text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Guest Customer</option>
                 {customers.map(c => (
@@ -843,7 +843,7 @@ export default function SalesOrder() {
                       type="number"
                       value={item.quantity}
                       onChange={(e) => setQuantity(cartItemId, parseInt(e.target.value) || 0)}
-                      className="text-xs lg:text-sm font-black w-10 lg:w-12 text-center text-indigo-600 bg-gray-50 border-none outline-none focus:ring-1 focus:ring-indigo-500 rounded py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="text-xs lg:text-sm font-medium w-10 lg:w-12 text-center text-indigo-600 bg-white border border-gray-200 outline-none focus:ring-1 focus:ring-indigo-500 rounded py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <button onClick={() => updateQuantity(cartItemId, 1)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"><Plus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
                     <button onClick={() => updateQuantity(cartItemId, -item.quantity)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors ml-1"><Trash2 className="w-3 h-3 lg:w-4 lg:h-4" /></button>
@@ -963,7 +963,7 @@ export default function SalesOrder() {
 
               <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
                 <div className="space-y-3">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Metode Pembayaran</label>
+                  <label className="block tracking-wider text-xs font-semibold text-gray-600">Metode Pembayaran</label>
                   <div className="flex gap-3">
                     <button
                       onClick={() => setPaymentMethodType('tunai')}
@@ -988,11 +988,11 @@ export default function SalesOrder() {
                     animate={{ opacity: 1, height: 'auto' }}
                     className="space-y-2"
                   >
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Pilih Bank</label>
+                    <label className="block tracking-wider text-xs font-semibold text-gray-600">Pilih Bank</label>
                     <select 
                       value={selectedBankAccountId}
                       onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-2 bg-white border-2 border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       {bankAccounts.filter(b => b.name.toUpperCase() !== 'TUNAI').map(b => (
                         <option key={b.id} value={b.id}>{b.name} {b.accountNumber ? `(${b.accountNumber})` : ''}</option>
@@ -1005,7 +1005,7 @@ export default function SalesOrder() {
                 )}
 
                 <div className="space-y-3">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Tipe Transaksi</label>
+                  <label className="block tracking-wider text-xs font-semibold text-gray-600">Tipe Transaksi</label>
                   <div className="flex gap-3">
                     <button
                       onClick={() => setPaymentType('cash')}
@@ -1044,18 +1044,18 @@ export default function SalesOrder() {
                     className="space-y-4"
                   >
                     <div className="space-y-2">
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Uang Diterima (Bayar)</label>
+                      <label className="block tracking-wider text-xs font-semibold text-gray-600">Uang Diterima (Bayar)</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</span>
                         <input
                           type="number"
                           value={cashReceived}
                           onChange={(e) => setCashReceived(Number(e.target.value))}
-                          className="w-full pl-12 pr-4 py-3 bg-green-50 border-2 border-green-100 rounded-2xl text-lg font-black text-green-900 outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                          className="w-full pl-12 pr-4 py-3 bg-green-50 border-2 border-green-100 rounded-lg text-lg font-medium text-green-900 outline-none focus:ring-2 focus:ring-green-500 transition-all"
                         />
                       </div>
                     </div>
-                    <div className="p-4 bg-gray-50 rounded-2xl border-2 border-gray-100 flex justify-between items-center">
+                    <div className="p-4 bg-white rounded-lg border-2 border-gray-100 flex justify-between items-center">
                       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kembalian</span>
                       <span className={`text-xl font-black ${change >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>
                         Rp.{change.toLocaleString()}
@@ -1070,14 +1070,14 @@ export default function SalesOrder() {
                     animate={{ opacity: 1, height: 'auto' }}
                     className="space-y-2"
                   >
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Amount Paid (DP)</label>
+                    <label className="block tracking-wider text-xs font-semibold text-gray-600">Amount Paid (DP)</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</span>
                       <input
                         type="number"
                         value={amountPaid}
                         onChange={(e) => setAmountPaid(Number(e.target.value))}
-                        className="w-full pl-12 pr-4 py-3 bg-indigo-50 border-2 border-indigo-100 rounded-2xl text-lg font-black text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-indigo-50 border-2 border-indigo-100 rounded-lg text-lg font-medium text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                       />
                     </div>
                     {amountPaid < total && (
@@ -1092,8 +1092,8 @@ export default function SalesOrder() {
               <div className="p-6 border-t border-gray-100 bg-gray-50">
                 
                 <div className="space-y-4 pt-4 border-t border-gray-100">
-                  <div className="bg-gray-50/50 p-4 border border-gray-100 rounded-xl space-y-3">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kupon Diskon (Opsional)</label>
+                  <div className="bg-white/50 p-4 border border-gray-100 rounded-lg space-y-3">
+                    <label className="block text-xs font-semibold text-gray-600">Kupon Diskon (Opsional)</label>
                     <div className="flex gap-2">
                        <input
                           type="text"
@@ -1101,7 +1101,7 @@ export default function SalesOrder() {
                           value={couponCodeInput}
                           onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
                           disabled={!!appliedCoupon || isLoadingCoupon}
-                          className="flex-1 px-4 py-2 border border-gray-200 bg-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="flex-1 p-2 border border-gray-200 bg-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                        />
                        {!appliedCoupon ? (
                          <button onClick={(e) => { e.preventDefault(); handleApplyCoupon(); }} disabled={isLoadingCoupon || !couponCodeInput} className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold w-24">Pasang</button>
@@ -1173,14 +1173,14 @@ export default function SalesOrder() {
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <button
                   onClick={() => handlePrint('invoice')}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
                 >
                   <FileText className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
                   <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Faktur (A4)</span>
                 </button>
                 <button
                   onClick={() => handlePrint('receipt')}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
                 >
                   <Printer className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
                   <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Struk (80mm)</span>

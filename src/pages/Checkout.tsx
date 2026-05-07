@@ -248,7 +248,7 @@ export default function Checkout() {
               Terima kasih telah memilih paket <span className="text-indigo-600 font-black">{planInfo.name}</span>. Tim kami akan memverifikasi pembayaran Anda dalam waktu maksimal 1x24 jam.
             </p>
           </div>
-          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-left space-y-3">
+          <div className="p-6 bg-white rounded-lg border border-gray-100 text-left space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500 font-bold">Order ID</span>
               <span className="text-gray-900 font-black font-mono">#{generatedInvoiceNumber}</span>
@@ -294,7 +294,7 @@ export default function Checkout() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-lg border border-gray-100">
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Bisnis</p>
                 <p className="font-bold text-gray-900">{tenant?.name || '---'}</p>
@@ -402,7 +402,7 @@ export default function Checkout() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white rounded-xl border border-gray-200 flex items-center justify-center font-black text-indigo-600 uppercase">
+                      <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center font-medium text-indigo-600 uppercase">
                         {globalSettings?.paymentMethods?.manual?.bankName || 'BCA'}
                       </div>
                       <div>
@@ -421,7 +421,7 @@ export default function Checkout() {
                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Atas Nama</p>
                     <p className="font-bold text-gray-900">{globalSettings?.paymentMethods?.manual?.accountHolder || 'PT ZENTORY DIGITAL INDONESIA'}</p>
                   </div>
-                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-3">
+                  <div className="p-4 bg-amber-50 rounded-lg border border-amber-100 flex items-start gap-3">
                     <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-[10px] text-amber-800 font-medium leading-relaxed">
                       Mohon sertakan <span className="font-black">ID Tenant</span> Anda pada berita transfer untuk mempercepat proses verifikasi.
@@ -485,7 +485,7 @@ export default function Checkout() {
             <h3 className="text-xl font-black text-gray-900 tracking-tight">Ringkasan Pesanan</h3>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${planInfo.color}`}>
                     <Zap className="w-4 h-4" />
@@ -503,7 +503,7 @@ export default function Checkout() {
 
               {/* Coupon Section */}
               <div className="space-y-2 pt-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Kupon Diskon (Gunakan jika ada)</label>
+                <label className="text-xs font-semibold text-gray-600">Kupon Diskon (Gunakan jika ada)</label>
                 <div className="flex gap-2">
                   <input 
                     type="text" 
@@ -511,7 +511,7 @@ export default function Checkout() {
                     value={couponCodeInput}
                     onChange={e => setCouponCodeInput(e.target.value)}
                     disabled={!!appliedCoupon || isLoadingCoupon}
-                    className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono font-bold text-sm"
+                    className="flex-1 p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase font-mono font-medium text-sm"
                   />
                   {!appliedCoupon ? (
                     <button 
@@ -567,7 +567,7 @@ export default function Checkout() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+              <div className="flex items-start gap-3 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
                 <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-indigo-700 font-medium leading-relaxed">
                   Pembayaran Anda aman dan terenkripsi. Dengan melanjutkan, Anda menyetujui <span className="font-black underline">Syarat & Ketentuan</span> Zentory.

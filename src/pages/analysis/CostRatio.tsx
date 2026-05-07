@@ -113,7 +113,7 @@ export default function CostRatio() {
           </h2>
           <p className="text-gray-500 font-medium">Persentase Biaya Operasional terhadap Pendapatan (Makin Kecil Makin Baik).</p>
         </div>
-        <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex bg-white p-1 rounded-lg shadow-sm border border-gray-100">
           {[
             { label: 'Bulanan', value: '1m' },
             { label: '3 Bulan', value: '3m' },

@@ -176,7 +176,7 @@ export default function BankAccounts() {
               key={account.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all relative overflow-hidden group"
+              className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all relative overflow-hidden group"
             >
               <div className="absolute top-0 right-0 p-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 {account.name.toUpperCase() !== 'TUNAI' && (
@@ -242,7 +242,7 @@ export default function BankAccounts() {
         })}
 
         {accounts.length === 0 && (
-          <div className="col-span-full bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
+          <div className="col-span-full bg-white rounded-lg border-2 border-dashed border-gray-200 p-12 text-center">
             <Landmark className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-gray-900">Belum ada akun bank</h3>
             <p className="text-gray-500 max-w-xs mx-auto mt-2">
@@ -275,24 +275,24 @@ export default function BankAccounts() {
 
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Nama Bank / Metode</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Bank / Metode</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Contoh: BCA, Mandiri, QRIS Toko"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                    className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Tipe</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Tipe</label>
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as BankAccount['type'] })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                     >
                       {ACCOUNT_TYPES.map(type => (
                         <option key={type.id} value={type.id}>{type.label}</option>
@@ -300,7 +300,7 @@ export default function BankAccounts() {
                     </select>
                   </div>
                   <div className="flex items-end">
-                    <label className="flex items-center space-x-2 cursor-pointer pb-2">
+                    <label className="flex items-center space-x-2 cursor-pointer pb-2 text-xs font-semibold text-gray-600">
                       <input
                         type="checkbox"
                         checked={formData.isActive}
@@ -315,23 +315,23 @@ export default function BankAccounts() {
                 {formData.type !== 'CASH' && (
                   <>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Nomor Rekening / ID</label>
+                      <label className="block mb-1 text-xs font-semibold text-gray-600">Nomor Rekening / ID</label>
                       <input
                         type="text"
                         value={formData.accountNumber}
                         onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                         placeholder="Masukkan nomor rekening"
-                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Nama Pemilik</label>
+                      <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Pemilik</label>
                       <input
                         type="text"
                         value={formData.accountHolder}
                         onChange={(e) => setFormData({ ...formData, accountHolder: e.target.value })}
                         placeholder="Nama sesuai rekening"
-                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>
                   </>
@@ -341,7 +341,7 @@ export default function BankAccounts() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 transition-all"
+                    className="flex-1 px-6 py-3 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>

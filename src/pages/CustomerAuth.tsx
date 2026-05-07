@@ -137,7 +137,7 @@ export default function CustomerAuth() {
                 className="space-y-4 overflow-hidden"
               >
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Nama Lengkap</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Nama Lengkap</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
@@ -145,20 +145,20 @@ export default function CustomerAuth() {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                       placeholder="Nama Anda"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Alamat Pengiriman</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Alamat Pengiriman</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                     <textarea
                       required
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all min-h-[100px]"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all min-h-[100px]"
                       placeholder="Alamat Lengkap"
                     />
                   </div>
@@ -168,7 +168,7 @@ export default function CustomerAuth() {
           </AnimatePresence>
 
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Email</label>
+            <label className="block mb-2 text-xs font-semibold text-gray-600">Email</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -176,14 +176,14 @@ export default function CustomerAuth() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                 placeholder="email@contoh.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Kata Sandi</label>
+            <label className="block mb-2 text-xs font-semibold text-gray-600">Kata Sandi</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -191,14 +191,14 @@ export default function CustomerAuth() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                 placeholder="••••••••"
               />
             </div>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 text-red-600 text-sm rounded-2xl border border-red-100 font-medium">
+            <div className="p-4 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 font-medium">
               {error}
             </div>
           )}

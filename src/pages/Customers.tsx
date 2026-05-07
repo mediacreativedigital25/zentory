@@ -305,11 +305,11 @@ export default function Customers() {
             ref={fileInputRef} 
             onChange={handleFileUpload} 
             accept=".xlsx,.xls" 
-            className="hidden" 
+            className="hidden p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium" 
           />
           <button
             onClick={handleDownloadTemplate}
-            className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-lg flex items-center hover:bg-gray-50 transition-colors"
+            className="bg-white border border-gray-200 text-gray-600 p-2 rounded-lg flex items-center hover:bg-white transition-colors"
           >
             <Download className="w-5 h-5 mr-2" />
             Template
@@ -351,7 +351,7 @@ export default function Customers() {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -443,7 +443,7 @@ export default function Customers() {
                           setSelectedCustomerForDetail(customer);
                           setIsDetailModalOpen(true);
                         }}
-                        className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-white rounded-xl transition-all shadow-sm hover:shadow border border-transparent hover:border-emerald-100"
+                        className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-white rounded-lg transition-all shadow-sm hover:shadow border border-transparent hover:border-emerald-100"
                         title="Detail Pelanggan"
                       >
                         <Eye className="w-4 h-4" />
@@ -465,14 +465,14 @@ export default function Customers() {
                           }); 
                           setIsModalOpen(true); 
                         }} 
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-xl transition-all shadow-sm hover:shadow border border-transparent hover:border-indigo-100"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm hover:shadow border border-transparent hover:border-indigo-100"
                         title="Edit Customer"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(customer.id)} 
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-xl transition-all shadow-sm hover:shadow border border-transparent hover:border-red-100"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm hover:shadow border border-transparent hover:border-red-100"
                         title="Delete Customer"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -501,7 +501,7 @@ export default function Customers() {
 
       {/* Pagination */}
       {filteredCustomers.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-2xl border border-gray-100 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-lg border border-gray-100 gap-4">
           <p className="text-xs text-gray-500">
             Showing <span className="font-bold text-gray-900">{Math.min(filteredCustomers.length, (currentPage - 1) * rowsPerPage + 1)}</span> to <span className="font-bold text-gray-900">{Math.min(filteredCustomers.length, currentPage * rowsPerPage)}</span> of <span className="font-bold text-gray-900">{filteredCustomers.length}</span> customers
           </p>
@@ -509,7 +509,7 @@ export default function Customers() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -539,7 +539,7 @@ export default function Customers() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -554,7 +554,7 @@ export default function Customers() {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-gray-100"
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"
             >
               <div className="relative p-6 sm:p-8 border-b border-gray-50 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
                 <div className="flex items-center gap-4">
@@ -586,9 +586,9 @@ export default function Customers() {
                     <span className="text-xs font-black uppercase tracking-wider">Identitas Pelanggan</span>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
+                      <label className="ml-1 text-xs font-semibold text-gray-600">Nama Lengkap</label>
                       <div className="relative group">
                         <UserRound className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                         <input
@@ -597,13 +597,13 @@ export default function Customers() {
                           placeholder="Contoh: Budi Santoso"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
                         />
                       </div>
                     </div>
                     
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Customer Code</label>
+                      <label className="ml-1 text-xs font-semibold text-gray-600">Customer Code</label>
                       <div className="relative flex gap-2">
                         <div className="relative flex-1 group">
                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
@@ -611,10 +611,10 @@ export default function Customers() {
                             type="text"
                             value={formData.code}
                             readOnly
-                            className="w-full pl-11 pr-4 py-3 bg-gray-100/50 border border-gray-200 rounded-2xl outline-none font-mono text-gray-500 cursor-not-allowed text-sm"
+                            className="w-full outline-none text-gray-500 cursor-not-allowed p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium pl-10"
                           />
                         </div>
-                        <div className="px-4 py-3 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-xs border border-indigo-100">
+                        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center font-medium text-xs border border-indigo-100">
                           AUTO
                         </div>
                       </div>
@@ -629,9 +629,9 @@ export default function Customers() {
                     <span className="text-xs font-black uppercase tracking-wider">Kontak & Alamat</span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alamat Email</label>
+                      <label className="ml-1 text-xs font-semibold text-gray-600">Alamat Email</label>
                       <div className="relative group">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                         <input
@@ -640,13 +640,13 @@ export default function Customers() {
                           placeholder="email@perusahaan.com"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nomor Telepon/WA</label>
+                      <label className="ml-1 text-xs font-semibold text-gray-600">Nomor Telepon/WA</label>
                       <div className="relative group">
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                         <input
@@ -655,14 +655,14 @@ export default function Customers() {
                           placeholder="+62 812..."
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alamat Pengiriman</label>
+                    <label className="ml-1 text-xs font-semibold text-gray-600">Alamat Pengiriman</label>
                     <div className="relative group">
                       <MapPin className="absolute left-4 top-4 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                       <textarea
@@ -670,7 +670,7 @@ export default function Customers() {
                         placeholder="Jl. Nama Jalan No. 123, Kota, Provinsi..."
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all h-24 text-sm font-medium resize-none"
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all h-24 text-sm font-medium resize-none"
                       />
                     </div>
                   </div>
@@ -683,15 +683,15 @@ export default function Customers() {
                     <span className="text-xs font-black uppercase tracking-wider">Pengaturan Akun</span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipe Pelanggan</label>
+                      <label className="ml-1 text-xs font-semibold text-gray-600">Tipe Pelanggan</label>
                       <div className="relative group">
                         <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                         <select
                           value={formData.categoryId}
                           onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                          className="w-full pl-11 pr-8 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none text-sm font-black text-gray-700"
+                          className="w-full pl-11 pr-8 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none text-sm font-medium text-gray-700"
                         >
                           <option value="">-- Umum / Tanpa Tipe --</option>
                           {categories.map(c => (
@@ -703,15 +703,15 @@ export default function Customers() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Otoritas Pembayaran Tempo</label>
-                      <div className="flex items-center h-[48px] bg-gray-50 border border-gray-100 rounded-2xl px-4 gap-4">
-                        <div className="p-2 rounded-xl bg-white border border-gray-100 shadow-sm">
+                      <label className="ml-1 text-xs font-semibold text-gray-600">Otoritas Pembayaran Tempo</label>
+                      <div className="flex items-center h-[48px] bg-white border border-gray-100 rounded-lg px-4 gap-4">
+                        <div className="p-2 rounded-lg bg-white border border-gray-100 shadow-sm">
                           <CreditCard className="w-4 h-4 text-gray-400" />
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer flex-1">
+                        <label className="relative inline-flex items-center cursor-pointer flex-1 text-xs font-semibold text-gray-600">
                           <input 
                             type="checkbox" 
-                            className="sr-only peer"
+                            className="sr-only peer p-2 rounded-lg border border-gray-200 text-sm"
                             checked={formData.allowTempo}
                             onChange={(e) => setFormData({ ...formData, allowTempo: e.target.checked })}
                           />
@@ -724,9 +724,9 @@ export default function Customers() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-gray-100 mt-6">
+                  <div className="space-y-4 pt-4 border-t border-gray-100 mt-6">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Diskon Otomatis (Opsional)</label>
+                      <label className="ml-1 text-xs font-semibold text-gray-600">Diskon Otomatis (Opsional)</label>
                       <div className="relative group">
                         <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
                         <input
@@ -734,7 +734,7 @@ export default function Customers() {
                           placeholder="0"
                           value={formData.discount || ''}
                           onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                          className="w-full pl-11 pr-12 py-3 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-black text-gray-900"
+                          className="w-full pl-11 pr-12 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-gray-900"
                         />
                         <span className="absolute right-4 top-1/2 -translate-y-[45%] text-gray-500 font-bold">%</span>
                       </div>
@@ -766,7 +766,7 @@ export default function Customers() {
                                   min="1"
                                   value={formData.tempoLimitDays}
                                   onChange={(e) => setFormData({ ...formData, tempoLimitDays: parseInt(e.target.value) || 0 })}
-                                  className="w-full px-5 py-3 bg-white border border-orange-200 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 shadow-sm font-black text-orange-900 text-lg"
+                                  className="w-full px-5 py-3 bg-white border border-orange-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 shadow-sm font-medium text-orange-900 text-lg"
                                 />
                               </div>
                               <div className="space-y-0.5">
@@ -790,7 +790,7 @@ export default function Customers() {
                   <button 
                     type="button" 
                     onClick={() => setIsModalOpen(false)} 
-                    className="flex-1 sm:flex-none px-6 py-3 border border-gray-200 rounded-2xl text-gray-600 hover:bg-white hover:text-gray-900 hover:border-gray-300 transition-all text-xs font-black uppercase tracking-widest"
+                    className="flex-1 sm:flex-none px-6 py-3 border border-gray-200 rounded-lg text-gray-600 hover:bg-white hover:text-gray-900 hover:border-gray-300 transition-all text-xs font-medium uppercase tracking-widest"
                   >
                     Batal
                   </button>
@@ -815,9 +815,9 @@ export default function Customers() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col"
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
             >
-              <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
+              <div className="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
                     <UserRound className="w-6 h-6 text-white" />
@@ -832,32 +832,32 @@ export default function Customers() {
                 </button>
               </div>
 
-              <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
+              <div className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[70vh] no-scrollbar">
+                <div className="space-y-6">
+                  <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Informasi Kontak</label>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Informasi Kontak</label>
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 text-sm font-bold text-gray-600">
                           <Mail className="w-4 h-4 text-indigo-500" />
-                          {selectedCustomerForDetail.email}
+                          <span className="truncate">{selectedCustomerForDetail.email}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm font-bold text-gray-600">
                           <Phone className="w-4 h-4 text-indigo-500" />
-                          {selectedCustomerForDetail.phone}
+                          <span className="truncate">{selectedCustomerForDetail.phone}</span>
                         </div>
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Alamat Pengiriman</label>
-                      <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Alamat Pengiriman</label>
+                      <div className="flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-100">
                         <MapPin className="w-4 h-4 text-indigo-500 mt-1 shrink-0" />
                         <span className="text-sm font-bold text-gray-600 leading-relaxed">{selectedCustomerForDetail.address}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-4 pt-4 border-t border-gray-100">
                     <div className="p-6 bg-red-50 rounded-3xl border border-red-100 flex flex-col justify-center items-center text-center">
                       <div className="p-3 rounded-2xl bg-white shadow-sm text-red-600 mb-2">
                         <CreditCard className="w-6 h-6" />
@@ -874,12 +874,12 @@ export default function Customers() {
                       {oldestInvoicesMap[selectedCustomerForDetail.id] ? (
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs font-black text-indigo-600">#{oldestInvoicesMap[selectedCustomerForDetail.id].orderNumber}</span>
-                            <span className="text-[10px] font-bold text-gray-400">{formatDate(oldestInvoicesMap[selectedCustomerForDetail.id].date)}</span>
+                            <span className="text-xs font-black text-indigo-600 truncate mr-2">#{oldestInvoicesMap[selectedCustomerForDetail.id].orderNumber}</span>
+                            <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap">{formatDate(oldestInvoicesMap[selectedCustomerForDetail.id].date)}</span>
                           </div>
                           <div className="flex justify-between items-end">
                             <span className="text-xs font-bold text-orange-900">Sisa Tagihan:</span>
-                            <span className="text-sm font-black text-orange-600">Rp.{(oldestInvoicesMap[selectedCustomerForDetail.id].totalAmount - (oldestInvoicesMap[selectedCustomerForDetail.id].paidAmount || 0)).toLocaleString()}</span>
+                            <span className="text-sm font-black text-orange-600 truncate ml-2">Rp.{(oldestInvoicesMap[selectedCustomerForDetail.id].totalAmount - (oldestInvoicesMap[selectedCustomerForDetail.id].paidAmount || 0)).toLocaleString()}</span>
                           </div>
                         </div>
                       ) : (
@@ -890,7 +890,7 @@ export default function Customers() {
                 </div>
               </div>
 
-              <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100 flex justify-end">
                 <button 
                   onClick={() => setIsDetailModalOpen(false)}
                   className="px-8 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"

@@ -107,7 +107,7 @@ export default function Warehouses() {
           <motion.div
             key={warehouse.id}
             layout
-            className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
+            className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all"
           >
             <div className="flex justify-between items-start mb-4">
               <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
@@ -131,7 +131,7 @@ export default function Warehouses() {
           </motion.div>
         ))}
         {warehouses.length === 0 && (
-          <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
+          <div className="col-span-full text-center py-12 bg-white rounded-lg border border-dashed border-gray-200">
             <Building2 className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             <p className="text-gray-500">Belum ada gudang. Mulai dengan menambah satu!</p>
           </div>
@@ -155,35 +155,35 @@ export default function Warehouses() {
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nama Gudang</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Gudang</label>
                   <input
                     type="text"
                     required
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Lokasi</label>
                   <input
                     type="text"
                     required
                     value={formData.location || ''}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Deskripsi</label>
                   <textarea
                     value={formData.description || ''}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                   />
                 </div>
                 <div className="pt-4 flex justify-end space-x-3">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">Batal</button>
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-white">Batal</button>
                   <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">
                     {editingWarehouse ? 'Simpan Perubahan' : 'Tambah Gudang'}
                   </button>

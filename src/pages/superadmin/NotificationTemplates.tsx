@@ -117,7 +117,7 @@ export default function SuperAdminNotificationTemplates() {
                 value={templates.invoiceCreate}
                 onChange={e => setTemplates({...templates, invoiceCreate: e.target.value})}
                 rows={6}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
             </div>
 
@@ -131,7 +131,7 @@ export default function SuperAdminNotificationTemplates() {
                 value={templates.paymentSuccess}
                 onChange={e => setTemplates({...templates, paymentSuccess: e.target.value})}
                 rows={6}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
             </div>
 
@@ -145,7 +145,7 @@ export default function SuperAdminNotificationTemplates() {
                 value={templates.subscriptionInfo}
                 onChange={e => setTemplates({...templates, subscriptionInfo: e.target.value})}
                 rows={5}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
             </div>
           </div>
@@ -164,14 +164,14 @@ export default function SuperAdminNotificationTemplates() {
                 placeholder="Subject Email"
                 value={templates.invoiceCreateEmailSubject}
                 onChange={e => setTemplates({...templates, invoiceCreateEmailSubject: e.target.value})}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
               <textarea
                 value={templates.invoiceCreateEmailHtml}
                 onChange={e => setTemplates({...templates, invoiceCreateEmailHtml: e.target.value})}
                 rows={6}
                 placeholder="HTML Body"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
               />
             </div>
 
@@ -186,14 +186,14 @@ export default function SuperAdminNotificationTemplates() {
                 placeholder="Subject Email"
                 value={templates.paymentSuccessEmailSubject}
                 onChange={e => setTemplates({...templates, paymentSuccessEmailSubject: e.target.value})}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
               <textarea
                 value={templates.paymentSuccessEmailHtml}
                 onChange={e => setTemplates({...templates, paymentSuccessEmailHtml: e.target.value})}
                 rows={6}
                 placeholder="HTML Body"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
               />
             </div>
 
@@ -208,14 +208,14 @@ export default function SuperAdminNotificationTemplates() {
                 placeholder="Subject Email"
                 value={templates.subscriptionInfoEmailSubject}
                 onChange={e => setTemplates({...templates, subscriptionInfoEmailSubject: e.target.value})}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
               <textarea
                 value={templates.subscriptionInfoEmailHtml}
                 onChange={e => setTemplates({...templates, subscriptionInfoEmailHtml: e.target.value})}
                 rows={5}
                 placeholder="HTML Body"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
               />
             </div>
           </div>

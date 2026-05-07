@@ -168,7 +168,7 @@ export default function SettingTarget() {
           <p className="text-gray-500 font-medium">Tentukan target pencapaian bisnis Anda secara manual per bulan.</p>
         </div>
         
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
           <Calendar className="w-5 h-5 text-gray-400 ml-2" />
           <input 
             type="month" 
@@ -177,7 +177,7 @@ export default function SettingTarget() {
               setSelectedMonth(e.target.value);
               setIsEditing(false);
             }}
-            className="bg-transparent border-none font-black text-gray-900 focus:ring-0 outline-none cursor-pointer"
+            className="bg-transparent border border-gray-200 font-medium text-gray-900 focus:ring-0 outline-none cursor-pointer"
           />
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function SettingTarget() {
             <div className="flex gap-3">
               <button 
                 onClick={() => setIsEditing(false)}
-                className="flex items-center gap-2 px-5 py-3 bg-white text-gray-400 rounded-2xl font-black border border-gray-100 hover:text-gray-600 transition-all"
+                className="flex items-center gap-2 px-5 py-3 bg-white text-gray-400 rounded-lg font-medium border border-gray-100 hover:text-gray-600 transition-all"
               >
                 <X className="w-4 h-4" />
                 Batal
@@ -221,14 +221,14 @@ export default function SettingTarget() {
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-100 italic text-xs font-bold">
+              <div className="flex items-center gap-2 p-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 italic text-xs font-medium">
                 <ShieldCheck className="w-4 h-4" />
                 Target terkunci
               </div>
               
               {isMonthLocked && revisionCount < 2 && (
                 hasPendingRequest ? (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-100 italic text-xs font-bold">
+                  <div className="flex items-center gap-2 p-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 italic text-xs font-medium">
                     <Clock className="w-4 h-4" />
                     Menunggu Approval
                   </div>
@@ -268,7 +268,7 @@ export default function SettingTarget() {
                     type="number"
                     value={formData[t.key as keyof typeof formData]}
                     onChange={(e) => setFormData({ ...formData, [t.key]: e.target.value })}
-                    className="w-full pl-12 pr-4 py-4 bg-white border border-indigo-100 rounded-2xl text-2xl font-black text-gray-900 outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-4 bg-white border border-indigo-100 rounded-lg text-2xl font-medium text-gray-900 outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
               ) : (

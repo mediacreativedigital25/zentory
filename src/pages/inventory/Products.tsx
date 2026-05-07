@@ -509,7 +509,7 @@ export default function Products() {
               }]);
               setIsBulkModalOpen(true); 
             }}
-            className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg flex items-center hover:bg-indigo-100 transition-colors border border-indigo-100"
+            className="bg-indigo-50 text-indigo-600 p-2 rounded-lg flex items-center hover:bg-indigo-100 transition-colors border border-indigo-100"
           >
             <Barcode className="w-5 h-5 mr-2" />
             Bulk Scan Barcode
@@ -565,7 +565,7 @@ export default function Products() {
       </div>
 
       {activeTab === 'products' ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
             <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
               <span>Show:</span>
@@ -587,7 +587,7 @@ export default function Products() {
                 <th className="px-6 py-4 font-medium w-10">
                   <input 
                     type="checkbox" 
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-lg"
                     onChange={(e) => {
                       if (e.target.checked) {
                         setSelectedProducts(products.map(p => p.id));
@@ -614,7 +614,7 @@ export default function Products() {
                   <td className="px-6 py-4">
                     <input 
                       type="checkbox" 
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-lg"
                       checked={selectedProducts.includes(product.id)}
                       onChange={() => toggleProductSelection(product.id)}
                     />
@@ -728,7 +728,7 @@ export default function Products() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -758,7 +758,7 @@ export default function Products() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -774,9 +774,9 @@ export default function Products() {
       </div>
     ) : (
       <div className="space-y-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Cari Produk / SKU</label>
+            <label className="block mb-2 text-xs font-semibold text-gray-600">Cari Produk / SKU</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -784,26 +784,26 @@ export default function Products() {
                 placeholder="Cari nama produk atau SKU..."
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
             </div>
           </div>
           <div className="w-48">
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Dari Tanggal</label>
+            <label className="block mb-2 text-xs font-semibold text-gray-600">Dari Tanggal</label>
             <input
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="w-full p-2 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
           </div>
           <div className="w-48">
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Sampai Tanggal</label>
+            <label className="block mb-2 text-xs font-semibold text-gray-600">Sampai Tanggal</label>
             <input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="w-full p-2 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
           </div>
           <button
@@ -820,7 +820,7 @@ export default function Products() {
           </button>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
             <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
               <span>Show:</span>
@@ -914,7 +914,7 @@ export default function Products() {
             <button
               onClick={() => setHistoryPage(prev => Math.max(1, prev - 1))}
               disabled={historyPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -944,7 +944,7 @@ export default function Products() {
             <button
               onClick={() => setHistoryPage(prev => Math.min(totalHistoryPages, prev + 1))}
               disabled={historyPage === totalHistoryPages || totalHistoryPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -1001,7 +1001,7 @@ export default function Products() {
                                   value={row.barcode || ''}
                                   onChange={(e) => updateBulkRow(index, 'barcode', e.target.value)}
                                   placeholder="Scan..."
-                                  className="w-full pl-3 pr-16 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold"
+                                  className="w-full pl-3 pr-16 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
                                 />
                               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                 <button
@@ -1040,7 +1040,7 @@ export default function Products() {
                               type="text"
                               readOnly
                               value={row.sku || ''}
-                              className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-xs font-mono text-gray-500"
+                              className="w-full text-gray-500 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
                             />
                           </td>
                           <td className="py-3 px-2">
@@ -1067,7 +1067,7 @@ export default function Products() {
                                required
                                value={row.price || 0}
                                onChange={(e) => updateBulkRow(index, 'price', Number(e.target.value))}
-                               className="w-full px-3 py-2 border border-green-200 bg-green-50/30 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold text-green-700"
+                               className="w-full px-3 py-2 border border-green-200 bg-green-50/30 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium text-green-700"
                              />
                            </td>
                            <td className="py-3 px-2">
@@ -1132,7 +1132,7 @@ export default function Products() {
                 <button
                   type="button"
                   onClick={addBulkRow}
-                  className="px-6 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition-all flex items-center"
+                  className="px-6 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all flex items-center"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Tambah Baris
@@ -1140,7 +1140,7 @@ export default function Products() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setIsBulkModalOpen(false)}
-                    className="px-8 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-100 transition-all"
+                    className="px-8 py-3 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
                   >
                     Batal
                   </button>
@@ -1175,7 +1175,7 @@ export default function Products() {
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
                 <div className="space-y-4">
-                  <label className="block text-sm font-bold text-gray-700 uppercase tracking-widest text-[10px]">Tipe Produk</label>
+                  <label className="block text-xs font-semibold text-gray-600">Tipe Produk</label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {[
                       { id: 'tunggal', label: 'Produk Tunggal', description: 'Satu item, satu harga' },
@@ -1216,24 +1216,24 @@ export default function Products() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Produk</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Produk</label>
                     <input
                       type="text"
                       required
                       value={formData.name || ''}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">SKU (ID Unik)</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">SKU (ID Unik)</label>
                     <div className="relative">
                       <input
                         type="text"
                         required
                         readOnly
                         value={formData.sku || ''}
-                        className="w-full pl-4 pr-10 py-2 border border-gray-200 rounded-lg outline-none bg-gray-50 text-gray-500 cursor-not-allowed font-mono text-xs"
+                        className="w-full outline-none bg-white text-gray-500 cursor-not-allowed p-2 border border-gray-200 rounded-lg text-sm font-medium pl-4"
                       />
                       {!editingProduct && (
                         <button
@@ -1248,7 +1248,7 @@ export default function Products() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Barcode</label>
                     <div className="relative">
                       <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
@@ -1282,12 +1282,12 @@ export default function Products() {
                     </div>
                   </div>
                   <div className={formDisplayType === 'service' ? 'col-span-2' : ''}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Kategori</label>
                     <select
                       required
                       value={formData.category || ''}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="">Pilih Kategori</option>
                       {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
@@ -1296,11 +1296,11 @@ export default function Products() {
                   {formDisplayType !== 'service' && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Gudang</label>
+                        <label className="block mb-1 text-xs font-semibold text-gray-600">Gudang</label>
                         <select
                           value={formData.warehouseId || ''}
                           onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="">Pilih Gudang</option>
                           {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -1309,7 +1309,7 @@ export default function Products() {
                       
                       {formDisplayType === 'variasi' && (
                         <div className="col-span-2 pt-2 border-t border-gray-100">
-                          <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-4">
+                          <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 space-y-4">
                               <div className="flex justify-between items-center">
                                   <h4 className="text-sm font-bold text-indigo-900 flex items-center">
                                       <Layers className="w-4 h-4 mr-2" /> Pengaturan Variasi
@@ -1351,7 +1351,7 @@ export default function Products() {
                                       </thead>
                                       <tbody>
                                           {formData.variants.map((v, idx) => (
-                                              <tr key={v.id} className="bg-white rounded-xl shadow-sm border border-gray-100">
+                                              <tr key={v.id} className="bg-white rounded-lg shadow-sm border border-gray-100">
                                                   <td className="p-2 first:rounded-l-xl">
                                                       <ImageUpload
                                                           value={v.imageUrl || ''}
@@ -1373,7 +1373,7 @@ export default function Products() {
                                                               setFormData({ ...formData, variants: newVars });
                                                           }}
                                                           placeholder="Warna / Ukuran..."
-                                                          className="w-full bg-transparent border-none outline-none font-bold text-gray-900"
+                                                          className="w-full bg-transparent border border-gray-200 outline-none font-medium text-gray-900"
                                                       />
                                                   </td>
                                                   <td className="p-2">
@@ -1388,7 +1388,7 @@ export default function Products() {
                                                               }
                                                               setFormData({ ...formData, variants: newVars });
                                                           }}
-                                                          className="w-full bg-transparent border-none outline-none font-bold text-gray-900 text-xs"
+                                                          className="w-full bg-transparent border border-gray-200 outline-none font-medium text-gray-900 text-xs"
                                                       >
                                                           <option value="stock">Stock</option>
                                                           <option value="non-stock">Non-Stock/Jasa</option>
@@ -1416,7 +1416,7 @@ export default function Products() {
                                                               newVars[idx].hpp = Number(e.target.value);
                                                               setFormData({ ...formData, variants: newVars });
                                                           }}
-                                                          className="w-full bg-transparent border-none outline-none text-red-600 font-medium"
+                                                          className="w-full bg-transparent border border-gray-200 outline-none text-red-600 font-medium"
                                                       />
                                                   </td>
                                                   <td className="p-2">
@@ -1428,7 +1428,7 @@ export default function Products() {
                                                               newVars[idx].price = Number(e.target.value);
                                                               setFormData({ ...formData, variants: newVars });
                                                           }}
-                                                          className="w-full bg-transparent border-none outline-none font-bold text-green-700"
+                                                          className="w-full bg-transparent border border-gray-200 outline-none font-medium text-green-700"
                                                       />
                                                   </td>
                                                   <td className="p-2">
@@ -1471,7 +1471,7 @@ export default function Products() {
                         <>
                           <div className="col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                              <label className="block text-sm font-medium text-yellow-700 mb-1 flex items-center">
+                              <label className="block text-yellow-700 mb-1 flex items-center text-xs font-semibold text-gray-600">
                                 Min. Stock <AlertCircle className="w-3 h-3 ml-1" />
                               </label>
                               <input
@@ -1479,11 +1479,11 @@ export default function Products() {
                                 required
                                 value={formData.minStock || 0}
                                 onChange={(e) => setFormData({ ...formData, minStock: Number(e.target.value) })}
-                                className="w-full px-4 py-2 border border-yellow-100 rounded-lg outline-none focus:ring-2 focus:ring-yellow-500 bg-yellow-50/30"
+                                className="w-full p-2 border border-yellow-100 rounded-lg outline-none focus:ring-2 focus:ring-yellow-500 bg-yellow-50/30"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-bold text-red-600 mb-1 flex items-center">
+                              <label className="block text-red-600 mb-1 flex items-center text-xs font-semibold text-gray-600">
                                 HPP (Rp.) <DollarSign className="w-3 h-3 ml-1" />
                               </label>
                               <input
@@ -1491,11 +1491,11 @@ export default function Products() {
                                 required
                                 value={formData.hpp || 0}
                                 onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
-                                className="w-full px-4 py-2 border border-red-100 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-bold"
+                                className="w-full p-2 border border-red-100 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-medium"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-bold text-green-600 mb-1 flex items-center">
+                              <label className="block text-green-600 mb-1 flex items-center text-xs font-semibold text-gray-600">
                                 Harga Jual <DollarSign className="w-3 h-3 ml-1" />
                               </label>
                               <input
@@ -1503,11 +1503,11 @@ export default function Products() {
                                 required
                                 value={formData.price || 0}
                                 onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                                className="w-full px-4 py-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-bold text-green-700"
+                                className="w-full p-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-medium text-green-700"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Awal</label>
+                              <label className="block mb-1 text-xs font-semibold text-gray-600">Stock Awal</label>
                               <input
                                 type="number"
                                 required
@@ -1530,7 +1530,7 @@ export default function Products() {
                         <div className="col-span-2">
                           <div className="pt-2 border-t border-gray-100 mt-2">
                             <div className="flex justify-between items-center mb-2">
-                                <label className="block text-sm font-bold text-gray-700">Harga Grosir (Bertingkat)</label>
+                                <label className="block text-xs font-semibold text-gray-600">Harga Grosir (Bertingkat)</label>
                                 <button 
                                     type="button" 
                                     onClick={() => setFormData({ 
@@ -1544,9 +1544,9 @@ export default function Products() {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {formData.wholesalePrices.map((tier, idx) => (
-                                    <div key={idx} className="flex items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                    <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100">
                                         <div className="w-20">
-                                            <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Min. Qty</label>
+                                            <label className="block mb-1 text-xs font-semibold text-gray-600">Min. Qty</label>
                                             <input 
                                                 type="number"
                                                 value={tier.minQuantity}
@@ -1559,7 +1559,7 @@ export default function Products() {
                                             />
                                         </div>
                                         <div className="flex-1">
-                                            <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Harga Grosir</label>
+                                            <label className="block mb-1 text-xs font-semibold text-gray-600">Harga Grosir</label>
                                             <input 
                                                 type="number"
                                                 value={tier.price}
@@ -1594,7 +1594,7 @@ export default function Products() {
                   {formDisplayType === 'service' && (
                     <div className="col-span-2 grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-bold text-red-600 mb-1 flex items-center">
+                        <label className="block text-red-600 mb-1 flex items-center text-xs font-semibold text-gray-600">
                           Harga Modal (HPP) <DollarSign className="w-3 h-3 ml-1" />
                         </label>
                         <input
@@ -1602,11 +1602,11 @@ export default function Products() {
                           required
                           value={formData.hpp || 0}
                           onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
-                          className="w-full px-4 py-2 border border-red-100 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-bold"
+                          className="w-full p-2 border border-red-100 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-medium"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-green-600 mb-1 flex items-center">
+                        <label className="block text-green-600 mb-1 flex items-center text-xs font-semibold text-gray-600">
                           Harga Jual <DollarSign className="w-3 h-3 ml-1" />
                         </label>
                         <input
@@ -1614,7 +1614,7 @@ export default function Products() {
                           required
                           value={formData.price || 0}
                           onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                          className="w-full px-4 py-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-bold text-green-700"
+                          className="w-full p-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-medium text-green-700"
                         />
                       </div>
                     </div>
@@ -1627,11 +1627,11 @@ export default function Products() {
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Deskripsi</label>
                     <textarea
                       value={formData.description || ''}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                     />
                   </div>
                 </div>
@@ -1639,7 +1639,7 @@ export default function Products() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-white"
                   >
                     Batal
                   </button>

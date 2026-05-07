@@ -343,7 +343,7 @@ export default function PurchaseInvoices() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -448,18 +448,18 @@ export default function PurchaseInvoices() {
                 </button>
               </div>
               <form onSubmit={submitDeleteRequest} className="p-6 space-y-4">
-                <div className="bg-red-50 p-4 rounded-xl mb-4 border border-red-100">
+                <div className="bg-red-50 p-4 rounded-lg mb-4 border border-red-100">
                   <p className="text-xs text-red-600 font-bold mb-1 uppercase">MENGHAPUS INVOICE:</p>
                   <p className="text-sm font-black text-red-700">{deleteFormData.piNumber}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Alasan Pengajuan</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Alasan Pengajuan</label>
                   <select
                     required
                     value={deleteFormData.reason}
                     onChange={(e) => setDeleteFormData({ ...deleteFormData, reason: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"
                   >
                     <option value="">Pilih Alasan</option>
                     <option value="Salah Metode Pembayaran">Salah Metode Pembayaran</option>
@@ -475,24 +475,24 @@ export default function PurchaseInvoices() {
                     animate={{ opacity: 1, height: 'auto' }}
                     className="space-y-2"
                   >
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Catatan Tambahan</label>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Catatan Tambahan</label>
                     <textarea
                       required
                       value={deleteFormData.notes}
                       onChange={(e) => setDeleteFormData({ ...deleteFormData, notes: e.target.value })}
                       placeholder="Jelaskan alasan lainnya..."
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500 h-24"
+                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500 h-24"
                     />
                   </motion.div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Deadline Approval</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Deadline Approval</label>
                   <input
                     type="date"
                     readOnly
                     value={deleteFormData.deadline}
-                    className="w-full px-4 py-2 border border-gray-100 bg-gray-50 rounded-lg text-gray-500 cursor-not-allowed outline-none"
+                    className="w-full bg-white text-gray-500 cursor-not-allowed outline-none p-2 border border-gray-200 rounded-lg text-sm font-medium"
                   />
                   <p className="text-[10px] text-gray-400 mt-1 italic">*Deadline diatur otomatis H+1</p>
                 </div>
@@ -501,7 +501,7 @@ export default function PurchaseInvoices() {
                   <button
                     type="button"
                     onClick={() => setIsDeleteModalOpen(false)}
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
@@ -549,7 +549,7 @@ export default function PurchaseInvoices() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Pilih Sumber Dana</label>
+                  <label className="block text-xs font-semibold text-gray-600">Pilih Sumber Dana</label>
                   <div className="grid grid-cols-1 gap-2">
                     {bankAccounts.map((bank) => (
                       <button
@@ -577,7 +577,7 @@ export default function PurchaseInvoices() {
                 <div className="pt-4 flex space-x-3">
                   <button
                     onClick={() => setIsPaymentModalOpen(false)}
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
@@ -617,19 +617,19 @@ export default function PurchaseInvoices() {
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Reference PO</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Reference PO</label>
                   <select
                     required
                     value={formData.poId}
                     onChange={(e) => handlePOSelection(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Pilih Purchase Order</option>
                     {orders.map(o => <option key={o.id} value={o.id}>{o.poNumber} - {o.supplierName}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Jumlah Tagihan</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Jumlah Tagihan</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">Rp</span>
                     <input
@@ -637,26 +637,26 @@ export default function PurchaseInvoices() {
                       required
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                      className="w-full pl-12 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                      className="w-full pl-12 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Tanggal Jatuh Tempo</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Tanggal Jatuh Tempo</label>
                   <input
                     type="date"
                     required
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Status Pembayaran</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Status Pembayaran</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="unpaid">Belum Dibayar</option>
                     <option value="partial">Dibayar Sebagian</option>
@@ -667,7 +667,7 @@ export default function PurchaseInvoices() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-600 font-bold hover:bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>

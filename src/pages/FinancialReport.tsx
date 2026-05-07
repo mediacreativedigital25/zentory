@@ -144,7 +144,7 @@ export default function FinancialReport() {
           <p className="text-gray-500 mt-1">Analisis performa finansial bisnis Anda secara mendalam.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="bg-white p-1 rounded-2xl border border-gray-100 shadow-sm flex">
+          <div className="bg-white p-1 rounded-lg border border-gray-100 shadow-sm flex">
             {(['daily', 'weekly', 'monthly', 'yearly'] as FilterType[]).map((f) => (
               <button
                 key={f}
@@ -159,7 +159,7 @@ export default function FinancialReport() {
           </div>
           <button
             onClick={handleExport}
-            className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-600 hover:bg-gray-50 transition-all shadow-sm"
+            className="p-3 bg-white border border-gray-100 rounded-lg text-gray-600 hover:bg-white transition-all shadow-sm"
             title="Export Report"
           >
             <Download className="w-5 h-5" />
@@ -264,7 +264,7 @@ export default function FinancialReport() {
               <FileText className="w-5 h-5 mr-2 text-indigo-600" />
               Rincian Transaksi ({filter === 'daily' ? 'Hari Ini' : filter === 'weekly' ? 'Minggu Ini' : filter === 'monthly' ? 'Bulan Ini' : 'Tahun Ini'})
             </h3>
-            <div className="flex items-center gap-2 text-[10px] text-gray-500 bg-white px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 text-[10px] text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
               <span className="font-black uppercase tracking-widest">Tampilkan:</span>
               <select 
                 value={rowsPerPage} 
@@ -360,7 +360,7 @@ export default function FinancialReport() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
+              className="p-3 bg-white border border-gray-100 rounded-lg text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -397,7 +397,7 @@ export default function FinancialReport() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
+              className="p-3 bg-white border border-gray-100 rounded-lg text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

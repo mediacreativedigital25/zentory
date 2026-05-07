@@ -346,7 +346,7 @@ export default function GoodsReceipts() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -414,13 +414,13 @@ export default function GoodsReceipts() {
               </div>
               <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Reference Purchase Order (PO)</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Reference Purchase Order (PO)</label>
                   <select
                     required
                     disabled={!!editingReceipt}
                     value={formData.poId}
                     onChange={(e) => handlePOSelection(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-white"
                   >
                     <option value="">Pilih PO yang akan diterima</option>
                     {orders.map(o => <option key={o.id} value={o.id}>{o.poNumber} - {o.supplierName}</option>)}
@@ -435,7 +435,7 @@ export default function GoodsReceipts() {
                   
                   <div className="space-y-3">
                     {formData.items.map((item, index) => (
-                      <div key={index} className="flex gap-3 items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
+                      <div key={index} className="flex gap-3 items-center bg-white p-4 rounded-lg border border-gray-100">
                         <button
                           type="button"
                           onClick={() => toggleCheck(index)}
@@ -450,7 +450,7 @@ export default function GoodsReceipts() {
                           <p className="text-xs text-gray-500">Dipesan: {item.quantityOrdered} Unit</p>
                         </div>
                         <div className="w-32">
-                          <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Qty Diterima</label>
+                          <label className="block mb-1 text-xs font-semibold text-gray-600">Qty Diterima</label>
                           <input
                             type="number"
                             required
@@ -482,7 +482,7 @@ export default function GoodsReceipts() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>

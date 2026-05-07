@@ -362,7 +362,7 @@ export default function PurchaseOrders() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -441,23 +441,23 @@ export default function PurchaseOrders() {
               <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Supplier</label>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Supplier</label>
                     <select
                       required
                       value={formData.supplierId}
                       onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="">Pilih Supplier</option>
                       {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Reference PR (Optional)</label>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Reference PR (Optional)</label>
                     <select
                       value={formData.prId}
                       onChange={(e) => handlePRSelection(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="">Pilih PR yang disetujui</option>
                       {requests.map(r => <option key={r.id} value={r.id}>{r.prNumber} ({r.items.length} Items)</option>)}
@@ -482,7 +482,7 @@ export default function PurchaseOrders() {
                   
                   <div className="space-y-3">
                     {formData.items.map((item, index) => (
-                      <div key={index} className="flex gap-3 items-start bg-gray-50 p-3 rounded-xl border border-gray-100">
+                      <div key={index} className="flex gap-3 items-start bg-white p-3 rounded-lg border border-gray-100">
                         <div className="flex-1">
                           <select
                             required
@@ -499,7 +499,7 @@ export default function PurchaseOrders() {
                             <select
                               value={(item as any).variantId || ''}
                               onChange={(e) => updateItem(index, item.productId, e.target.value)}
-                              className="w-full mt-2 px-3 py-1.5 border border-indigo-100 bg-indigo-50/50 rounded-lg text-[11px] font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full mt-2 px-3 py-1.5 border border-indigo-100 bg-indigo-50/50 rounded-lg text-[11px] font-medium outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                               {products.find(p => p.id === item.productId)?.variants?.map((v: any) => (
                                 <option key={v.id} value={v.id}>{v.name} (HPP: Rp.{v.hpp.toLocaleString()})</option>
@@ -557,7 +557,7 @@ export default function PurchaseOrders() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>

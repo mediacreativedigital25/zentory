@@ -179,15 +179,15 @@ export default function DomainManagement() {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3">
-            <div className="bg-white p-4 rounded-2xl border border-indigo-100">
+            <div className="bg-white p-4 rounded-lg border border-indigo-100">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Type</p>
               <p className="font-mono font-bold text-indigo-600 text-sm">CNAME</p>
             </div>
-            <div className="bg-white p-4 rounded-2xl border border-indigo-100">
+            <div className="bg-white p-4 rounded-lg border border-indigo-100">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Name (Host)</p>
               <p className="font-mono font-bold text-indigo-600 text-sm">@ atau subdomain (misal: shop)</p>
             </div>
-            <div className="bg-white p-4 rounded-2xl border border-indigo-100 relative group">
+            <div className="bg-white p-4 rounded-lg border border-indigo-100 relative group">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Target (Value)</p>
               <p className="font-mono font-bold text-indigo-600 text-xs truncate pr-8">{appHostname}</p>
               <button 
@@ -214,7 +214,7 @@ export default function DomainManagement() {
               <p className="text-sm text-amber-700">Gunakan Worker sebagai jembatan. Satu Worker bisa digunakan untuk banyak domain.</p>
             </div>
           </div>
-          <div className="bg-white p-4 rounded-2xl border border-amber-100 space-y-3">
+          <div className="bg-white p-4 rounded-lg border border-amber-100 space-y-3">
             <p className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md inline-block">TIPS: Jika sudah punya Worker proxy, cukup tambahkan domain baru di tab "Domains & Routes".</p>
             <ol className="text-xs text-gray-600 space-y-2 list-decimal ml-4 font-medium">
               <li>Buat Worker baru di Cloudflare (Start with Hello World).</li>
@@ -263,17 +263,17 @@ export default function DomainManagement() {
             placeholder="Cari domain atau tenant..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
           />
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Domain</p>
             <p className="text-xl font-bold text-gray-900">{domains.length}</p>
           </div>
           <Globe className="w-8 h-8 text-indigo-100" />
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Aktif</p>
             <p className="text-xl font-bold text-green-600">{domains.filter(d => d.status === 'active').length}</p>
@@ -402,7 +402,7 @@ export default function DomainManagement() {
               </div>
               <form onSubmit={handleAddDomain} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Domain Name</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Domain Name</label>
                   <div className="relative">
                     <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -411,18 +411,18 @@ export default function DomainManagement() {
                       placeholder="contoh: toko-saya.com"
                       value={formData.domain}
                       onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Tenant</label>
+                  <label className="block mb-2 text-xs font-semibold text-gray-600">Pilih Tenant</label>
                   <select
                     required
                     value={formData.tenantId}
                     onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium appearance-none bg-white"
+                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium appearance-none bg-white"
                   >
                     <option value="">Pilih Tenant Owner</option>
                     {tenants.map(t => (
@@ -439,14 +439,14 @@ export default function DomainManagement() {
                     onChange={(e) => setFormData({ ...formData, isPrimary: e.target.checked })}
                     className="w-5 h-5 text-indigo-600 rounded-lg border-gray-300 focus:ring-indigo-500"
                   />
-                  <label htmlFor="isPrimary" className="text-sm font-bold text-gray-700">Set sebagai Domain Utama</label>
+                  <label htmlFor="isPrimary" className="text-xs font-semibold text-gray-600">Set sebagai Domain Utama</label>
                 </div>
 
                 <div className="pt-4 flex gap-3">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-2xl text-gray-600 font-bold hover:bg-gray-50"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>

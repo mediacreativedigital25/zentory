@@ -51,7 +51,7 @@ export default function SuperAdminUsers() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -67,7 +67,7 @@ export default function SuperAdminUsers() {
             <select
               value={userFilter}
               onChange={(e) => setUserFilter(e.target.value as any)}
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              className="p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="all">All Users</option>
               <option value="online">Online Now</option>

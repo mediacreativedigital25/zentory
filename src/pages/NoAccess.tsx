@@ -29,7 +29,7 @@ export default function NoAccess() {
           </Link>
           <button
             onClick={() => signOut(auth)}
-            className="inline-flex items-center justify-center w-full px-6 py-4 bg-white border-2 border-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-50 hover:border-gray-200 transition-all"
+            className="inline-flex items-center justify-center w-full px-6 py-4 bg-white border-2 border-gray-100 text-gray-600 rounded-lg font-medium hover:bg-white hover:border-gray-200 transition-all"
           >
             <LogOut className="w-5 h-5 mr-3" />
             Logout Akun
