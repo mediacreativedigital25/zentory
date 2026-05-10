@@ -474,7 +474,8 @@ export default function SalesOrder() {
             const prefix = isKasir ? 'M' : (orderType === 'manual' ? 'M' : 'IN');
             orderNumber = `${prefix}${yearMonth}${String(sequence).padStart(6, '0')}`;
 
-            const productUpdates: { ref: any; updateData: any }[] = [];
+            const productUpdatesMap = new Map<string, { ref: any; updateData: any; productData: Product }>();
+
             for (const pInfo of productDocs) {
               const productData = pInfo.data;
               const item = pInfo.item;
@@ -483,46 +484,55 @@ export default function SalesOrder() {
               const isService = productData.type === 'service' || (variant && variant.type === 'non-stock');
               
               if (!isService) {
+                // Get the current base reference if it exists in the map
+                const existingUpdate = productUpdatesMap.get(item.product.id);
+                const currentProductData = existingUpdate ? existingUpdate.productData : { ...productData, variants: productData.variants ? [...productData.variants] : [] };
+                
                 let currentItemStock = 0;
-                let updateData: any = {};
+                let updateData: any = existingUpdate ? { ...existingUpdate.updateData } : {};
 
-                if (itemVid && productData.variants) {
-                  const variantIndex = productData.variants.findIndex(v => v.id === itemVid);
-                  if (variantIndex === -1) throw new Error(`Variant not found for ${productData.name}`);
+                if (itemVid && currentProductData.variants) {
+                  const variantIndex = currentProductData.variants.findIndex(v => v.id === itemVid);
+                  if (variantIndex === -1) throw new Error(`Variant not found for ${currentProductData.name}`);
                   
-                  const variant = productData.variants[variantIndex];
-                  currentItemStock = variant.stock;
+                  const targetVariant = currentProductData.variants[variantIndex];
+                  currentItemStock = targetVariant.stock;
                   if (currentItemStock < item.quantity) {
-                    throw new Error(`Stok variasi ${variant.name} untuk ${productData.name} tidak mencukupi`);
+                    throw new Error(`Stok variasi ${targetVariant.name} untuk ${currentProductData.name} tidak mencukupi`);
                   }
 
-                  const updatedVariants = [...productData.variants];
-                  updatedVariants[variantIndex] = {
-                    ...variant,
-                    stock: variant.stock - item.quantity
+                  currentProductData.variants[variantIndex] = {
+                    ...targetVariant,
+                    stock: targetVariant.stock - item.quantity
                   };
 
                   updateData = {
-                    variants: updatedVariants,
-                    stock: (productData.stock || 0) - item.quantity
+                    ...updateData,
+                    variants: currentProductData.variants,
+                    stock: (currentProductData.stock || 0) - item.quantity // Decrease total stock too
                   };
+                  // Apply total stock safely:
+                  currentProductData.stock = updateData.stock;
                 } else {
-                  currentItemStock = productData.stock || 0;
+                  currentItemStock = currentProductData.stock || 0;
                   if (currentItemStock < item.quantity) {
-                    throw new Error(`Stok ${productData.name} tidak mencukupi`);
+                    throw new Error(`Stok ${currentProductData.name} tidak mencukupi`);
                   }
+                  
                   updateData = {
-                    stock: (productData.stock || 0) - item.quantity
+                    ...updateData,
+                    stock: currentItemStock - item.quantity
                   };
+                  currentProductData.stock = updateData.stock;
                 }
 
-                productUpdates.push({
+                productUpdatesMap.set(item.product.id, {
                   ref: pInfo.ref,
-                  updateData
+                  updateData,
+                  productData: currentProductData
                 });
 
-                const variant = itemVid ? productData.variants?.find(v => v.id === itemVid) : null;
-                const logName = variant ? `${productData.name} (${variant.name})` : productData.name;
+                const logName = variant ? `${currentProductData.name} (${variant.name})` : currentProductData.name;
                 stockLogsToProcess.push({
                   productId: item.product.id,
                   name: logName,
@@ -554,7 +564,7 @@ export default function SalesOrder() {
               }
             }
             
-            for (const update of productUpdates) {
+            for (const update of productUpdatesMap.values()) {
               transaction.update(update.ref, update.updateData);
             }
 

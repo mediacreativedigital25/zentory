@@ -469,6 +469,26 @@
       },
       "required": ["tenantId", "sourceCollection", "sourceId", "reason", "status"]
     },
+    "payment_correction": {
+      "title": "Payment Correction",
+      "description": "Request to correct/undo a payment receipt.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "receiptId": { "type": "string" },
+        "receiptNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "amount": { "type": "number" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "requestedBy": { "type": "string" },
+        "requestedByName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "invoices": { "type": "array" },
+        "collections": { "type": "array" }
+      },
+      "required": ["tenantId", "receiptId", "receiptNumber", "reason", "status", "requestedBy"]
+    },
     "system_service": {
       "title": "System Service",
       "description": "Available services and packages in the system.",
@@ -603,6 +623,10 @@
     "/delete_requests/{requestId}": {
       "schema": "delete_request",
       "description": "Requests for document deletion"
+    },
+    "/payment_corrections/{correctionId}": {
+      "schema": "payment_correction",
+      "description": "Requests for payment correction/undo"
     },
     "/system_services/{serviceId}": {
       "schema": "system_service",

@@ -76,8 +76,8 @@ export default function Finance() {
     }
   };
 
-  const totalSales = transactions.filter(t => t.type === 'sale' && t.status !== 'cancelled').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
-  const totalExpenses = transactions.filter(t => t.type === 'expense' && t.status !== 'cancelled').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+  const totalSales = transactions.filter(t => t.type === 'sale' && t.status !== 'cancelled' && t.status !== 'deleted').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+  const totalExpenses = transactions.filter(t => t.type === 'expense' && t.status !== 'cancelled' && t.status !== 'deleted').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
   const balance = totalSales - totalExpenses;
 
   const filteredTransactions = transactions.filter(t => 

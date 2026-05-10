@@ -114,6 +114,72 @@ export default function SuperAdminApprovals() {
             tenantId: request.tenantId,
             month: request.targetMonth
           }, { merge: true });
+        } else if (request.type === 'payment_correction' && request.receiptId) {
+          // Revert the payment
+          // Note: using direct writes rather than batch directly to keep similar error boundaries as above if needed,
+          // but we can just use normal operations.
+          // 1. Revert Invoices (orders)
+          if (Array.isArray(request.invoices)) {
+            for (const inv of request.invoices) {
+              const orderRef = doc(db, 'orders', inv.orderId);
+              const orderSnap = await getDoc(orderRef);
+              if (orderSnap.exists()) {
+                 const currentData = orderSnap.data();
+                 const currentPaid = Number(currentData.paidAmount) || 0;
+                 const allocatedAmount = Number(inv.amountPaid) || 0;
+                 const newPaid = Math.max(0, currentPaid - allocatedAmount);
+                 const orderTotal = Number(currentData.totalAmount) || Number(currentData.total) || 0;
+                 
+                 let paymentStatus = newPaid <= 0 ? 'unpaid' : (newPaid < orderTotal ? 'partial' : 'paid');
+                 let statusToSet = currentData.status;
+                 if (currentData.status === 'completed' && paymentStatus !== 'paid') {
+                    statusToSet = 'pending'; 
+                 }
+                 
+                 await updateDoc(orderRef, {
+                   paidAmount: newPaid,
+                   paymentStatus: paymentStatus,
+                   status: statusToSet,
+                   isInCollection: true
+                 });
+              }
+            }
+          }
+          // 2. Revert Collections (invoice_collections)
+          if (Array.isArray(request.collections)) {
+            for (const col of request.collections) {
+              const colRef = doc(db, 'invoice_collections', col.collectionId);
+              const colSnap = await getDoc(colRef);
+              if (colSnap.exists()) {
+                const currentData = colSnap.data();
+                const totalPaid = Number(currentData.totalPaid) || 0;
+                const allocatedAmount = Number(col.amountPaid) || 0;
+                const newTotalPaid = Math.max(0, totalPaid - allocatedAmount);
+                const colTotalAmount = Number(currentData.totalAmount) || 0;
+                const newSisa = Math.max(0, colTotalAmount - newTotalPaid);
+                
+                await updateDoc(colRef, {
+                  totalPaid: newTotalPaid,
+                  totalSisa: newSisa,
+                  status: 'open'
+                });
+              }
+            }
+          }
+          // 3. Delete related transactions
+          const trxQuery = query(
+            collection(db, 'transactions'),
+            where('tenantId', '==', request.tenantId),
+             where('transactionNumber', '>=', `TRX-RP-${request.orderNumber}`),
+             where('transactionNumber', '<=', `TRX-RP-${request.orderNumber}\uf8ff`)
+          );
+          const trxSnap = await getDocs(trxQuery);
+          for (const tDoc of trxSnap.docs) {
+             await deleteDoc(tDoc.ref);
+          }
+          
+          // 4. Delete the actual receipt
+          await deleteDoc(doc(db, 'payment_receipts', request.receiptId));
         }
 
         await deleteDoc(requestRef);

@@ -16,7 +16,8 @@ import {
   Banknote,
   Navigation,
   Layers,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -47,6 +48,29 @@ export default function ReceivePayment() {
   const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [requestKoreksiReceipt, setRequestKoreksiReceipt] = useState<PaymentReceipt | null>(null);
+  const [koreksiReasonType, setKoreksiReasonType] = useState('Salah Input Nominal');
+  const [koreksiReasonDetail, setKoreksiReasonDetail] = useState('');
+  const [isRequestingKoreksi, setIsRequestingKoreksi] = useState(false);
+  const [pendingCorrections, setPendingCorrections] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!targetTenantId) return;
+
+    const unsubCorrections = onSnapshot(query(
+      collection(db, 'approval_requests'),
+      where('tenantId', '==', targetTenantId),
+      where('type', '==', 'payment_correction'),
+      where('status', '==', 'pending')
+    ), (snap) => {
+      setPendingCorrections(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, error => {
+      console.error('Error fetching pending corrections:', error);
+    });
+
+    return () => unsubCorrections();
+  }, [targetTenantId]);
 
   useEffect(() => {
     if (!targetTenantId) return;
@@ -314,6 +338,41 @@ export default function ReceivePayment() {
     }
   };
 
+  const handleRequestKoreksi = async () => {
+    const finalReason = koreksiReasonType === 'Lainnya' ? koreksiReasonDetail : koreksiReasonType;
+    if (!requestKoreksiReceipt || !finalReason.trim() || !targetTenantId) return;
+    setIsRequestingKoreksi(true);
+
+    try {
+      await addDoc(collection(db, 'approval_requests'), {
+        tenantId: targetTenantId,
+        type: 'payment_correction',
+        receiptId: requestKoreksiReceipt.id,
+        orderNumber: requestKoreksiReceipt.receiptNumber, // Maps to reference
+        customerName: requestKoreksiReceipt.customerName,
+        amount: requestKoreksiReceipt.amount,
+        reason: finalReason,
+        status: 'pending',
+        requestedBy: profile?.uid,
+        requestedByName: profile?.name || profile?.email || 'Kasir',
+        requestedAt: serverTimestamp(),
+        // We save a snapshot of the allocated invoices and collections for easy rollback reference 
+        invoices: requestKoreksiReceipt.invoices || [],
+        collections: requestKoreksiReceipt.collections || []
+      });
+
+      alert('Berhasil mengajukan koreksi payment ke Super Admin.');
+      setRequestKoreksiReceipt(null);
+      setKoreksiReasonType('Salah Input Nominal');
+      setKoreksiReasonDetail('');
+    } catch (err) {
+      console.error('Error requesting koreksi:', err);
+      alert('Gagal mengajukan koreksi payment.');
+    } finally {
+      setIsRequestingKoreksi(false);
+    }
+  };
+
   const filteredReceipts = receipts.filter(r => 
     r.receiptNumber.toLowerCase().includes(search.toLowerCase()) ||
     r.customerName.toLowerCase().includes(search.toLowerCase())
@@ -364,6 +423,56 @@ export default function ReceivePayment() {
           </span>
         </div>
       </div>
+
+      {/* Pending Corrections Table */}
+      {pendingCorrections.length > 0 && (
+        <div className="bg-amber-50/50 rounded-[2.5rem] border border-amber-100 shadow-sm overflow-hidden mb-6">
+          <div className="p-6 border-b border-amber-100/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold text-amber-900 leading-tight">Status Pengajuan Koreksi</h3>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-amber-100/30">
+                  <th className="px-6 py-4 text-[10px] font-black text-amber-700 uppercase tracking-widest">Waktu Pengajuan</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-amber-700 uppercase tracking-widest">No. Bukti</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-amber-700 uppercase tracking-widest">Alasan</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-amber-700 uppercase tracking-widest">Diajukan Oleh</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-amber-700 uppercase tracking-widest text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-100/30">
+                {pendingCorrections.map(c => (
+                  <tr key={c.id} className="hover:bg-amber-50/80 transition-colors">
+                    <td className="px-6 py-4 text-xs font-bold text-amber-800">
+                      {c.requestedAt?.toDate().toLocaleString('id-ID')}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-black text-amber-900">
+                      {c.orderNumber}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-amber-800">
+                      {c.reason}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-amber-800">
+                      {c.requestedByName}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="px-3 py-1 bg-amber-100 text-amber-700 font-bold text-[10px] uppercase tracking-wider rounded-full">
+                        Menunggu Approval
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Main Table Container */}
       <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
@@ -421,12 +530,22 @@ export default function ReceivePayment() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <button 
-                      onClick={() => setViewReceipt(r)}
-                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
+                    <div className="flex justify-center items-center gap-2">
+                       <button 
+                         onClick={() => setViewReceipt(r)}
+                         className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                         title="Lihat Detail"
+                       >
+                         <Eye className="w-5 h-5" />
+                       </button>
+                       <button 
+                         onClick={() => { setRequestKoreksiReceipt(r); setKoreksiReasonType(''); setKoreksiReasonDetail(''); }}
+                         className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                         title="Koreksi Payment"
+                       >
+                         <AlertCircle className="w-5 h-5" />
+                       </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -827,6 +946,89 @@ export default function ReceivePayment() {
                   className="px-8 py-3.5 bg-gray-900 text-white rounded-2xl text-xs font-black hover:bg-gray-800 transition-all shadow-xl shadow-gray-200 active:scale-95 uppercase tracking-[0.2em]"
                 >
                   Selesai & Tutup
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Koreksi Modal */}
+      <AnimatePresence>
+        {requestKoreksiReceipt && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-amber-50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-amber-900 leading-tight">Pengajuan Koreksi</h3>
+                    <p className="text-xs font-medium text-amber-700/70 uppercase tracking-widest">{requestKoreksiReceipt.receiptNumber}</p>
+                  </div>
+                </div>
+                <button onClick={() => setRequestKoreksiReceipt(null)} className="p-2 text-amber-900/50 hover:bg-amber-100 rounded-full transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-600">
+                  Anda akan mengajukan koreksi untuk pembayaran dari <strong className="text-gray-900">{requestKoreksiReceipt.customerName}</strong> senilai <strong className="text-gray-900">Rp.{requestKoreksiReceipt.amount.toLocaleString()}</strong>.
+                </p>
+                <p className="text-sm text-gray-600">
+                  Koreksi memerlukan persetujuan dari Super Admin. Jika disetujui, pembayaran ini akan dibatalkan, dan status order serta piutang akan dikembalikan seperti semula.
+                </p>
+                
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest">Alasan Koreksi</label>
+                    <select
+                      value={koreksiReasonType}
+                      onChange={(e) => setKoreksiReasonType(e.target.value)}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all appearance-none"
+                    >
+                      <option value="Salah Salesman">Salah Salesman</option>
+                      <option value="Salah Input Nominal">Salah Input Nominal</option>
+                      <option value="Salah Bank">Salah Bank</option>
+                      <option value="Salah Tanggal">Salah Tanggal</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                  </div>
+                  {koreksiReasonType === 'Lainnya' && (
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest">Detail Alasan Lainnya</label>
+                      <textarea
+                        rows={3}
+                        value={koreksiReasonDetail}
+                        onChange={(e) => setKoreksiReasonDetail(e.target.value)}
+                        placeholder="Masukkan alasan yang lebih detail..."
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all resize-none"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+                <button
+                  onClick={() => setRequestKoreksiReceipt(null)}
+                  disabled={isRequestingKoreksi}
+                  className="flex-1 py-3 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleRequestKoreksi}
+                  disabled={(koreksiReasonType === 'Lainnya' && !koreksiReasonDetail.trim()) || isRequestingKoreksi}
+                  className="flex-1 py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:bg-amber-600 transition-all disabled:opacity-50 disabled:grayscale text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                  {isRequestingKoreksi ? 'Memproses...' : 'Ajukan Koreksi'}
                 </button>
               </div>
             </motion.div>

@@ -3,7 +3,7 @@ import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, 
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Order, ApprovalRequest, Tenant, BankAccount } from '../types';
-import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark, DollarSign, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth } from '../lib/firebase';
 import ConfirmModal from '../components/ConfirmModal';
@@ -64,7 +64,7 @@ export default function SalesOrderReceive() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'manual' | 'catalog' | 'service' | 'pos'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'manual' | 'catalog' | 'service' | 'pos' | 'deleted'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -205,14 +205,22 @@ export default function SalesOrderReceive() {
 
   const filteredOrders = orders.filter(o => {
     let matchesFilter = false;
-    if (filter === 'all') matchesFilter = true;
-    else if (filter === 'pending') {
-      const oDate = o.date?.seconds || (o as any).createdAt?.seconds || 0;
-      const tDate = new Date(oDate * 1000);
-      const isToday = tDate.toDateString() === new Date().toDateString();
-      matchesFilter = o.status === 'pending' && isToday;
+    // Exclude deleted from regular tabs unless explicitly asked for
+    if (filter === 'deleted') {
+      matchesFilter = o.status === 'deleted';
+    } else {
+      // Exclude deleted orders from tabs EXCEPT 'all'
+      if (filter !== 'all' && o.status === 'deleted') return false;
+
+      if (filter === 'all') matchesFilter = true;
+      else if (filter === 'pending') {
+        const oDate = o.date?.seconds || (o as any).createdAt?.seconds || 0;
+        const tDate = new Date(oDate * 1000);
+        const isToday = tDate.toDateString() === new Date().toDateString();
+        matchesFilter = o.status === 'pending' && isToday;
+      }
+      else matchesFilter = o.type === filter;
     }
-    else matchesFilter = o.type === filter;
 
     const matchesSearch = 
       o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -317,8 +325,11 @@ export default function SalesOrderReceive() {
             }
           }
 
-          // 3. Handle Stock Return/Deduction if status changes to/from cancelled
-          if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
+          // 3. Handle Stock Return/Deduction if status changes to/from cancelled or deleted
+          const isReturningStock = (newStatus === 'cancelled' || newStatus === 'deleted') && oldStatus !== 'cancelled' && oldStatus !== 'deleted';
+          const isDeductingStock = (oldStatus === 'cancelled' || oldStatus === 'deleted') && newStatus !== 'cancelled' && newStatus !== 'deleted';
+
+          if (isReturningStock) {
             // Return stock
             for (const item of order.items) {
               const productRef = doc(db, 'products', item.productId);
@@ -332,7 +343,7 @@ export default function SalesOrderReceive() {
                 transaction.update(productRef, { stock: currentStock + item.quantity });
               });
             }
-          } else if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
+          } else if (isDeductingStock) {
             // Deduct stock again
             for (const item of order.items) {
               const productRef = doc(db, 'products', item.productId);
@@ -505,6 +516,7 @@ export default function SalesOrderReceive() {
       case 'processing': return 'bg-blue-50 text-blue-700 border-blue-100';
       case 'pending': return 'bg-yellow-50 text-yellow-700 border-yellow-100';
       case 'cancelled': return 'bg-red-50 text-red-700 border-red-100';
+      case 'deleted': return 'bg-gray-100 text-gray-500 border-gray-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-100';
     }
   };
@@ -515,6 +527,7 @@ export default function SalesOrderReceive() {
       case 'processing': return 'Processing';
       case 'pending': return 'PENDING';
       case 'cancelled': return 'CANCELLED';
+      case 'deleted': return 'DELETED';
       default: return status.toUpperCase();
     }
   };
@@ -529,7 +542,7 @@ export default function SalesOrderReceive() {
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
         <div className="flex-1 flex items-center gap-4 overflow-x-auto pb-2 sm:pb-0">
           <div className="flex gap-2">
-            {(['all', 'pending', 'manual', 'pos', 'catalog', 'service'] as const).map((t) => (
+            {(['all', 'pending', 'manual', 'pos', 'catalog', 'service', 'deleted'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setFilter(t)}
@@ -645,6 +658,14 @@ export default function SalesOrderReceive() {
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         <span className="text-xs font-bold">Detail</span>
+                      </button>
+                      <button 
+                        onClick={() => updateStatus(order.id, 'deleted')}
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center"
+                        title="Hapus Pesanan (Ubah Status)"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        <span className="text-xs font-bold">Delete</span>
                       </button>
                     </div>
                   </td>
@@ -824,16 +845,16 @@ export default function SalesOrderReceive() {
                         <tr>
                           <td colSpan={3} className="px-4 py-2 text-right font-bold text-gray-500">Subtotal :</td>
                           <td className="px-4 py-2 text-right font-bold text-gray-900">
-                            Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discount || 0) ).toLocaleString()}
+                            Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0) ).toLocaleString()}
                           </td>
                         </tr>
-                        {(selectedOrder as any).discount > 0 && (
+                        {((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0) > 0 && (
                           <tr>
                             <td colSpan={3} className="px-4 py-2 text-right font-bold text-green-600">
                               Anda Hemat :
                             </td>
                             <td className="px-4 py-2 text-right font-bold text-green-600">
-                              - Rp.{((selectedOrder as any).discount || 0).toLocaleString()}
+                              - Rp.{((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0).toLocaleString()}
                             </td>
                           </tr>
                         )}
@@ -876,10 +897,10 @@ export default function SalesOrderReceive() {
                     </div>
                   )}
 
-                  {selectedOrder.status === 'cancelled' ? (
+                  {selectedOrder.status === 'cancelled' || selectedOrder.status === 'deleted' ? (
                     <div className="p-4 bg-red-50 border border-red-100 rounded-lg space-y-3">
                       <p className="text-xs text-red-700 font-medium">
-                        Pesanan ini telah dibatalkan dan tidak dapat diubah secara langsung. 
+                        Pesanan ini telah {selectedOrder.status === 'deleted' ? 'dihapus' : 'dibatalkan'} dan tidak dapat diubah secara langsung. 
                         Silakan hubungi Super Admin atau kirim permintaan aktivasi kembali.
                       </p>
                       <button
@@ -891,7 +912,7 @@ export default function SalesOrderReceive() {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                       <button
                         disabled={isUpdating || selectedOrder.status === 'pending'}
                         onClick={() => updateStatus(selectedOrder.id, 'pending')}
@@ -923,6 +944,14 @@ export default function SalesOrderReceive() {
                       >
                         <X className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">CANCEL</span>
+                      </button>
+                      <button
+                        disabled={isUpdating || selectedOrder.status === 'deleted'}
+                        onClick={() => { updateStatus(selectedOrder.id, 'deleted'); setSelectedOrder(null); }}
+                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-all disabled:opacity-50"
+                      >
+                        <Trash2 className="w-5 h-5 mb-1 text-red-500" />
+                        <span className="text-[10px] font-bold">DELETE</span>
                       </button>
                     </div>
                   )}
@@ -1051,16 +1080,16 @@ export default function SalesOrderReceive() {
                       <tr className="border-t border-gray-100">
                         <td colSpan={3} className="py-2 text-right font-bold text-gray-500 uppercase tracking-widest text-[10px]">Subtotal :</td>
                         <td className="py-2 text-right font-bold text-gray-900 text-sm">
-                          Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discount || 0) ).toLocaleString()}
+                          Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0) ).toLocaleString()}
                         </td>
                       </tr>
-                      {(selectedOrder as any).discount > 0 && (
+                      {((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0) > 0 && (
                         <tr>
                           <td colSpan={3} className="py-2 text-right font-bold text-green-600 uppercase tracking-widest text-[10px]">
                             Anda Hemat :
                           </td>
                           <td className="py-2 text-right font-bold text-green-600 text-sm">
-                            - Rp.{((selectedOrder as any).discount || 0).toLocaleString()}
+                            - Rp.{((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0).toLocaleString()}
                           </td>
                         </tr>
                       )}

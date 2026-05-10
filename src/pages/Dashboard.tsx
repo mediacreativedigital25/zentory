@@ -100,8 +100,8 @@ export default function Dashboard() {
   }, [profile, domainTenantId]);
 
   const stats = useMemo(() => {
-    const activeSales = allTransactions.filter(t => t.type === 'sale' && t.status !== 'cancelled');
-    const activeExpenses = allTransactions.filter(t => t.type === 'expense' && t.status !== 'cancelled');
+    const activeSales = allTransactions.filter(t => t.type === 'sale' && t.status !== 'cancelled' && t.status !== 'deleted');
+    const activeExpenses = allTransactions.filter(t => t.type === 'expense' && t.status !== 'cancelled' && t.status !== 'deleted');
     
     const sales = activeSales.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
     const expenses = activeExpenses.reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
@@ -165,7 +165,7 @@ export default function Dashboard() {
 
     const dataMap = last7Days.reduce((acc, day) => ({ ...acc, [day]: { sales: 0, expenses: 0 } }), {} as any);
 
-    allTransactions.filter(t => t.status !== 'cancelled').forEach(t => {
+    allTransactions.filter(t => t.status !== 'cancelled' && t.status !== 'deleted').forEach(t => {
       const date = t.date instanceof Timestamp 
         ? t.date.toDate() 
         : (t.date?.seconds ? new Date(t.date.seconds * 1000) : new Date());

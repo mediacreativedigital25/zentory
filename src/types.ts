@@ -287,7 +287,7 @@ export interface ApprovalRequest {
   id: string;
   tenantId: string;
   tenantName?: string;
-  type: 'order_status' | 'daily_settlement_open' | 'charity_revision' | 'target_revision';
+  type: 'order_status' | 'daily_settlement_open' | 'charity_revision' | 'target_revision' | 'payment_correction';
   orderId?: string;
   orderNumber?: string;
   closingId?: string;
@@ -301,6 +301,12 @@ export interface ApprovalRequest {
   status: 'pending' | 'approved' | 'rejected';
   resolvedBy?: string;
   resolvedAt?: any;
+  // Fields for payment corrections
+  receiptId?: string;
+  customerName?: string;
+  amount?: number;
+  invoices?: any[];
+  collections?: any[];
 }
 
 export interface BankAccount {

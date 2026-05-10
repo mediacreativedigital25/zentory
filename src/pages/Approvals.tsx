@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, deleteDoc, getDocs, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,10 +19,11 @@ import {
   Info,
   Package,
   ArrowRight,
-  Trash2
+  Trash2,
+  RefreshCcw // adding this for Koreksi
 } from 'lucide-react';
 
-type ApprovalType = 'Sales' | 'Finance' | 'Purchase' | 'Deletion';
+type ApprovalType = 'Sales' | 'Finance' | 'Purchase' | 'Deletion' | 'Correction';
 
 interface ApprovalItem {
   id: string;
@@ -131,6 +132,27 @@ export default function Approvals() {
     });
     unsubscribes.push(unsubDelete);
 
+    // 5. Correction Requests (status 'pending')
+    const correctionQuery = query(
+      collection(db, 'payment_corrections'),
+      where('tenantId', '==', profile.tenantId),
+      where('status', '==', 'pending')
+    );
+    const unsubCorrection = onSnapshot(correctionQuery, (snap) => {
+      const correctionItems: ApprovalItem[] = snap.docs.map(d => ({
+        id: d.id,
+        type: 'Correction' as ApprovalType,
+        title: `Koreksi: ${d.data().receiptNumber}`,
+        subtitle: `Pelanggan: ${d.data().customerName} - Oleh: ${d.data().requestedByName}`,
+        amount: d.data().amount,
+        status: d.data().status,
+        date: d.data().createdAt,
+        rawData: { ...d.data(), collection: 'payment_corrections' }
+      }));
+      updateItems('Correction', correctionItems);
+    });
+    unsubscribes.push(unsubCorrection);
+
     return () => unsubscribes.forEach(unsub => unsub());
   }, [profile]);
 
@@ -138,7 +160,8 @@ export default function Approvals() {
     Sales: [],
     Finance: [],
     Purchase: [],
-    Deletion: []
+    Deletion: [],
+    Correction: []
   });
 
   const updateItems = (type: ApprovalType, newItems: ApprovalItem[]) => {
@@ -171,6 +194,85 @@ export default function Approvals() {
         } else {
           status = 'rejected';
         }
+      } else if (item.type === 'Correction') {
+        if (action === 'approve') {
+          // Rollback the receipt
+          const batch = writeBatch(db);
+          
+          // 1. Revert Invoices (orders collection)
+          if (Array.isArray(item.rawData.invoices)) {
+            for (const inv of item.rawData.invoices) {
+              const orderRef = doc(db, 'orders', inv.orderId);
+              const orderSnap = await getDoc(orderRef);
+              if (orderSnap.exists()) {
+                 const currentData = orderSnap.data();
+                 const currentPaid = Number(currentData.paidAmount) || 0;
+                 const allocatedAmount = Number(inv.amountPaid) || 0;
+                 const newPaid = Math.max(0, currentPaid - allocatedAmount);
+                 const orderTotal = Number(currentData.totalAmount) || Number(currentData.total) || 0;
+                 
+                 // If it was corrected, the payment is undone.
+                 let paymentStatus = newPaid <= 0 ? 'unpaid' : (newPaid < orderTotal ? 'partial' : 'paid');
+                 
+                 let statusToSet = currentData.status;
+                 // If the order was fully completed by this payment, maybe revert to processing or pending
+                 if (currentData.status === 'completed' && paymentStatus !== 'paid') {
+                    statusToSet = 'pending'; // revert to pending to be collected again
+                 }
+                 
+                 batch.update(orderRef, {
+                   paidAmount: newPaid,
+                   paymentStatus: paymentStatus,
+                   status: statusToSet,
+                   isInCollection: true // Re-add to collection so it can be viewed in collections
+                 });
+              }
+            }
+          }
+
+          // 2. Revert Collections (invoice_collections)
+          if (Array.isArray(item.rawData.collections)) {
+            for (const col of item.rawData.collections) {
+              const colRef = doc(db, 'invoice_collections', col.collectionId);
+              const colSnap = await getDoc(colRef);
+              if (colSnap.exists()) {
+                const currentData = colSnap.data();
+                const totalPaid = Number(currentData.totalPaid) || 0;
+                const allocatedAmount = Number(col.amountPaid) || 0;
+                
+                const newTotalPaid = Math.max(0, totalPaid - allocatedAmount);
+                const colTotalAmount = Number(currentData.totalAmount) || 0;
+                const newSisa = Math.max(0, colTotalAmount - newTotalPaid);
+                
+                batch.update(colRef, {
+                  totalPaid: newTotalPaid,
+                  totalSisa: newSisa,
+                  status: 'open' // since we just removed payment, it should be open
+                });
+              }
+            }
+          }
+
+          // 3. Delete related transactions
+          const trxQuery = query(
+            collection(db, 'transactions'),
+            where('tenantId', '==', profile?.tenantId),
+            where('transactionNumber', '>=', `TRX-RP-${item.rawData.receiptNumber}`),
+            where('transactionNumber', '<=', `TRX-RP-${item.rawData.receiptNumber}\uf8ff`)
+          );
+          const trxSnap = await getDocs(trxQuery);
+          trxSnap.forEach(tDoc => {
+             batch.delete(tDoc.ref);
+          });
+          
+          // 4. Delete the actual receipt
+          batch.delete(doc(db, 'payment_receipts', item.rawData.receiptId));
+
+          await batch.commit();
+          status = 'approved';
+        } else {
+          status = 'rejected';
+        }
       }
 
       await updateDoc(docRef, {
@@ -190,6 +292,7 @@ export default function Approvals() {
     { type: 'Sales', icon: ShoppingCart, label: 'Sales' },
     { type: 'Finance', icon: Wallet, label: 'Finance' },
     { type: 'Purchase', icon: Truck, label: 'Purchase' },
+    { type: 'Correction', icon: RefreshCcw, label: 'Koreksi Payment' },
     { type: 'Deletion', icon: Trash2, label: 'Penghapusan' }
   ];
 
@@ -367,6 +470,29 @@ export default function Approvals() {
                     </div>
                   )}
 
+                  {selectedItem.type === 'Correction' && (
+                    <div className="space-y-4">
+                      <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Target Koreksi Pembayaran</p>
+                        <p className="font-bold text-amber-900">{selectedItem.rawData.receiptNumber}</p>
+                        <p className="text-xs text-amber-700 mt-1 opacity-70">Refund / Undo nominal: Rp.{selectedItem.amount?.toLocaleString()}</p>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-4 rounded-2xl space-y-4">
+                        <div>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alasan Koreksi</p>
+                          <p className="text-sm text-gray-900 font-bold">{selectedItem.rawData.reason}</p>
+                        </div>
+                        <div className="pt-2 border-t border-gray-200/50 flex justify-between items-center">
+                          <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Diajukan Oleh</p>
+                            <p className="text-sm text-gray-900 font-bold">{selectedItem.rawData.requestedByName}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {selectedItem.type === 'Deletion' && (
                     <div className="space-y-4">
                       <div className="bg-red-50 p-4 rounded-lg border border-red-100">
@@ -462,11 +588,13 @@ export default function Approvals() {
                     item.type === 'Sales' ? 'bg-indigo-50 text-indigo-600' :
                     item.type === 'Finance' ? 'bg-green-50 text-green-600' :
                     item.type === 'Deletion' ? 'bg-red-50 text-red-600' :
+                    item.type === 'Correction' ? 'bg-amber-50 text-amber-600' :
                     'bg-orange-50 text-orange-600'
                   }`}>
                     {item.type === 'Sales' ? <ShoppingCart className="w-6 h-6" /> :
                      item.type === 'Finance' ? <Wallet className="w-6 h-6" /> :
                      item.type === 'Deletion' ? <Trash2 className="w-6 h-6" /> :
+                     item.type === 'Correction' ? <RefreshCcw className="w-6 h-6" /> :
                      <Truck className="w-6 h-6" />}
                   </div>
                   <div>
