@@ -333,10 +333,14 @@ export default function Finance() {
                 <div>
                   <label className="block mb-1 text-xs font-semibold text-gray-600">Amount (Rp.)</label>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                    value={formData.amount > 0 ? formData.amount.toLocaleString('id-ID') : ''}
+                    onChange={(e) => {
+                       let val = e.target.value.replace(/\./g, '');
+                       val = val.replace(/\D/g, '');
+                       setFormData({ ...formData, amount: Number(val) });
+                    }}
                     className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>

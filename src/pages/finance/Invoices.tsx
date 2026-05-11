@@ -112,8 +112,8 @@ export default function Invoices() {
   };
 
   const selectedOrders = orders.filter(o => selectedOrderIds.includes(o.id));
-  const totalSelectedNominal = selectedOrders.reduce((acc, o) => acc + o.totalAmount, 0);
-  const totalSelectedSisa = selectedOrders.reduce((acc, o) => acc + (o.totalAmount - (o.paidAmount || 0)), 0);
+  const totalSelectedNominal = selectedOrders.reduce((acc, o) => acc + (o.totalAmount || (o as any).total || 0), 0);
+  const totalSelectedSisa = selectedOrders.reduce((acc, o) => acc + ((o.totalAmount || (o as any).total || 0) - (o.paidAmount || 0)), 0);
 
   const generatePDF = () => {
     const doc = new jsPDF();

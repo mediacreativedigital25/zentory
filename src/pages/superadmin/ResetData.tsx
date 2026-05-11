@@ -50,6 +50,7 @@ export default function SuperAdminResetData() {
     { id: 'approval_requests', label: 'Approval Requests' },
     { id: 'expenseRules', label: 'Expense Rules (Aturan Biaya)' },
     { id: 'roles', label: 'Custom Roles (Jabatan)' },
+    { id: 'counters', label: 'Counters (Sequence Numbers / ID)' },
   ];
 
   const handleReset = async () => {

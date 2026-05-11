@@ -122,7 +122,45 @@ export default function ReceivePayment() {
           where('status', '==', 'open')
         );
         const snap = await getDocs(q);
-        setUnpaidCollections(snap.docs.map(d => ({ id: d.id, ...d.data() } as InvoiceCollection)));
+        const collections = snap.docs.map(d => ({ id: d.id, ...d.data() } as InvoiceCollection));
+        
+        // Auto-fix any NaN/0 totals by recalculating from orders (Legacy data fix)
+        for (const col of collections) {
+          if (!col.totalAmount || isNaN(col.totalAmount)) {
+             if (col.orderIds && col.orderIds.length > 0) {
+               // Batch fetch the orders in chunks of 10 if necessary, but usually it's < 10
+               const chunks = [];
+               for (let i = 0; i < col.orderIds.length; i += 10) {
+                 chunks.push(col.orderIds.slice(i, i + 10));
+               }
+               
+               let fixedTotal = 0;
+               let fixedPaid = 0;
+               
+               for (const chunk of chunks) {
+                 const ordersSnap = await getDocs(query(collection(db, 'orders'), where('__name__', 'in', chunk)));
+                 ordersSnap.forEach(oDoc => {
+                   const data = oDoc.data();
+                   fixedTotal += (Number(data.totalAmount) || Number(data.total) || 0);
+                   fixedPaid += (Number(data.paidAmount) || 0);
+                 });
+               }
+               
+               col.totalAmount = fixedTotal;
+               col.totalPaid = fixedPaid;
+               col.totalSisa = fixedTotal - fixedPaid;
+               
+               // Update it in the database permanently
+               await updateDoc(doc(db, 'invoice_collections', col.id), {
+                 totalAmount: fixedTotal,
+                 totalPaid: fixedPaid,
+                 totalSisa: fixedTotal - fixedPaid
+               });
+             }
+          }
+        }
+        
+        setUnpaidCollections(collections);
       } catch (err) {
         console.error('Error fetching collections:', err);
       }
@@ -139,7 +177,7 @@ export default function ReceivePayment() {
       const colTotalAmount = Number(col.totalAmount) || 0;
       const colTotalPaid = Number(col.totalPaid) || 0;
       const colSisa = Number(col.totalSisa) || (colTotalAmount - colTotalPaid);
-      const sisa = Math.max(0, colSisa);
+      const sisa = Math.round(Math.max(0, colSisa));
       setSelectedCollections(prev => [...prev, { 
         collectionId: col.id, 
         collectionNumber: col.collectionNumber, 
@@ -661,9 +699,13 @@ export default function ReceivePayment() {
                             <div className="relative w-full sm:w-48">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">Rp</span>
                               <input 
-                                type="number"
-                                value={item.amountToPay}
-                                onChange={(e) => handleAmountChange(item.collectionId, Number(e.target.value))}
+                                type="text"
+                                value={item.amountToPay > 0 ? item.amountToPay.toLocaleString('id-ID') : ''}
+                                onChange={(e) => {
+                                  let val = e.target.value.replace(/\./g, '');
+                                  val = val.replace(/\D/g, '');
+                                  handleAmountChange(item.collectionId, Number(val));
+                                }}
                                 className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-indigo-600"
                               />
                             </div>

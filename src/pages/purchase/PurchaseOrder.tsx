@@ -522,10 +522,14 @@ export default function PurchaseOrders() {
                           <div className="relative">
                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rp</span>
                             <input
-                              type="number"
+                              type="text"
                               required
-                              value={item.price}
-                              onChange={(e) => updateField(index, 'price', Number(e.target.value))}
+                              value={item.price > 0 ? item.price.toLocaleString('id-ID') : ''}
+                              onChange={(e) => {
+                                 let val = e.target.value.replace(/\./g, '');
+                                 val = val.replace(/\D/g, '');
+                                 updateField(index, 'price', Number(val));
+                              }}
                               className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                               placeholder="Harga"
                             />

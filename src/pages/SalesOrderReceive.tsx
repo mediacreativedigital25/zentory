@@ -1269,9 +1269,13 @@ export default function SalesOrderReceive() {
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</span>
                     <input
-                      type="number"
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                      type="text"
+                      value={paymentAmount > 0 ? paymentAmount.toLocaleString('id-ID') : ''}
+                      onChange={(e) => {
+                         let val = e.target.value.replace(/\./g, '');
+                         val = val.replace(/\D/g, '');
+                         setPaymentAmount(Number(val));
+                      }}
                       className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>

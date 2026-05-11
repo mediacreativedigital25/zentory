@@ -172,7 +172,7 @@ service cloud.firestore {
         (incoming().type == 'sale' && incoming().status == 'pending')
       ));
       allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /bank_transfers/{transferId} {
@@ -186,7 +186,7 @@ service cloud.firestore {
       allow read, list: if isSignedIn();
       allow create: if isSignedIn() && isValidOrder(incoming());
       allow update: if isSignedIn() && isValidOrder(incoming());
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     // -------------------------------------------------------------------------
@@ -267,41 +267,41 @@ service cloud.firestore {
     match /approval_requests/{requestId} {
       allow read, list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin();
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /delete_requests/{requestId} {
       allow read, list: if isSignedIn() && (isSuperAdmin() || resource.data.tenantId == getTenantId());
       allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin();
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /charityRecords/{charityId} {
       allow read, list: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn();
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /invoice_collections/{collectionId} {
       allow read, list: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn();
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /payment_receipts/{receiptId} {
       allow read, list: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn();
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /payment_corrections/{correctionId} {
       allow read, list: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn();
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /counters/{counterId} {
@@ -345,6 +345,7 @@ service cloud.firestore {
         (existing().uid == request.auth.uid) ||
         (userExists() && existing().tenantId == getTenantId() && isValidCustomer(incoming()))
       );
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(existing().tenantId));
     }
 
     match /customer_categories/{categoryId} {
@@ -357,7 +358,7 @@ service cloud.firestore {
       allow read, list: if isSuperAdmin() || (isSignedIn() && userExists() && (resource.data.tenantId == getTenantId() || resource.data.userId == request.auth.uid));
       allow create: if isSuperAdmin() || (isSignedIn() && (incoming().userId == request.auth.uid || isTenantStaff(incoming().tenantId)));
       allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
     }
 
     match /roles/{roleId} {

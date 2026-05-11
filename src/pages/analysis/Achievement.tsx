@@ -172,7 +172,7 @@ export default function Achievement() {
                     </div>
                     <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight">Total Sales ({period === '1m' ? 'Bulan Ini' : `${periodMonths} Bln`})</h4>
                 </div>
-                <p className="text-3xl font-black text-gray-900">Rp.{totalSales.toLocaleString()}</p>
+                <p className="text-3xl font-black text-gray-900">Rp.{Math.round(totalSales).toLocaleString('id-ID')}</p>
                 <div className="flex items-center mt-3 text-green-600 gap-1">
                     <div className="bg-green-100 p-0.5 rounded text-[10px] font-black uppercase tracking-tighter shadow-sm flex items-center gap-1">
                         <ArrowUpRight className="w-3 h-3" />
@@ -202,11 +202,11 @@ export default function Achievement() {
                     <div className="flex justify-between items-end">
                         <div className="flex flex-col">
                             <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Realisasi</span>
-                            <span className="text-xl font-black">Rp.{currentMonthSales.toLocaleString()}</span>
+                            <span className="text-xl font-black">Rp.{Math.round(currentMonthSales).toLocaleString('id-ID')}</span>
                         </div>
                         <div className="text-right">
                             <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Goal</span>
-                            <p className="text-xs font-bold">Rp.{achievement.nextTarget.toLocaleString()}</p>
+                            <p className="text-xs font-bold">Rp.{Math.round(achievement.nextTarget).toLocaleString('id-ID')}</p>
                         </div>
                     </div>
                 </div>
@@ -247,7 +247,7 @@ export default function Achievement() {
                         <Tooltip 
                             cursor={{ fill: 'rgba(79, 70, 229, 0.05)' }} 
                             contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.1)', padding: '20px' }}
-                            formatter={(value: any) => [`Rp.${Number(value).toLocaleString()}`, '']}
+                            formatter={(value: any) => [`Rp.${Math.round(Number(value)).toLocaleString('id-ID')}`, '']}
                         />
                         <Area type="monotone" dataKey="sales" fill="url(#achieveColor)" stroke="none" />
                         <Bar dataKey="sales" fill="#4f46e5" radius={[8, 8, 0, 0]} barSize={40} />
@@ -289,19 +289,19 @@ export default function Achievement() {
                                     <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                                         <td className="px-8 py-6 font-bold text-gray-900 border-r border-gray-50">{data.month}</td>
                                         <td className="px-8 py-6 text-right font-black text-indigo-600 text-lg border-r border-gray-50">
-                                            Rp.{data.sales.toLocaleString()}
+                                            Rp.{Math.round(data.sales).toLocaleString('id-ID')}
                                         </td>
                                         
                                         {/* Target 1 */}
                                         <td className="px-8 py-6 text-right border-r border-gray-50">
                                             <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-gray-400 mb-1">Rp.{data.target1.toLocaleString()}</span>
+                                                <span className="text-xs font-bold text-gray-400 mb-1">Rp.{Math.round(data.target1).toLocaleString('id-ID')}</span>
                                                 <span className={`text-sm font-black ${pct1 >= 100 ? 'text-green-600' : 'text-amber-500'}`}>
                                                     {pct1.toFixed(1)}%
                                                 </span>
                                                 {pct1 < 100 && data.target1 > 0 && (
                                                     <span className="text-[9px] font-bold text-red-400 mt-1 uppercase tracking-tighter">
-                                                        Kurang: Rp.{(data.target1 - data.sales).toLocaleString()}
+                                                        Kurang: Rp.{Math.round(data.target1 - data.sales).toLocaleString('id-ID')}
                                                     </span>
                                                 )}
                                             </div>
@@ -310,13 +310,13 @@ export default function Achievement() {
                                         {/* Target 2 */}
                                         <td className="px-8 py-6 text-right border-r border-gray-50">
                                             <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-gray-400 mb-1">Rp.{data.target2.toLocaleString()}</span>
+                                                <span className="text-xs font-bold text-gray-400 mb-1">Rp.{Math.round(data.target2).toLocaleString('id-ID')}</span>
                                                 <span className={`text-sm font-black ${pct2 >= 100 ? 'text-indigo-600' : 'text-gray-400'}`}>
                                                     {pct2.toFixed(1)}%
                                                 </span>
                                                 {pct2 < 100 && data.target2 > 0 && (
                                                     <span className="text-[9px] font-bold text-red-400 mt-1 uppercase tracking-tighter">
-                                                        Kurang: Rp.{(data.target2 - data.sales).toLocaleString()}
+                                                        Kurang: Rp.{Math.round(data.target2 - data.sales).toLocaleString('id-ID')}
                                                     </span>
                                                 )}
                                             </div>
@@ -325,13 +325,13 @@ export default function Achievement() {
                                         {/* Target 3 */}
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-gray-400 mb-1">Rp.{data.target3.toLocaleString()}</span>
+                                                <span className="text-xs font-bold text-gray-400 mb-1">Rp.{Math.round(data.target3).toLocaleString('id-ID')}</span>
                                                 <span className={`text-sm font-black ${pct3 >= 100 ? 'text-amber-600' : 'text-gray-300'}`}>
                                                     {pct3.toFixed(1)}%
                                                 </span>
                                                 {pct3 < 100 && data.target3 > 0 && (
                                                     <span className="text-[9px] font-bold text-red-400 mt-1 uppercase tracking-tighter">
-                                                        Kurang: Rp.{(data.target3 - data.sales).toLocaleString()}
+                                                        Kurang: Rp.{Math.round(data.target3 - data.sales).toLocaleString('id-ID')}
                                                     </span>
                                                 )}
                                             </div>

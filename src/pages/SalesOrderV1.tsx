@@ -202,7 +202,7 @@ export default function SalesOrderV1() {
   }, [appliedCoupon, subtotal]);
 
   const discountAmount = customerDiscountAmount + couponDiscountAmount;
-  const totalAmount = Math.max(0, subtotal - discountAmount);
+  const totalAmount = Math.round(Math.max(0, subtotal - discountAmount));
 
   
   const handleApplyCoupon = async () => {
@@ -246,7 +246,7 @@ export default function SalesOrderV1() {
       const currentSubtotal = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
       if (currentSubtotal < couponData.minPurchase) {
-        setCouponError(`Minimal pembelian Rp ${couponData.minPurchase.toLocaleString()}`);
+        setCouponError(`Minimal pembelian Rp ${Math.round(couponData.minPurchase).toLocaleString('id-ID')}`);
         return;
       }
       
@@ -620,7 +620,7 @@ export default function SalesOrderV1() {
                   >
                      <option value="">-- Tidak Menggunakan Diskon --</option>
                      {coupons.map(c => (
-                         <option key={c.id} value={c.id}>{c.code} - {c.type === 'percentage' ? `${c.value}%` : `Rp ${c.value.toLocaleString()}`}</option>
+                         <option key={c.id} value={c.id}>{c.code} - {c.type === 'percentage' ? `${c.value}%` : `Rp ${Math.round(c.value).toLocaleString('id-ID')}`}</option>
                      ))}
                 </select>
                 {customerDiscountAmount > 0 && (
@@ -705,7 +705,7 @@ export default function SalesOrderV1() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-indigo-600">Rp.{p.price.toLocaleString()}</span>
+                        <span className="text-sm font-semibold text-indigo-600">Rp.{Math.round(p.price).toLocaleString('id-ID')}</span>
                         <Plus className="w-5 h-5 text-gray-300 group-hover:text-indigo-600 group-hover:rotate-90 transition-all" />
                       </div>
                     </button>
@@ -744,7 +744,7 @@ export default function SalesOrderV1() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className="text-xs font-medium text-gray-600">Rp.{item.price.toLocaleString()}</span>
+                        <span className="text-xs font-medium text-gray-600">Rp.{Math.round(item.price).toLocaleString('id-ID')}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-3">
@@ -766,7 +766,7 @@ export default function SalesOrderV1() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="text-sm font-semibold text-indigo-600">Rp.{(item.price * item.quantity).toLocaleString()}</span>
+                        <span className="text-sm font-semibold text-indigo-600">Rp.{Math.round(item.price * item.quantity).toLocaleString('id-ID')}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button onClick={() => removeFromCart(item.productId)} className="text-red-400 hover:text-red-600 transition-colors">
@@ -907,17 +907,17 @@ export default function SalesOrderV1() {
           <div className="flex gap-2 sm:gap-12 flex-1 w-full sm:w-auto">
              <div className="hidden sm:block">
                 <p className="text-xs font-semibold text-gray-600 mb-1 text-left">Subtotal</p>
-                <p className="text-lg font-black text-gray-500 text-left">Rp.{subtotal.toLocaleString()}</p>
+                <p className="text-lg font-black text-gray-500 text-left">Rp.{Math.round(subtotal).toLocaleString('id-ID')}</p>
              </div>
              <div className="hidden sm:block">
                 <p className="text-xs font-semibold text-gray-600 mb-1 text-left">Diskon</p>
-                <p className="text-lg font-black text-emerald-500 text-left">- Rp.{discountAmount.toLocaleString()}</p>
+                <p className="text-lg font-black text-emerald-500 text-left">- Rp.{Math.round(discountAmount).toLocaleString('id-ID')}</p>
              </div>
              <div>
                 <p className="text-xs font-semibold text-gray-600 mb-1 text-left">Netto {(appliedCoupon || customerDiscountAmount > 0) && <span className="hidden sm:inline text-emerald-500">(Dipotong Diskon)</span>}</p>
                 <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
-                   <p className="text-2xl font-black text-indigo-600 text-left">Rp.{totalAmount.toLocaleString()}</p>
-                   {discountAmount > 0 && <p className="text-xs font-medium text-emerald-500 sm:hidden">- Rp.{discountAmount.toLocaleString()} (Diskon)</p>}
+                   <p className="text-2xl font-black text-indigo-600 text-left">Rp.{Math.round(totalAmount).toLocaleString('id-ID')}</p>
+                   {discountAmount > 0 && <p className="text-xs font-medium text-emerald-500 sm:hidden">- Rp.{Math.round(discountAmount).toLocaleString('id-ID')} (Diskon)</p>}
                 </div>
              </div>
           </div>

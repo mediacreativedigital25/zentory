@@ -178,7 +178,7 @@ export default function FinancialReport() {
               <Wallet className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Saldo</p>
-            <h3 className="text-3xl font-black text-gray-900">Rp.{balance.toLocaleString()}</h3>
+            <h3 className="text-3xl font-black text-gray-900">Rp.{Math.round(balance).toLocaleString('id-ID')}</h3>
           </div>
           <PieChart className="absolute -right-4 -bottom-4 w-24 h-24 text-gray-50 group-hover:text-indigo-50 transition-colors" />
         </motion.div>
@@ -192,7 +192,7 @@ export default function FinancialReport() {
               <TrendingUp className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Pendapatan</p>
-            <h3 className="text-3xl font-black text-gray-900">Rp.{totalSales.toLocaleString()}</h3>
+            <h3 className="text-3xl font-black text-gray-900">Rp.{Math.round(totalSales).toLocaleString('id-ID')}</h3>
           </div>
           <BarChart3 className="absolute -right-4 -bottom-4 w-24 h-24 text-gray-50 group-hover:text-green-50 transition-colors" />
         </motion.div>
@@ -206,7 +206,7 @@ export default function FinancialReport() {
               <TrendingDown className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Pengeluaran</p>
-            <h3 className="text-3xl font-black text-gray-900">Rp.{totalExpenses.toLocaleString()}</h3>
+            <h3 className="text-3xl font-black text-gray-900">Rp.{Math.round(totalExpenses).toLocaleString('id-ID')}</h3>
           </div>
           <TrendingDown className="absolute -right-4 -bottom-4 w-24 h-24 text-gray-50 group-hover:text-red-50 transition-colors" />
         </motion.div>
@@ -244,7 +244,7 @@ export default function FinancialReport() {
                 <p className="text-xs text-gray-500 font-medium truncate mb-2">{bank.accountNumber || 'Cash Account'}</p>
               </div>
               <h4 className={`text-lg font-black ${bank.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                Rp.{bank.balance.toLocaleString()}
+                Rp.{Math.round(bank.balance).toLocaleString('id-ID')}
               </h4>
             </motion.div>
           ))}
@@ -334,7 +334,7 @@ export default function FinancialReport() {
                   </td>
                   <td className="px-8 py-6">
                     <p className={`text-sm font-black ${t.type === 'sale' ? 'text-green-600' : 'text-red-600'}`}>
-                      {t.type === 'sale' ? '+' : '-'} Rp.{t.amount.toLocaleString()}
+                      {t.type === 'sale' ? '+' : '-'} Rp.{Math.round(t.amount).toLocaleString('id-ID')}
                     </p>
                   </td>
                   <td className="px-8 py-6">

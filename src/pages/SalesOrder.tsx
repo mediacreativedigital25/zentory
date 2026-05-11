@@ -298,7 +298,7 @@ export default function SalesOrder() {
     }
     return appliedCoupon.value;
   }, [appliedCoupon, subtotal]);
-  const total = Math.max(0, subtotal - discountAmount);
+  const total = Math.round(Math.max(0, subtotal - discountAmount));
 
   useEffect(() => {
     if (paymentType === 'cash') {
@@ -379,7 +379,7 @@ export default function SalesOrder() {
       const currentSubtotal = cart.reduce((acc: number, item: any) => acc + (getProductPrice(item.product, (item as any).variantId) * item.quantity), 0);
 
       if (currentSubtotal < couponData.minPurchase) {
-        setCouponError(`Minimal pembelian Rp ${couponData.minPurchase.toLocaleString()}`);
+        setCouponError(`Minimal pembelian Rp ${Math.round(couponData.minPurchase).toLocaleString('id-ID')}`);
         return;
       }
       
@@ -780,7 +780,7 @@ export default function SalesOrder() {
                 </div>
                 <h4 className="text-xs lg:text-sm font-bold text-gray-900 truncate">{product.name}</h4>
                 <div className="flex justify-between items-center mt-1 lg:mt-2">
-                  <p className="text-indigo-600 font-extrabold text-xs lg:text-sm">Rp.{(product.price || 0).toLocaleString()}</p>
+                  <p className="text-indigo-600 font-extrabold text-xs lg:text-sm">Rp.{Math.round(product.price || 0).toLocaleString('id-ID')}</p>
                   {orderType === 'manual' && <p className="text-[8px] lg:text-[10px] text-gray-500">{product.stock} left</p>}
                 </div>
               </button>
@@ -836,16 +836,16 @@ export default function SalesOrder() {
                     </p>
                     <div className="flex items-center gap-2">
                       <p className={`text-[10px] lg:text-xs font-bold ${isDiscounted ? 'text-green-600' : 'text-gray-500'}`}>
-                        Rp.{unitPrice.toLocaleString()}
+                        Rp.{Math.round(unitPrice).toLocaleString('id-ID')}
                         {isDiscounted && (
-                          <span className="text-[8px] lg:text-[10px] text-gray-400 line-through ml-1 font-medium">Rp.{basePrice.toLocaleString()}</span>
+                          <span className="text-[8px] lg:text-[10px] text-gray-400 line-through ml-1 font-medium">Rp.{Math.round(basePrice).toLocaleString('id-ID')}</span>
                         )}
                       </p>
                       {isDiscounted && (
                         <span className="text-[8px] text-green-600 font-bold bg-green-50 px-1 py-0.5 rounded border border-green-100">Grosir!</span>
                       )}
                     </div>
-                    <p className="text-[10px] lg:text-xs text-gray-400 font-medium">Total: Rp.{(unitPrice * item.quantity).toLocaleString()}</p>
+                    <p className="text-[10px] lg:text-xs text-gray-400 font-medium">Total: Rp.{Math.round(unitPrice * item.quantity).toLocaleString('id-ID')}</p>
                   </div>
                   <div className="flex items-center space-x-1 shrink-0">
                     <button onClick={() => updateQuantity(cartItemId, -1)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"><Minus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
@@ -867,7 +867,7 @@ export default function SalesOrder() {
         <div className="p-3 lg:p-4 bg-gray-50 border-t border-gray-100 space-y-3">
           <div className="flex justify-between text-lg lg:text-xl font-extrabold text-gray-900 pt-2">
             <span>Total</span>
-            <span>Rp.{(total || 0).toLocaleString()}</span>
+            <span>Rp.{Math.round(total || 0).toLocaleString('id-ID')}</span>
           </div>
       <button
         onClick={(e) => {
@@ -924,7 +924,7 @@ export default function SalesOrder() {
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="font-black text-indigo-600">Rp.{v.price.toLocaleString()}</p>
+                        <p className="font-black text-indigo-600">Rp.{Math.round(v.price).toLocaleString('id-ID')}</p>
                         <p className={`text-[9px] font-bold ${v.stock <= 5 ? 'text-red-500 animate-pulse' : 'text-gray-400'}`}>
                             {v.stock > 0 ? `Stok: ${v.stock}` : 'Stok Habis'}
                         </p>
@@ -1058,9 +1058,13 @@ export default function SalesOrder() {
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</span>
                         <input
-                          type="number"
-                          value={cashReceived}
-                          onChange={(e) => setCashReceived(Number(e.target.value))}
+                          type="text"
+                          value={cashReceived > 0 ? cashReceived.toLocaleString('id-ID') : ''}
+                          onChange={(e) => {
+                            let val = e.target.value.replace(/\./g, '');
+                            val = val.replace(/\D/g, '');
+                            setCashReceived(Number(val));
+                          }}
                           className="w-full pl-12 pr-4 py-3 bg-green-50 border-2 border-green-100 rounded-lg text-lg font-medium text-green-900 outline-none focus:ring-2 focus:ring-green-500 transition-all"
                         />
                       </div>
@@ -1068,7 +1072,7 @@ export default function SalesOrder() {
                     <div className="p-4 bg-white rounded-lg border-2 border-gray-100 flex justify-between items-center">
                       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kembalian</span>
                       <span className={`text-xl font-black ${change >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>
-                        Rp.{change.toLocaleString()}
+                        Rp.{Math.round(change).toLocaleString('id-ID')}
                       </span>
                     </div>
                   </motion.div>
@@ -1084,15 +1088,19 @@ export default function SalesOrder() {
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Rp</span>
                       <input
-                        type="number"
-                        value={amountPaid}
-                        onChange={(e) => setAmountPaid(Number(e.target.value))}
+                        type="text"
+                        value={amountPaid > 0 ? amountPaid.toLocaleString('id-ID') : ''}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/\./g, '');
+                          val = val.replace(/\D/g, '');
+                          setAmountPaid(Number(val));
+                        }}
                         className="w-full pl-12 pr-4 py-3 bg-indigo-50 border-2 border-indigo-100 rounded-lg text-lg font-medium text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                       />
                     </div>
                     {amountPaid < total && (
                       <p className="text-xs text-red-500 font-bold text-right">
-                        Sisa: Rp.{(total - amountPaid).toLocaleString()}
+                        Sisa: Rp.{Math.round(total - amountPaid).toLocaleString('id-ID')}
                       </p>
                     )}
                   </motion.div>
@@ -1122,17 +1130,17 @@ export default function SalesOrder() {
                     {couponError && <p className="text-xs text-red-500 font-bold">{couponError}</p>}
                     {couponSuccess && <p className="text-xs text-green-500 font-bold">{couponSuccess}</p>}
                     {appliedCoupon && (
-                      <div className="text-sm font-bold text-green-600">Diskon: - Rp {discountAmount.toLocaleString()}</div>
+                      <div className="text-sm font-bold text-green-600">Diskon: - Rp {Math.round(discountAmount).toLocaleString('id-ID')}</div>
                     )}
                   </div>
                 </div>
   
-                <div className="flex justify-between items-center gap-4 mb-4 mt-6 text-sm font-bold text-gray-500"><span className="uppercase">Subtotal</span><span>Rp.{subtotal.toLocaleString()}</span></div>
+                <div className="flex justify-between items-center gap-4 mb-4 mt-6 text-sm font-bold text-gray-500"><span className="uppercase">Subtotal</span><span>Rp.{Math.round(subtotal).toLocaleString('id-ID')}</span></div>
                 
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Total Tagihan</span>
                   {appliedCoupon && <span className="text-sm text-green-500 font-bold ml-2">(Telah Dipotong Diskon)</span>}
-                  <span className="text-2xl font-black text-gray-900">Rp.{total.toLocaleString()}</span>
+                  <span className="text-2xl font-black text-gray-900">Rp.{Math.round(total).toLocaleString('id-ID')}</span>
                 </div>
                 <button
                   onClick={handleCheckout}
@@ -1272,8 +1280,8 @@ export default function SalesOrder() {
                         <tr key={i} className="text-sm">
                           <td className="py-4 font-medium">{item.name}</td>
                           <td className="py-4 text-center">{item.quantity}</td>
-                          <td className="py-4 text-right">Rp.{item.price.toLocaleString()}</td>
-                          <td className="py-4 text-right font-bold">Rp.{(item.price * item.quantity).toLocaleString()}</td>
+                          <td className="py-4 text-right">Rp.{Math.round(item.price).toLocaleString('id-ID')}</td>
+                          <td className="py-4 text-right font-bold">Rp.{Math.round(item.price * item.quantity).toLocaleString('id-ID')}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1281,7 +1289,7 @@ export default function SalesOrder() {
                       <tr className="border-t-2 border-gray-900">
                         <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Grand Total</td>
                         <td className="py-6 text-right text-2xl font-black text-indigo-600">
-                          Rp.{lastOrder.totalAmount.toLocaleString()}
+                          Rp.{Math.round(lastOrder.totalAmount).toLocaleString('id-ID')}
                         </td>
                       </tr>
                     </tfoot>
@@ -1329,8 +1337,8 @@ export default function SalesOrder() {
                         <span>{item.name}</span>
                       </div>
                       <div className="flex justify-between pl-2">
-                        <span>{item.quantity} x {item.price.toLocaleString()}</span>
-                        <span>{(item.price * item.quantity).toLocaleString()}</span>
+                        <span>{item.quantity} x {Math.round(item.price).toLocaleString('id-ID')}</span>
+                        <span>{Math.round(item.price * item.quantity).toLocaleString('id-ID')}</span>
                       </div>
                     </div>
                   ))}
@@ -1339,7 +1347,7 @@ export default function SalesOrder() {
                 <div className="border-t border-dashed border-gray-300 py-2 font-bold text-xs">
                   <div className="flex justify-between">
                     <span>TOTAL</span>
-                    <span>Rp.{lastOrder.totalAmount.toLocaleString()}</span>
+                    <span>Rp.{Math.round(lastOrder.totalAmount).toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 

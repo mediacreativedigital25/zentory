@@ -369,11 +369,14 @@ export default function BankTransfers() {
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium tracking-widest text-xs uppercase">Rp</span>
                     <input
-                      type="number"
+                      type="text"
                       required
-                      min="1"
-                      value={formData.amount}
-                      onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                      value={Number(formData.amount) > 0 ? Number(formData.amount).toLocaleString('id-ID') : ''}
+                      onChange={(e) => {
+                        let val = e.target.value.replace(/\./g, '');
+                        val = val.replace(/\D/g, '');
+                        setFormData(prev => ({ ...prev, amount: Number(val) || '' }));
+                      }}
                       className="w-full pl-12 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-lg font-medium font-mono tracking-wider text-right"
                       placeholder="0"
                     />

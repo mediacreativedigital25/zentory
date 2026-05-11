@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import SuperAdmin from './pages/SuperAdmin';
 import SuperAdminDashboard from './pages/superadmin/Dashboard';
+import DataCheck from './pages/superadmin/DataCheck';
 import SuperAdminInvoices from './pages/superadmin/Invoices';
 import SuperAdminTenants from './pages/superadmin/Tenants';
 import SuperAdminCoupons from './pages/superadmin/TenantCoupons';
@@ -435,6 +436,12 @@ export default function App() {
           <Route path="/superadmin/dashboard" element={
             <ProtectedRoute allowedRoles={['superadmin']}>
               <SuperAdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/data-check" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <DataCheck />
             </ProtectedRoute>
           } />
 

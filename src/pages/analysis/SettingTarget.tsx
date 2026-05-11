@@ -265,16 +265,20 @@ export default function SettingTarget() {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">Rp</span>
                   <input
-                    type="number"
-                    value={formData[t.key as keyof typeof formData]}
-                    onChange={(e) => setFormData({ ...formData, [t.key]: e.target.value })}
+                    type="text"
+                    value={Number(formData[t.key as keyof typeof formData]) > 0 ? Number(formData[t.key as keyof typeof formData]).toLocaleString('id-ID') : ''}
+                    onChange={(e) => {
+                       let val = e.target.value.replace(/\./g, '');
+                       val = val.replace(/\D/g, '');
+                       setFormData({ ...formData, [t.key]: Number(val) });
+                    }}
                     className="w-full pl-12 pr-4 py-4 bg-white border border-indigo-100 rounded-lg text-2xl font-medium text-gray-900 outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
               ) : (
                 <div>
                   <span className="text-gray-400 font-bold text-lg mr-1">Rp</span>
-                  <span className={`text-3xl font-black ${t.color}`}>{(formData[t.key as keyof typeof formData] || 0).toLocaleString()}</span>
+                  <span className={`text-3xl font-black ${t.color}`}>{Math.round(Number(formData[t.key as keyof typeof formData]) || 0).toLocaleString('id-ID')}</span>
                 </div>
               )}
             </div>

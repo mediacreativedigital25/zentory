@@ -213,7 +213,7 @@ export default function Sales() {
     }
     return appliedCoupon.value;
   }, [appliedCoupon, subtotal]);
-  const total = Math.max(0, subtotal - discountAmount);
+  const total = Math.round(Math.max(0, subtotal - discountAmount));
 
   
   const handleApplyCoupon = async () => {
@@ -257,7 +257,7 @@ export default function Sales() {
       const currentSubtotal = cart.reduce((acc: number, item: any) => acc + (getProductPrice(item.product, (item as any).variantId) * item.quantity), 0);
 
       if (currentSubtotal < couponData.minPurchase) {
-        setCouponError(`Minimal pembelian Rp ${couponData.minPurchase.toLocaleString()}`);
+        setCouponError(`Minimal pembelian Rp ${Math.round(couponData.minPurchase).toLocaleString('id-ID')}`);
         return;
       }
       
@@ -550,7 +550,7 @@ export default function Sales() {
                 </div>
                 <h4 className="text-[11px] sm:text-xs md:text-sm font-bold text-gray-900 truncate leading-tight">{product.name}</h4>
                 <div className="flex justify-between items-center mt-1 sm:mt-2">
-                  <p className="text-indigo-600 font-extrabold text-[10px] sm:text-xs md:text-sm">Rp.{(product.price || 0).toLocaleString()}</p>
+                  <p className="text-indigo-600 font-extrabold text-[10px] sm:text-xs md:text-sm">Rp.{Math.round(product.price || 0).toLocaleString('id-ID')}</p>
                   <p className="text-[8px] sm:text-[9px] md:text-[10px] text-gray-400">{product.stock} stok</p>
                 </div>
               </button>
@@ -598,16 +598,16 @@ export default function Sales() {
                   </p>
                   <div className="flex items-center gap-2">
                     <p className={`text-[10px] md:text-xs font-bold ${isDiscounted ? 'text-green-600' : 'text-gray-500'}`}>
-                      Rp.{unitPrice.toLocaleString()}
+                      Rp.{Math.round(unitPrice).toLocaleString('id-ID')}
                       {isDiscounted && (
-                        <span className="text-[8px] md:text-[10px] text-gray-400 line-through ml-1 font-medium">Rp.{basePrice.toLocaleString()}</span>
+                        <span className="text-[8px] md:text-[10px] text-gray-400 line-through ml-1 font-medium">Rp.{Math.round(basePrice).toLocaleString('id-ID')}</span>
                       )}
                     </p>
                     {isDiscounted && (
                       <span className="text-[8px] text-green-600 font-bold bg-green-50 px-1 py-0.5 rounded border border-green-100">Grosir!</span>
                     )}
                   </div>
-                  <p className="text-[10px] md:text-xs text-gray-400">Total: Rp.{(unitPrice * item.quantity).toLocaleString()}</p>
+                  <p className="text-[10px] md:text-xs text-gray-400">Total: Rp.{Math.round(unitPrice * item.quantity).toLocaleString('id-ID')}</p>
                 </div>
                 <div className="flex items-center space-x-1 md:space-x-2">
                   <button onClick={() => updateQuantity(cartItemId, -1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
@@ -644,11 +644,11 @@ export default function Sales() {
           <div className="space-y-1 md:space-y-2">
             <div className="flex justify-between text-[10px] md:text-sm text-gray-600">
               <span>Subtotal</span>
-              <span className="font-bold">Rp.{(total || 0).toLocaleString()}</span>
+              <span className="font-bold">Rp.{Math.round(subtotal || 0).toLocaleString('id-ID')}</span>
             </div>
             <div className="flex justify-between text-base md:text-xl font-black text-gray-900 pt-2 border-t border-gray-200">
               <span>Total</span>
-              <span className="text-indigo-600">Rp.{(total || 0).toLocaleString()}</span>
+              <span className="text-indigo-600">Rp.{Math.round(total || 0).toLocaleString('id-ID')}</span>
             </div>
           </div>
 
@@ -716,7 +716,7 @@ export default function Sales() {
                         <p className="text-[10px] text-gray-500 font-mono">{v.sku}</p>
                     </div>
                     <div className="text-right">
-                        <p className="font-black text-indigo-600">Rp.{v.price.toLocaleString()}</p>
+                        <p className="font-black text-indigo-600">Rp.{Math.round(v.price).toLocaleString('id-ID')}</p>
                         <p className={`text-[9px] font-bold ${v.stock <= 5 ? 'text-red-500 animate-pulse' : 'text-gray-400'}`}>
                             {v.stock > 0 ? `Stok: ${v.stock}` : 'Stok Habis'}
                         </p>
@@ -819,7 +819,7 @@ export default function Sales() {
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-gray-500 font-bold">Total Tagihan</span>
                   {appliedCoupon && <span className="text-sm text-green-500 font-bold ml-2">(Telah Dipotong Diskon)</span>}
-                    <span className="text-2xl font-black text-indigo-600">Rp.{total.toLocaleString()}</span>
+                    <span className="text-2xl font-black text-indigo-600">Rp.{Math.round(total).toLocaleString('id-ID')}</span>
                   </div>
                   <button
                     onClick={handleCheckout}
@@ -944,8 +944,8 @@ export default function Sales() {
                         <tr key={i} className="text-sm">
                           <td className="py-4 font-medium">{item.name}</td>
                           <td className="py-4 text-center">{item.quantity}</td>
-                          <td className="py-4 text-right">Rp.{item.price.toLocaleString()}</td>
-                          <td className="py-4 text-right font-bold">Rp.{(item.price * item.quantity).toLocaleString()}</td>
+                          <td className="py-4 text-right">Rp.{Math.round(item.price).toLocaleString('id-ID')}</td>
+                          <td className="py-4 text-right font-bold">Rp.{Math.round(item.price * item.quantity).toLocaleString('id-ID')}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -953,7 +953,7 @@ export default function Sales() {
                       <tr className="border-t-2 border-gray-900">
                         <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Grand Total</td>
                         <td className="py-6 text-right text-2xl font-black text-indigo-600">
-                          Rp.{lastTransaction.totalAmount.toLocaleString()}
+                          Rp.{Math.round(lastTransaction.totalAmount).toLocaleString('id-ID')}
                         </td>
                       </tr>
                     </tfoot>
@@ -1001,8 +1001,8 @@ export default function Sales() {
                         <span>{item.name}</span>
                       </div>
                       <div className="flex justify-between pl-2">
-                        <span>{item.quantity} x {item.price.toLocaleString()}</span>
-                        <span>{(item.price * item.quantity).toLocaleString()}</span>
+                        <span>{item.quantity} x {Math.round(item.price).toLocaleString('id-ID')}</span>
+                        <span>{Math.round(item.price * item.quantity).toLocaleString('id-ID')}</span>
                       </div>
                     </div>
                   ))}
@@ -1011,7 +1011,7 @@ export default function Sales() {
                 <div className="border-t border-dashed border-gray-300 py-2 font-bold text-xs">
                   <div className="flex justify-between">
                     <span>TOTAL</span>
-                    <span>Rp.{lastTransaction.totalAmount.toLocaleString()}</span>
+                    <span>Rp.{Math.round(lastTransaction.totalAmount).toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 

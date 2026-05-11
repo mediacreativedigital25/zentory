@@ -575,10 +575,14 @@ export default function ClaimExpense() {
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                             <input
-                              type="number"
+                              type="text"
                               required
-                              value={item.amount}
-                              onChange={(e) => updateItem(index, 'amount', Number(e.target.value))}
+                              value={item.amount > 0 ? item.amount.toLocaleString('id-ID') : ''}
+                              onChange={(e) => {
+                                 let val = e.target.value.replace(/\./g, '');
+                                 val = val.replace(/\D/g, '');
+                                 updateItem(index, 'amount', Number(val));
+                              }}
                               className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
                             />
                           </div>

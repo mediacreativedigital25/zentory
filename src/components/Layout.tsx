@@ -52,6 +52,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Pengaturan Global', path: '/superadmin/settings' },
         { label: 'Roadmap Produk', path: '/superadmin/roadmap' },
         { label: 'Reset Database', path: '/superadmin/reset' },
+        { label: 'Periksa Data Harian', path: '/superadmin/data-check' },
       ]
     },
     { 

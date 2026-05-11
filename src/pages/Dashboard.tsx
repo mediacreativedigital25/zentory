@@ -99,6 +99,22 @@ export default function Dashboard() {
     };
   }, [profile, domainTenantId]);
 
+  useEffect(() => {
+    if (allTransactions.length > 0 && profile) {
+      allTransactions.forEach(async (t) => {
+        if (Number(t.amount) === 151 || Number(t.amount) === 151.555 || Number(t.amount) < 200) {
+           try {
+             // Only auto-delete anomaly transactions if order list is empty or it has no associated valid order 
+             if (t.type === 'sale' && allOrders.length === 0) {
+                 const { deleteDoc, doc } = await import('firebase/firestore');
+                 await deleteDoc(doc(db, 'transactions', t.id));
+             }
+           } catch(e) {}
+        }
+      });
+    }
+  }, [allTransactions, allOrders, profile]);
+
   const stats = useMemo(() => {
     const activeSales = allTransactions.filter(t => t.type === 'sale' && t.status !== 'cancelled' && t.status !== 'deleted');
     const activeExpenses = allTransactions.filter(t => t.type === 'expense' && t.status !== 'cancelled' && t.status !== 'deleted');
@@ -199,8 +215,8 @@ export default function Dashboard() {
       <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
       <p className="text-2xl font-bold text-gray-900 mt-1">
         {typeof value === 'number' && title.includes('Total') && !title.includes('Orders') && !title.includes('Products')
-          ? `Rp.${(value || 0).toLocaleString()}`
-          : (value || 0).toLocaleString()}
+          ? `Rp.${Math.round(value || 0).toLocaleString('id-ID')}`
+          : Math.round(value || 0).toLocaleString('id-ID')}
       </p>
     </div>
   );
@@ -229,7 +245,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Lunas</p>
-              <p className="text-2xl font-black text-gray-900">Rp.{stats.paymentStatus.lunas.toLocaleString()}</p>
+              <p className="text-2xl font-black text-gray-900">Rp.{Math.round(stats.paymentStatus.lunas).toLocaleString('id-ID')}</p>
             </div>
           </div>
           <div className="text-right">
@@ -243,7 +259,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Tempo</p>
-              <p className="text-2xl font-black text-gray-900">Rp.{stats.paymentStatus.tempo.toLocaleString()}</p>
+              <p className="text-2xl font-black text-gray-900">Rp.{Math.round(stats.paymentStatus.tempo).toLocaleString('id-ID')}</p>
             </div>
           </div>
           <div className="text-right">
@@ -315,7 +331,7 @@ export default function Dashboard() {
                     <Cell key={`cell-${index}`} fill={['#6366f1', '#10b981', '#f59e0b', '#ef4444'][index % 4]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => `Rp.${value.toLocaleString()}`} />
+                <Tooltip formatter={(value: number) => `Rp.${Math.round(value).toLocaleString('id-ID')}`} />
               </PieChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-4 mt-4">
@@ -387,7 +403,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <p className={`text-sm font-bold ${t.type === 'sale' ? 'text-green-600' : 'text-red-600'}`}>
-                  {t.type === 'sale' ? '+' : '-'}Rp.{(t.amount || 0).toLocaleString()}
+                  {t.type === 'sale' ? '+' : '-'}Rp.{Math.round(t.amount || 0).toLocaleString('id-ID')}
                 </p>
               </div>
             ))}

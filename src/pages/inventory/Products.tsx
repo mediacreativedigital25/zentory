@@ -1530,7 +1530,10 @@ export default function Products() {
                         <div className="col-span-2">
                           <div className="pt-2 border-t border-gray-100 mt-2">
                             <div className="flex justify-between items-center mb-2">
-                                <label className="block text-xs font-semibold text-gray-600">Harga Grosir (Bertingkat)</label>
+                                <div>
+                                  <label className="block text-xs font-semibold text-gray-600">Harga Grosir (Bertingkat)</label>
+                                  <p className="text-[10px] text-gray-400 mt-0.5">Note: Harga yang diisi adalah <b>harga baru per item</b>, BUKAN jumlah potongan.</p>
+                                </div>
                                 <button 
                                     type="button" 
                                     onClick={() => setFormData({ 

@@ -143,7 +143,7 @@ export default function CostRatio() {
             </div>
             <h4 className="font-black text-gray-900 text-xs uppercase tracking-tight">Total Pendapatan</h4>
           </div>
-          <p className="text-2xl font-black text-gray-900">Rp.{totalRevenue.toLocaleString()}</p>
+          <p className="text-2xl font-black text-gray-900">Rp.{Math.round(totalRevenue).toLocaleString('id-ID')}</p>
           <p className="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">{periodMonths} Bulan Terakhir</p>
         </div>
 
@@ -154,7 +154,7 @@ export default function CostRatio() {
             </div>
             <h4 className="font-black text-gray-900 text-xs uppercase tracking-tight">Total Biaya Operasional</h4>
           </div>
-          <p className="text-2xl font-black text-gray-900 text-red-600">Rp.{totalExpense.toLocaleString()}</p>
+          <p className="text-2xl font-black text-gray-900 text-red-600">Rp.{Math.round(totalExpense).toLocaleString('id-ID')}</p>
           <p className="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">{periodMonths} Bulan Terakhir</p>
         </div>
 
@@ -215,6 +215,7 @@ export default function CostRatio() {
             <Tooltip 
               cursor={{ fill: 'rgba(79, 70, 229, 0.05)' }} 
               contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.1)', padding: '20px' }}
+              formatter={(value: any, name: string) => [name === 'Cost Ratio (%)' ? `${Number(value)}%` : `Rp.${Math.round(Number(value)).toLocaleString('id-ID')}`, name]}
             />
             <Legend />
             <Bar yAxisId="left" dataKey="revenue" fill="#4f46e5" radius={[8, 8, 0, 0]} name="Pendapatan" />
@@ -259,8 +260,8 @@ export default function CostRatio() {
                 return (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-8 py-6 font-bold text-gray-900">{data.month}</td>
-                    <td className="px-8 py-6 text-right font-bold">Rp.{data.revenue.toLocaleString()}</td>
-                    <td className="px-8 py-6 text-right font-bold text-red-500">Rp.{data.expense.toLocaleString()}</td>
+                    <td className="px-8 py-6 text-right font-bold">Rp.{Math.round(data.revenue).toLocaleString('id-ID')}</td>
+                    <td className="px-8 py-6 text-right font-bold text-red-500">Rp.{Math.round(data.expense).toLocaleString('id-ID')}</td>
                     <td className="px-8 py-6 text-right">
                       <span className={`text-lg font-black ${getRatioColor(data.ratio)}`}>
                         {data.ratio}%
