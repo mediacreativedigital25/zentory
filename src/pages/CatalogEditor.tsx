@@ -74,7 +74,7 @@ export default function CatalogEditor() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Settings Form */}
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-4">
+          <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 space-y-4">
             <h3 className="text-lg font-semibold flex items-center">
               <Store className="w-5 h-5 mr-2 text-indigo-600" />
               General Information
@@ -86,7 +86,7 @@ export default function CatalogEditor() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
@@ -108,14 +108,14 @@ export default function CatalogEditor() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                  className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                   placeholder="Describe your store to your customers..."
                 />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-4">
+          <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 space-y-4">
             <h3 className="text-lg font-semibold flex items-center">
               <Palette className="w-5 h-5 mr-2 text-indigo-600" />
               Branding & Style
@@ -135,7 +135,7 @@ export default function CatalogEditor() {
                     type="color"
                     value={formData.themeColor}
                     onChange={(e) => setFormData({ ...formData, themeColor: e.target.value })}
-                    className="w-12 h-12 border-none rounded-lg cursor-pointer"
+                    className="w-12 h-12 border-none rounded-md cursor-pointer"
                   />
                   <span className="text-sm font-mono text-gray-500 uppercase">{formData.themeColor}</span>
                 </div>
@@ -147,7 +147,7 @@ export default function CatalogEditor() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center shadow-lg shadow-indigo-100 disabled:opacity-50"
+              className="bg-indigo-600 text-white px-8 py-3 rounded-md font-bold hover:bg-indigo-700 transition-all flex items-center shadow-lg shadow-indigo-100 disabled:opacity-50"
             >
               <Save className="w-5 h-5 mr-2" />
               {saving ? 'Saving...' : 'Save Changes'}
@@ -157,13 +157,13 @@ export default function CatalogEditor() {
 
         {/* Preview Card */}
         <div className="space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 sticky top-8">
+          <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 sticky top-8">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Globe className="w-5 h-5 mr-2 text-indigo-600" />
               Live Preview
             </h3>
-            <div className="border border-gray-100 rounded-lg overflow-hidden shadow-inner bg-gray-50 p-4">
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="border border-gray-100 rounded-md overflow-hidden shadow-inner bg-gray-50 p-4">
+              <div className="bg-white rounded-md shadow-sm overflow-hidden">
                 <div className="h-12 border-b border-gray-50 flex items-center px-4 justify-between">
                   <div className="flex items-center">
                     <div className="w-6 h-6 rounded bg-indigo-600 mr-2" style={{ backgroundColor: formData.themeColor }} />
@@ -175,12 +175,12 @@ export default function CatalogEditor() {
                   </div>
                 </div>
                 <div className="p-4 space-y-3">
-                  <div className="h-24 bg-gray-50 rounded-lg flex items-center justify-center">
+                  <div className="h-24 bg-gray-50 rounded-md flex items-center justify-center">
                     <p className="text-[10px] text-gray-400 text-center px-4">{formData.description || 'Store description will appear here...'}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="h-20 bg-gray-50 rounded-lg" />
-                    <div className="h-20 bg-gray-50 rounded-lg" />
+                    <div className="h-20 bg-gray-50 rounded-md" />
+                    <div className="h-20 bg-gray-50 rounded-md" />
                   </div>
                 </div>
               </div>
@@ -190,7 +190,7 @@ export default function CatalogEditor() {
                 href={`/catalog/${formData.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2 border border-indigo-600 text-indigo-600 rounded-lg text-sm font-medium flex items-center justify-center hover:bg-indigo-50 transition-colors"
+                className="w-full py-2 border border-indigo-600 text-indigo-600 rounded-md text-sm font-medium flex items-center justify-center hover:bg-indigo-50 transition-colors"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 View Public Store

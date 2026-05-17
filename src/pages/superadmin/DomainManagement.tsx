@@ -159,7 +159,7 @@ export default function DomainManagement() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah Domain
@@ -168,9 +168,9 @@ export default function DomainManagement() {
 
       {/* DNS Instructions & Worker Guide */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-6 space-y-4">
+        <div className="bg-indigo-50 border border-indigo-100 rounded-md p-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-indigo-600 text-white rounded-md flex items-center justify-center">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
@@ -179,15 +179,15 @@ export default function DomainManagement() {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3">
-            <div className="bg-white p-4 rounded-lg border border-indigo-100">
+            <div className="bg-white p-4 rounded-md border border-indigo-100">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Type</p>
               <p className="font-mono font-bold text-indigo-600 text-sm">CNAME</p>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-indigo-100">
+            <div className="bg-white p-4 rounded-md border border-indigo-100">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Name (Host)</p>
               <p className="font-mono font-bold text-indigo-600 text-sm">@ atau subdomain (misal: shop)</p>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-indigo-100 relative group">
+            <div className="bg-white p-4 rounded-md border border-indigo-100 relative group">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Target (Value)</p>
               <p className="font-mono font-bold text-indigo-600 text-xs truncate pr-8">{appHostname}</p>
               <button 
@@ -195,7 +195,7 @@ export default function DomainManagement() {
                   navigator.clipboard.writeText(appHostname);
                   alert('Target DNS disalin!');
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-indigo-50 rounded-lg text-indigo-400 transition-all"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-indigo-50 rounded-md text-indigo-400 transition-all"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -204,9 +204,9 @@ export default function DomainManagement() {
           <p className="text-xs text-indigo-500 italic">Catatan: Jika menggunakan Cloudflare, pastikan Proxy (Awan Oranye) AKTIF.</p>
         </div>
 
-        <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 space-y-4">
+        <div className="bg-amber-50 border border-amber-100 rounded-md p-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-600 text-white rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-amber-600 text-white rounded-md flex items-center justify-center">
               <RefreshCw className="w-6 h-6" />
             </div>
             <div>
@@ -214,7 +214,7 @@ export default function DomainManagement() {
               <p className="text-sm text-amber-700">Gunakan Worker sebagai jembatan. Satu Worker bisa digunakan untuk banyak domain.</p>
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg border border-amber-100 space-y-3">
+          <div className="bg-white p-4 rounded-md border border-amber-100 space-y-3">
             <p className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md inline-block">TIPS: Jika sudah punya Worker proxy, cukup tambahkan domain baru di tab "Domains & Routes".</p>
             <ol className="text-xs text-gray-600 space-y-2 list-decimal ml-4 font-medium">
               <li>Buat Worker baru di Cloudflare (Start with Hello World).</li>
@@ -246,7 +246,7 @@ export default function DomainManagement() {
                 navigator.clipboard.writeText(script);
                 alert('Script Worker disalin!');
               }}
-              className="w-full py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 transition-all"
+              className="w-full py-2 bg-amber-600 text-white rounded-md text-xs font-bold hover:bg-amber-700 transition-all"
             >
               Salin Script Worker
             </button>
@@ -263,17 +263,17 @@ export default function DomainManagement() {
             placeholder="Cari domain atau tenant..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
           />
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-md border border-gray-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Domain</p>
             <p className="text-xl font-bold text-gray-900">{domains.length}</p>
           </div>
           <Globe className="w-8 h-8 text-indigo-100" />
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-md border border-gray-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Aktif</p>
             <p className="text-xl font-bold text-green-600">{domains.filter(d => d.status === 'active').length}</p>
@@ -283,7 +283,7 @@ export default function DomainManagement() {
       </div>
 
       {/* Domains Table */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -300,7 +300,7 @@ export default function DomainManagement() {
                 <tr key={domain.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                      <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center">
                         <Globe className="w-5 h-5" />
                       </div>
                       <div>
@@ -318,7 +318,7 @@ export default function DomainManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border ${
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border ${
                       domain.status === 'active' 
                         ? 'bg-green-50 text-green-700 border-green-100' 
                         : 'bg-yellow-50 text-yellow-700 border-yellow-100'
@@ -328,7 +328,7 @@ export default function DomainManagement() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border ${
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border ${
                       domain.sslStatus === 'valid' 
                         ? 'bg-blue-50 text-blue-700 border-blue-100' 
                         : domain.sslStatus === 'pending'
@@ -345,7 +345,7 @@ export default function DomainManagement() {
                         <button
                           onClick={() => handleVerify(domain)}
                           disabled={isVerifying === domain.id}
-                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-2 text-xs font-bold"
+                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors flex items-center gap-2 text-xs font-bold"
                         >
                           {isVerifying === domain.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                           Verify & Activate
@@ -356,7 +356,7 @@ export default function DomainManagement() {
                           href={`http://${domain.domain}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
                           title="Buka Domain"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -364,7 +364,7 @@ export default function DomainManagement() {
                       )}
                       <button
                         onClick={() => handleDeleteDomain(domain.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -392,7 +392,7 @@ export default function DomainManagement() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">Tambah Custom Domain</h3>
@@ -411,7 +411,7 @@ export default function DomainManagement() {
                       placeholder="contoh: toko-saya.com"
                       value={formData.domain}
                       onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                      className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                     />
                   </div>
                 </div>
@@ -422,7 +422,7 @@ export default function DomainManagement() {
                     required
                     value={formData.tenantId}
                     onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium appearance-none bg-white"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 font-medium appearance-none bg-white"
                   >
                     <option value="">Pilih Tenant Owner</option>
                     {tenants.map(t => (
@@ -431,13 +431,13 @@ export default function DomainManagement() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md">
                   <input
                     type="checkbox"
                     id="isPrimary"
                     checked={formData.isPrimary}
                     onChange={(e) => setFormData({ ...formData, isPrimary: e.target.checked })}
-                    className="w-5 h-5 text-indigo-600 rounded-lg border-gray-300 focus:ring-indigo-500"
+                    className="w-5 h-5 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500"
                   />
                   <label htmlFor="isPrimary" className="text-xs font-semibold text-gray-600">Set sebagai Domain Utama</label>
                 </div>
@@ -446,14 +446,14 @@ export default function DomainManagement() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={isAdding}
-                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 disabled:opacity-50 flex items-center justify-center"
+                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 disabled:opacity-50 flex items-center justify-center"
                   >
                     {isAdding ? (
                       <>

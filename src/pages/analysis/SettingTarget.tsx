@@ -168,7 +168,7 @@ export default function SettingTarget() {
           <p className="text-gray-500 font-medium">Tentukan target pencapaian bisnis Anda secara manual per bulan.</p>
         </div>
         
-        <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-3 bg-white p-2 rounded-md border border-gray-100 shadow-sm">
           <Calendar className="w-5 h-5 text-gray-400 ml-2" />
           <input 
             type="month" 
@@ -182,10 +182,10 @@ export default function SettingTarget() {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
         <div className="p-8 border-b border-gray-50 bg-indigo-50/30 flex justify-between items-center transition-all">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-white rounded-2xl shadow-sm text-indigo-600">
+            <div className="p-3 bg-white rounded-md shadow-sm text-indigo-600">
               <Calendar className="w-6 h-6" />
             </div>
             <div>
@@ -197,7 +197,7 @@ export default function SettingTarget() {
           {(!isMonthLocked || isUnlockedByAdmin) && !isEditing ? (
             <button 
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+              className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
             >
               <Edit2 className="w-4 h-4" />
               Edit Target {isUnlockedByAdmin && '(Revisi Buka)'}
@@ -206,14 +206,14 @@ export default function SettingTarget() {
             <div className="flex gap-3">
               <button 
                 onClick={() => setIsEditing(false)}
-                className="flex items-center gap-2 px-5 py-3 bg-white text-gray-400 rounded-lg font-medium border border-gray-100 hover:text-gray-600 transition-all"
+                className="flex items-center gap-2 px-5 py-3 bg-white text-gray-400 rounded-md font-medium border border-gray-100 hover:text-gray-600 transition-all"
               >
                 <X className="w-4 h-4" />
                 Batal
               </button>
               <button 
                 onClick={handleSave}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-2xl font-black shadow-lg shadow-green-100 hover:bg-green-700 transition-all active:scale-95"
+                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-md font-black shadow-lg shadow-green-100 hover:bg-green-700 transition-all active:scale-95"
               >
                 <Save className="w-4 h-4" />
                 Simpan Target
@@ -221,21 +221,21 @@ export default function SettingTarget() {
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 p-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 italic text-xs font-medium">
+              <div className="flex items-center gap-2 p-2 bg-amber-50 text-amber-700 rounded-md border border-amber-100 italic text-xs font-medium">
                 <ShieldCheck className="w-4 h-4" />
                 Target terkunci
               </div>
               
               {isMonthLocked && revisionCount < 2 && (
                 hasPendingRequest ? (
-                  <div className="flex items-center gap-2 p-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 italic text-xs font-medium">
+                  <div className="flex items-center gap-2 p-2 bg-blue-50 text-blue-700 rounded-md border border-blue-100 italic text-xs font-medium">
                     <Clock className="w-4 h-4" />
                     Menunggu Approval
                   </div>
                 ) : (
                   <button 
                     onClick={handleRequestUnlock}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl font-bold shadow-sm hover:bg-red-100 transition-all text-xs"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-md font-bold shadow-sm hover:bg-red-100 transition-all text-xs"
                   >
                     <Key className="w-4 h-4" />
                     Ajukan Revisi (Sisa {2 - revisionCount}x)
@@ -272,7 +272,7 @@ export default function SettingTarget() {
                        val = val.replace(/\D/g, '');
                        setFormData({ ...formData, [t.key]: Number(val) });
                     }}
-                    className="w-full pl-12 pr-4 py-4 bg-white border border-indigo-100 rounded-lg text-2xl font-medium text-gray-900 outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-4 bg-white border border-indigo-100 rounded-md text-2xl font-medium text-gray-900 outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
               ) : (

@@ -477,7 +477,7 @@ export default function SalesOrderV1() {
         {/* Main Form */}
         <div className="space-y-6">
           {/* Customer & Date */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+          <div className="bg-white p-8 rounded-md border border-gray-100 shadow-sm space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="space-y-2">
                 <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-600">
@@ -489,7 +489,7 @@ export default function SalesOrderV1() {
                   placeholder="Nama Sales"
                   value={salesName}
                   onChange={(e) => setSalesName(e.target.value)}
-                  className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans"
+                  className="w-full p-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans"
                 />
               </div>
 
@@ -513,10 +513,10 @@ export default function SalesOrderV1() {
                     }}
                     onFocus={() => setIsCustomerDropdownOpen(true)}
                     onBlur={() => setTimeout(() => setIsCustomerDropdownOpen(false), 200)}
-                    className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans"
                   />
                   {isCustomerDropdownOpen && (
-                     <div className="absolute top-full left-0 z-50 w-[300px] bg-white border border-gray-100 rounded-lg mt-2 max-h-60 overflow-y-auto shadow-xl py-2">
+                     <div className="absolute top-full left-0 z-50 w-[300px] bg-white border border-gray-100 rounded-md mt-2 max-h-60 overflow-y-auto shadow-xl py-2">
                         {customers.filter(c => c.name.toLowerCase().includes(customerSearchTerm.toLowerCase())).map(c => (
                             <div 
                                key={c.id} 
@@ -543,7 +543,7 @@ export default function SalesOrderV1() {
                   placeholder="Kode Customer"
                   value={customerCodeSearch}
                   readOnly
-                  className="w-full text-gray-400 outline-none cursor-not-allowed uppercase p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium"
+                  className="w-full text-gray-400 outline-none cursor-not-allowed uppercase p-2 bg-white border border-gray-200 rounded-md text-sm font-medium"
                 />
               </div>
 
@@ -556,7 +556,7 @@ export default function SalesOrderV1() {
                   placeholder="No PO (Opsional)"
                   value={poNumber}
                   onChange={(e) => setPoNumber(e.target.value)}
-                  className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all uppercase"
+                  className="w-full p-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all uppercase"
                 />
               </div>
             </div>
@@ -568,17 +568,17 @@ export default function SalesOrderV1() {
                   Term Of Payment (TOP)
                 </label>
                 {!selectedCustomerId ? (
-                  <div className="w-full p-2 bg-white border border-dashed border-gray-200 rounded-lg text-[10px] font-medium text-gray-400 italic flex items-center justify-center">
+                  <div className="w-full p-2 bg-white border border-dashed border-gray-200 rounded-md text-[10px] font-medium text-gray-400 italic flex items-center justify-center">
                     Pilih pelanggan dahulu
                   </div>
                 ) : isTempoAllowed ? (
                   <div className="space-y-3">
-                    <div className="w-full p-2 bg-orange-50 border border-orange-100 rounded-lg flex items-center justify-between">
+                    <div className="w-full p-2 bg-orange-50 border border-orange-100 rounded-md flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-black text-orange-400 uppercase tracking-tighter">Term Of Payment</span>
                         <span className="text-sm font-semibold text-orange-600">{tempoDays} Hari</span>
                       </div>
-                      <span className="text-[10px] font-mono text-orange-400 font-medium bg-white px-2 py-1 rounded-lg">CREDIT</span>
+                      <span className="text-[10px] font-mono text-orange-400 font-medium bg-white px-2 py-1 rounded-md">CREDIT</span>
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-gray-600">Tanggal Jatuh Tempo</label>
@@ -586,17 +586,17 @@ export default function SalesOrderV1() {
                         type="date"
                         value={dueDate}
                         readOnly
-                        className="w-full text-gray-400 outline-none cursor-not-allowed p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium"
+                        className="w-full text-gray-400 outline-none cursor-not-allowed p-2 bg-white border border-gray-200 rounded-md text-sm font-medium"
                       />
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full p-2 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center justify-between">
+                  <div className="w-full p-2 bg-emerald-50 border border-emerald-100 rounded-md flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black text-emerald-400 uppercase tracking-tighter">Term Of Payment</span>
                       <span className="text-sm font-semibold text-emerald-600 uppercase">Cash</span>
                     </div>
-                    <span className="text-[10px] font-mono text-emerald-400 font-medium bg-white px-2 py-1 rounded-lg">PAID</span>
+                    <span className="text-[10px] font-mono text-emerald-400 font-medium bg-white px-2 py-1 rounded-md">PAID</span>
                   </div>
                 )}
               </div>
@@ -616,7 +616,7 @@ export default function SalesOrderV1() {
                          const cp = coupons.find(c => c.id === e.target.value);
                          setAppliedCoupon(cp || null);
                      }}
-                     className="w-full p-2 bg-indigo-50 border border-indigo-100 rounded-lg text-sm font-medium text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans appearance-none cursor-pointer"
+                     className="w-full p-2 bg-indigo-50 border border-indigo-100 rounded-md text-sm font-medium text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-sans appearance-none cursor-pointer"
                   >
                      <option value="">-- Tidak Menggunakan Diskon --</option>
                      {coupons.map(c => (
@@ -624,7 +624,7 @@ export default function SalesOrderV1() {
                      ))}
                 </select>
                 {customerDiscountAmount > 0 && (
-                   <div className="mt-4 bg-emerald-50/50 p-2 border border-emerald-100 rounded-lg flex items-center justify-between">
+                   <div className="mt-4 bg-emerald-50/50 p-2 border border-emerald-100 rounded-md flex items-center justify-between">
                      <div>
                        <h4 className="text-xs font-black text-emerald-700">Diskon Pelanggan ({selectedCustomer?.discount}%)</h4>
                        <p className="text-[10px] font-medium text-emerald-600/70">Otomatis diterapkan berdasarkan profil</p>
@@ -637,13 +637,13 @@ export default function SalesOrderV1() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-gray-50">
                <div className="space-y-2">
                   <p className="text-xs font-semibold text-gray-600 mb-1 ">Total Produk</p>
-                  <div className="p-2 bg-gray-50 rounded-lg text-base font-semibold text-gray-900">
+                  <div className="p-2 bg-gray-50 rounded-md text-base font-semibold text-gray-900">
                      {cartItems.length}
                   </div>
                </div>
                <div className="space-y-2">
                   <p className="text-xs font-semibold text-gray-600 mb-1 ">Total Item</p>
-                  <div className="p-2 bg-gray-50 rounded-lg text-base font-semibold text-gray-900">
+                  <div className="p-2 bg-gray-50 rounded-md text-base font-semibold text-gray-900">
                      {cartItems.reduce((s, i) => s + i.quantity, 0)}
                   </div>
                </div>
@@ -655,10 +655,10 @@ export default function SalesOrderV1() {
                     value={remark}
                     onChange={(e) => setRemark(e.target.value.substring(0, 25))}
                     maxLength={25}
-                    className="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-gray-700 resize-none h-full min-h-[80px]"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-gray-700 resize-none h-full min-h-[80px]"
                     placeholder="Keterangan opsional..."
                   />
-                  <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-lg">
+                  <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-md">
                     <span className="text-[10px] font-medium text-gray-400">{remark.length}/25</span>
                   </div>
                </div>
@@ -666,7 +666,7 @@ export default function SalesOrderV1() {
           </div>
 
           {/* Product Picker */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+          <div className="bg-white p-8 rounded-md border border-gray-100 shadow-sm space-y-6">
             <div className="space-y-4">
               <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-600">
                 <Package className="w-3 h-3" />
@@ -679,17 +679,17 @@ export default function SalesOrderV1() {
                   placeholder="Ketik nama produk atau SKU..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-10 pr-3 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                 />
               </div>
 
               {productSearch && (
-                <div className="grid grid-cols-1 gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="grid grid-cols-1 gap-2 p-2 bg-gray-50 rounded-md border border-gray-100">
                   {filteredProducts.map(p => (
                     <button
                       key={p.id}
                       onClick={() => { addToCart(p); setProductSearch(''); }}
-                      className="flex items-center justify-between p-3 hover:bg-white rounded-lg transition-all group"
+                      className="flex items-center justify-between p-3 hover:bg-white rounded-md transition-all group"
                     >
                       <div className="text-left">
                         <p className="text-sm font-medium text-gray-900">{p.name}</p>
@@ -716,7 +716,7 @@ export default function SalesOrderV1() {
             </div>
 
             {/* Cart Table */}
-            <div className="overflow-hidden border border-gray-100 rounded-3xl">
+            <div className="overflow-hidden border border-gray-100 rounded-md">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-gray-50/50">
                   <tr>
@@ -748,7 +748,7 @@ export default function SalesOrderV1() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-3">
-                          <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                          <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-1 hover:bg-gray-100 rounded-md transition-colors">
                             <Minus className="w-3 h-3" />
                           </button>
                           <input 
@@ -758,9 +758,9 @@ export default function SalesOrderV1() {
                               const val = parseInt(e.target.value);
                               if (!isNaN(val)) updateQuantity(item.productId, val);
                             }}
-                            className="text-sm font-medium text-gray-900 w-12 text-center bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-indigo-500 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="text-sm font-medium text-gray-900 w-12 text-center bg-white border border-gray-200 rounded-md focus:ring-1 focus:ring-indigo-500 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                          <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-1 hover:bg-gray-100 rounded-md transition-colors">
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
@@ -786,7 +786,7 @@ export default function SalesOrderV1() {
           </div>
         </div>
 
-        <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100 flex items-start gap-2">
+        <div className="bg-amber-50 p-6 rounded-md border border-amber-100 flex items-start gap-2">
           <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
           <p className="text-xs text-amber-700 font-medium leading-relaxed">
             Pesanan V1 akan otomatis mengikuti setting pelanggan. Jika CASH maka status PAID, jika TEMPO maka status UNPAID.
@@ -801,11 +801,11 @@ export default function SalesOrderV1() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
+                  <div className="p-2 bg-white/20 rounded-md">
                     <Landmark className="w-6 h-6" />
                   </div>
                   <div>
@@ -819,7 +819,7 @@ export default function SalesOrderV1() {
               </div>
 
               <div className="p-8 space-y-6">
-                <div className="bg-amber-50 p-2 rounded-lg border border-amber-100 flex items-start gap-3">
+                <div className="bg-amber-50 p-2 rounded-md border border-amber-100 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-700 font-medium leading-relaxed">
                     Pesanan ini dibayar tunai. Silakan pilih akun bank atau kas yang akan menerima dana ini.
@@ -833,13 +833,13 @@ export default function SalesOrderV1() {
                       <button
                         key={bank.id}
                         onClick={() => setSelectedBankId(bank.id)}
-                        className={`w-full p-2 rounded-lg border-2 text-left transition-all flex items-center gap-2 group ${
+                        className={`w-full p-2 rounded-md border-2 text-left transition-all flex items-center gap-2 group ${
                           selectedBankId === bank.id
                             ? 'border-indigo-600 bg-indigo-50 shadow-md'
                             : 'border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white'
                         }`}
                       >
-                        <div className={`p-3 rounded-lg transition-colors ${
+                        <div className={`p-3 rounded-md transition-colors ${
                           selectedBankId === bank.id ? 'bg-indigo-600 text-white' : 'bg-white text-gray-400 group-hover:text-gray-600'
                         }`}>
                           <Landmark className="w-5 h-5" />
@@ -863,7 +863,7 @@ export default function SalesOrderV1() {
                 <div className="pt-4 flex gap-3">
                   <button
                     onClick={() => setIsBankModalOpen(false)}
-                    className="flex-1 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all font-sans"
+                    className="flex-1 py-4 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white transition-all font-sans"
                   >
                     BATAL
                   </button>
@@ -873,7 +873,7 @@ export default function SalesOrderV1() {
                       setIsBankModalOpen(false);
                       processSubmit(selectedBankId);
                     }}
-                    className="flex-[2] py-4 bg-indigo-600 text-white rounded-lg font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
+                    className="flex-[2] py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                     KONFIRMASI & SIMPAN
@@ -924,7 +924,7 @@ export default function SalesOrderV1() {
           <button
                 disabled={isSubmitting || cartItems.length === 0}
                 onClick={handlePreSubmit}
-                className="w-auto px-6 sm:2 py-4 bg-indigo-600 text-white rounded-lg font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap"
+                className="w-auto px-6 sm:2 py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 {isSubmitting ? <Clock className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 <span className="hidden sm:inline">SIMPAN PESANAN</span>

@@ -317,21 +317,21 @@ export default function SuperAdminTenants() {
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Tenant Manual
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <h3 className="text-lg font-semibold">Tenants</h3>
             <button
               onClick={generateMissingCodes}
               disabled={isGeneratingCodes}
-              className="flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors disabled:opacity-50"
+              className="flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md text-xs font-bold hover:bg-indigo-100 transition-colors disabled:opacity-50"
             >
               <RefreshCcw className={`w-3 h-3 mr-2 ${isGeneratingCodes ? 'animate-spin' : ''}`} />
               Generate Missing Codes
@@ -344,7 +344,7 @@ export default function SuperAdminTenants() {
               placeholder="Search tenants..."
               value={tenantSearch}
               onChange={(e) => setTenantSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              className="pl-10 pr-4 py-2 border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
         </div>
@@ -449,7 +449,7 @@ export default function SuperAdminTenants() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+              className="bg-white rounded-md shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div className="flex items-center">
@@ -461,7 +461,7 @@ export default function SuperAdminTenants() {
                 </div>
                 <button 
                   onClick={() => setSelectedTenantForDetail(null)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-md transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -492,7 +492,7 @@ export default function SuperAdminTenants() {
                             type="text"
                             value={tenantFormData.name || ''}
                             onChange={(e) => setTenantFormData({ ...tenantFormData, name: e.target.value })}
-                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className="text-gray-900 font-medium">{selectedTenantForDetail.name}</p>
@@ -508,7 +508,7 @@ export default function SuperAdminTenants() {
                           <textarea
                             value={tenantFormData.address || ''}
                             onChange={(e) => setTenantFormData({ ...tenantFormData, address: e.target.value })}
-                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-20"
+                            className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 h-20"
                           />
                         ) : (
                           <p className="text-gray-600 flex items-start">
@@ -530,7 +530,7 @@ export default function SuperAdminTenants() {
                               ...tenantFormData, 
                               subscriptionEndDate: e.target.value ? new Date(e.target.value) : null 
                             })}
-                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className={`font-black text-sm ${
@@ -553,7 +553,7 @@ export default function SuperAdminTenants() {
                               value={tenantFormData.billingCycle || ''}
                               placeholder="e.g. 30 Hari"
                               onChange={(e) => setTenantFormData({ ...tenantFormData, billingCycle: e.target.value })}
-                              className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                           ) : (
                             <p className="text-gray-900 font-medium">{selectedTenantForDetail.billingCycle || '-'}</p>
@@ -567,7 +567,7 @@ export default function SuperAdminTenants() {
                               value={tenantFormData.lastPaymentMethod || ''}
                               placeholder="e.g. QRIS"
                               onChange={(e) => setTenantFormData({ ...tenantFormData, lastPaymentMethod: e.target.value })}
-                              className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                           ) : (
                             <p className="text-gray-900 font-medium">{selectedTenantForDetail.lastPaymentMethod || '-'}</p>
@@ -591,7 +591,7 @@ export default function SuperAdminTenants() {
                             type="text"
                             value={tenantFormData.whatsapp || ''}
                             onChange={(e) => setTenantFormData({ ...tenantFormData, whatsapp: e.target.value })}
-                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className="text-gray-600 flex items-center">
@@ -607,7 +607,7 @@ export default function SuperAdminTenants() {
                             type="email"
                             value={tenantFormData.email || ''}
                             onChange={(e) => setTenantFormData({ ...tenantFormData, email: e.target.value })}
-                            className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className="text-gray-600 flex items-center">
@@ -673,10 +673,10 @@ export default function SuperAdminTenants() {
                       const hasSubMenus = menu.children && menu.children.length > 0;
                       
                       return (
-                        <div key={menu.label} className="bg-white border-2 border-gray-100 rounded-lg overflow-hidden transition-all">
+                        <div key={menu.label} className="bg-white border-2 border-gray-100 rounded-md overflow-hidden transition-all">
                           <div className={`p-4 flex items-center justify-between ${isEnabled ? 'bg-indigo-50/50' : 'bg-gray-50/50'}`}>
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-xl ${isEnabled ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                              <div className={`p-2 rounded-md ${isEnabled ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
                                 <menu.icon className="w-5 h-5" />
                               </div>
                               <div>
@@ -740,7 +740,7 @@ export default function SuperAdminTenants() {
                                       });
                                       if (!isEditingTenant) setIsEditingTenant(true);
                                     }}
-                                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                                    className={`flex items-center justify-between p-2.5 rounded-md border transition-all ${
                                       isChildEnabled 
                                         ? 'bg-white border-indigo-200 text-indigo-700 shadow-sm' 
                                         : 'bg-gray-50 border-gray-100 text-gray-400 opacity-60'
@@ -777,7 +777,7 @@ export default function SuperAdminTenants() {
                   </button>
                   <button
                     onClick={handleSaveTenantDetails}
-                    className="px-8 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center"
+                    className="px-8 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center"
                   >
                     <Save className="w-4 h-4 mr-2" />
                     Simpan Perubahan
@@ -797,7 +797,7 @@ export default function SuperAdminTenants() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col"
+              className="bg-white rounded-md shadow-xl w-full max-w-lg overflow-hidden flex flex-col"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div className="flex items-center">
@@ -806,7 +806,7 @@ export default function SuperAdminTenants() {
                 </div>
                 <button 
                   onClick={() => setIsAddModalOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-md transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -823,7 +823,7 @@ export default function SuperAdminTenants() {
                       const slug = name.toLowerCase().replace(/\s+/g, '-');
                       setNewTenantData({ ...newTenantData, name, slug });
                     }}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="e.g. My Awesome Shop"
                   />
                 </div>
@@ -833,7 +833,7 @@ export default function SuperAdminTenants() {
                     type="text"
                     value={newTenantData.slug}
                     onChange={(e) => setNewTenantData({ ...newTenantData, slug: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
                     placeholder="e.g. awesome-shop"
                   />
                 </div>
@@ -843,7 +843,7 @@ export default function SuperAdminTenants() {
                     type="text"
                     value={newTenantData.ownerId}
                     onChange={(e) => setNewTenantData({ ...newTenantData, ownerId: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
                     placeholder="User UID from Auth"
                   />
                   <p className="text-[10px] text-gray-400 mt-1">Leave blank if you want to assign it later or create user separately.</p>
@@ -854,7 +854,7 @@ export default function SuperAdminTenants() {
                     <select
                       value={newTenantData.subscription}
                       onChange={(e) => setNewTenantData({ ...newTenantData, subscription: e.target.value as SubscriptionPlan })}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       {Object.values(PLANS).map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
@@ -867,7 +867,7 @@ export default function SuperAdminTenants() {
                       type="date"
                       value={newTenantData.subscriptionEndDate}
                       onChange={(e) => setNewTenantData({ ...newTenantData, subscriptionEndDate: e.target.value })}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -882,7 +882,7 @@ export default function SuperAdminTenants() {
                 </button>
                 <button
                   onClick={handleAddTenant}
-                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center"
+                  className="px-8 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center"
                 >
                   Create Tenant
                 </button>

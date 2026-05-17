@@ -171,14 +171,14 @@ export default function Users() {
         </div>
         <button
           onClick={() => { setEditingUser(null); setFormData({ email: '', displayName: '', role: '', tenantId: '', password: '' }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah User
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -244,7 +244,7 @@ export default function Users() {
                           });
                           setIsModalOpen(true);
                         }}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -273,7 +273,7 @@ export default function Users() {
                               }
                             });
                           }}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                           title="Paksa Logout"
                         >
                           <LogOut className="w-4 h-4" />
@@ -282,7 +282,7 @@ export default function Users() {
                       {user.uid !== profile?.uid && (
                         <button
                           onClick={() => deleteUser(user.uid)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -303,7 +303,7 @@ export default function Users() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">{editingUser ? 'Edit User' : 'Tambah User Baru'}</h3>
@@ -325,7 +325,7 @@ export default function Users() {
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           placeholder="user@example.com"
-                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                       </div>
                     </div>
@@ -338,7 +338,7 @@ export default function Users() {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         placeholder="Min. 6 karakter"
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>
                   </>
@@ -352,7 +352,7 @@ export default function Users() {
                     value={formData.displayName}
                     onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                     placeholder="John Doe"
-                    className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
                   />
                 </div>
 
@@ -364,7 +364,7 @@ export default function Users() {
                       required
                       value={formData.role}
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
                     >
                       <option value="">-- Pilih Role --</option>
                       <optgroup label="System Roles">
@@ -390,7 +390,7 @@ export default function Users() {
                       <select
                         value={formData.tenantId}
                         onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
                       >
                         <option value="">System (Global)</option>
                         {tenants.map(t => (
@@ -405,13 +405,13 @@ export default function Users() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
                   >
                     {editingUser ? 'Update' : 'Simpan'}
                   </button>

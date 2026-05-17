@@ -524,14 +524,14 @@ export default function Catalog() {
   if (!tenant) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
-        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mb-6">
+        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-md flex items-center justify-center mb-6">
           <X className="w-10 h-10" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Toko Tidak Ditemukan</h2>
         <p className="text-gray-500 text-center max-w-xs mb-8">Maaf, kami tidak dapat menemukan toko dengan alamat tersebut.</p>
         <button 
           onClick={() => navigate('/')}
-          className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+          className="px-8 py-3 bg-indigo-600 text-white rounded-md font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
         >
           Kembali ke Beranda
         </button>
@@ -567,7 +567,7 @@ export default function Catalog() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari produk..."
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-600 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-600 transition-all"
               />
             </div>
 
@@ -605,7 +605,7 @@ export default function Catalog() {
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => navigate(`/catalog/${tenantSlug}/auth`)}
-                    className="px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
+                    className="px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 rounded-md transition-all"
                   >
                     Masuk
                   </button>
@@ -613,7 +613,7 @@ export default function Catalog() {
                     onClick={() => {
                       navigate(`/catalog/${tenantSlug}/auth`, { state: { mode: 'register' } });
                     }}
-                    className="px-4 py-2 text-sm font-bold bg-black text-white rounded-xl hover:bg-gray-800 transition-all hidden sm:block"
+                    className="px-4 py-2 text-sm font-bold bg-black text-white rounded-md hover:bg-gray-800 transition-all hidden sm:block"
                   >
                     Daftar
                   </button>
@@ -659,7 +659,7 @@ export default function Catalog() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-lg overflow-hidden shadow-sm flex flex-col"
+                className="bg-white rounded-md overflow-hidden shadow-sm flex flex-col"
               >
                 <div className="aspect-square relative group">
                   <img
@@ -706,7 +706,7 @@ export default function Catalog() {
                       <button 
                         onClick={() => addToCart(product)}
                         disabled={product.stock <= 0 && product.type !== 'service'}
-                        className="p-1.5 bg-gray-50 text-gray-900 rounded-lg hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-30"
+                        className="p-1.5 bg-gray-50 text-gray-900 rounded-md hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-30"
                       >
                         <ShoppingBag className="w-4 h-4" />
                       </button>
@@ -719,7 +719,7 @@ export default function Catalog() {
         </div>
 
         {filteredProducts.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-xl mt-4">
+          <div className="text-center py-20 bg-white rounded-md mt-4">
             <ShoppingBag className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             <p className="text-gray-500 font-medium">Produk tidak ditemukan.</p>
           </div>
@@ -731,7 +731,7 @@ export default function Catalog() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-black text-lg mr-3">
+              <div className="w-8 h-8 bg-black rounded-md flex items-center justify-center text-white font-black text-lg mr-3">
                 {tenant.name.charAt(0)}
               </div>
               <h1 className="text-lg font-black text-gray-900 tracking-tight">{tenant.name}</h1>
@@ -772,13 +772,13 @@ export default function Catalog() {
               <div className="space-y-3">
                 <button
                   onClick={() => navigate(`/catalog/${tenantSlug}/dashboard`)}
-                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all"
+                  className="w-full py-4 bg-indigo-600 text-white rounded-md font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all"
                 >
                   Cek Status Pesanan
                 </button>
                 <button
                   onClick={() => setShowSuccess(false)}
-                  className="w-full py-4 bg-gray-50 text-gray-500 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-100 transition-all"
+                  className="w-full py-4 bg-gray-50 text-gray-500 rounded-md font-black uppercase tracking-widest hover:bg-gray-100 transition-all"
                 >
                   Lanjut Belanja
                 </button>
@@ -807,7 +807,7 @@ export default function Catalog() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-sm overflow-hidden"
             >
               <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
                 <div>
@@ -824,14 +824,14 @@ export default function Catalog() {
                     key={v.id}
                     onClick={() => setSelectedVariantId(v.id)}
                     disabled={v.stock <= 0}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                    className={`w-full flex items-center justify-between p-4 rounded-md border-2 transition-all ${
                       selectedVariantId === v.id 
                         ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50' 
                         : 'border-gray-100 hover:border-indigo-200 bg-white'
                     } ${v.stock <= 0 ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                   >
                     <div className="flex items-center gap-4 text-left">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-50">
+                        <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-50">
                             <img 
                               src={v.imageUrl || selectedDetailProduct.imageUrl || `https://picsum.photos/seed/${v.id}/200/200`} 
                               className="w-full h-full object-cover" 
@@ -857,7 +857,7 @@ export default function Catalog() {
                 <button
                   onClick={() => addToCart(selectedDetailProduct, selectedVariantId)}
                   disabled={!selectedVariantId}
-                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
+                  className="w-full bg-indigo-600 text-white py-4 rounded-md font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
                 >
                   MASUKKAN KERANJANG
                 </button>
@@ -889,7 +889,7 @@ export default function Catalog() {
                   {cartStep === 2 && (
                     <button 
                       onClick={() => setCartStep(1)}
-                      className="p-2 hover:bg-gray-200 rounded-xl transition-all text-gray-400 hover:text-indigo-600"
+                      className="p-2 hover:bg-gray-200 rounded-md transition-all text-gray-400 hover:text-indigo-600"
                     >
                       <ArrowRight className="w-5 h-5 rotate-180" />
                     </button>
@@ -903,7 +903,7 @@ export default function Catalog() {
                     </p>
                   </div>
                 </div>
-                <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-gray-200 rounded-xl transition-all">
+                <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-gray-200 rounded-md transition-all">
                   <X className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
@@ -935,7 +935,7 @@ export default function Catalog() {
 
                       return (
                         <div key={cartItemId} className="flex items-center space-x-4 group">
-                          <div className="w-20 h-24 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
+                          <div className="w-20 h-24 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
                             <img src={itemImageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -955,7 +955,7 @@ export default function Catalog() {
                               )}
                             </div>
                             <div className="flex items-center space-x-3">
-                              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                              <div className="flex items-center bg-gray-100 rounded-md p-1">
                                 <button 
                                   onClick={() => updateQuantity(cartItemId, -1)}
                                   className="w-7 h-7 flex items-center justify-center bg-white shadow-sm rounded-md text-gray-600 hover:text-indigo-600 transition-all"
@@ -979,7 +979,7 @@ export default function Catalog() {
                           </div>
                           <button 
                             onClick={() => removeFromCart(cartItemId)} 
-                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-all"
                           >
                             <X className="w-5 h-5" />
                           </button>
@@ -999,7 +999,7 @@ export default function Catalog() {
                           value={shippingAddress}
                           onChange={(e) => setShippingAddress(e.target.value)}
                           placeholder="Masukkan alamat lengkap (Jalan, No. Rumah, RT/RW, Kec, Kab/Kota, Prov)..."
-                          className="w-full p-4 bg-white border-2 border-gray-100 rounded-lg text-sm outline-none focus:border-indigo-600 transition-all min-h-[120px] resize-none shadow-sm"
+                          className="w-full p-4 bg-white border-2 border-gray-100 rounded-md text-sm outline-none focus:border-indigo-600 transition-all min-h-[120px] resize-none shadow-sm"
                         />
                       </div>
 
@@ -1013,14 +1013,14 @@ export default function Catalog() {
                             <button
                               key={bank.id}
                               onClick={() => setSelectedBankAccountId(bank.id)}
-                              className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                              className={`flex items-center justify-between p-4 rounded-md border-2 transition-all ${
                                 selectedBankAccountId === bank.id 
                                   ? 'border-indigo-600 bg-white text-indigo-700 shadow-lg shadow-indigo-100' 
                                   : 'border-gray-100 bg-white hover:border-gray-200 text-gray-600'
                               }`}
                             >
                               <div className="flex items-center">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-3 ${
+                                <div className={`w-10 h-10 rounded-md flex items-center justify-center mr-3 ${
                                   selectedBankAccountId === bank.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
                                 }`}>
                                   <Landmark className="w-5 h-5" />
@@ -1038,7 +1038,7 @@ export default function Catalog() {
                             </button>
                           ))}
                           {bankAccounts.length === 0 && (
-                            <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg text-amber-700 text-xs font-medium flex items-center">
+                            <div className="p-4 bg-amber-50 border border-amber-100 rounded-md text-amber-700 text-xs font-medium flex items-center">
                               <X className="w-4 h-4 mr-2" />
                               Belum ada metode pembayaran tersedia.
                             </div>
@@ -1059,9 +1059,9 @@ export default function Catalog() {
                   </div>
                   
                   {appliedCoupon ? (
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-indigo-100 shadow-sm">
+                    <div className="flex items-center justify-between p-3 bg-white rounded-md border border-indigo-100 shadow-sm">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-indigo-600 text-white rounded-md flex items-center justify-center">
                           <Tag className="w-4 h-4" />
                         </div>
                         <div>
@@ -1088,12 +1088,12 @@ export default function Catalog() {
                         placeholder="Kode kupon..."
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-600 transition-all"
+                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-md text-xs font-medium outline-none focus:ring-1 focus:ring-indigo-600 transition-all"
                       />
                       <button
                         onClick={validateCoupon}
                         disabled={!couponCode.trim() || isValidatingCoupon}
-                        className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all disabled:bg-gray-200"
+                        className="px-4 py-2 bg-gray-900 text-white rounded-md text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all disabled:bg-gray-200"
                       >
                         {isValidatingCoupon ? '...' : 'Pasang'}
                       </button>

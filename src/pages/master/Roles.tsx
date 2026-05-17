@@ -140,7 +140,7 @@ export default function Roles() {
         </div>
         <button
           onClick={() => { setEditingRole(null); setFormData({ name: '', permissions: [] }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah Role
@@ -149,10 +149,10 @@ export default function Roles() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {roles.map((role) => (
-          <div key={role.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-col">
+          <div key={role.id} className="bg-white p-6 rounded-md shadow-sm border border-gray-100 flex flex-col">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center">
-                <div className="p-2 bg-indigo-50 rounded-lg mr-3">
+                <div className="p-2 bg-indigo-50 rounded-md mr-3">
                   <Shield className="w-6 h-6 text-indigo-600" />
                 </div>
                 <h3 className="font-bold text-gray-900">{role.name}</h3>
@@ -160,13 +160,13 @@ export default function Roles() {
               <div className="flex space-x-2">
                 <button
                   onClick={() => { setEditingRole(role); setFormData({ name: role.name, permissions: role.permissions }); setIsModalOpen(true); }}
-                  className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                  className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => deleteRole(role.id)}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -198,7 +198,7 @@ export default function Roles() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">{editingRole ? 'Edit Role' : 'Tambah Role Baru'}</h3>
@@ -216,7 +216,7 @@ export default function Roles() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Contoh: Supervisor, Kasir, Warehouse Manager"
-                    className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
                   />
                 </div>
 
@@ -228,7 +228,7 @@ export default function Roles() {
                         key={feature.id}
                         type="button"
                         onClick={() => togglePermission(feature.id)}
-                        className={`flex items-center p-3 rounded-xl border transition-all text-left ${
+                        className={`flex items-center p-3 rounded-md border transition-all text-left ${
                           formData.permissions.includes(feature.id)
                             ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                             : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
@@ -250,13 +250,13 @@ export default function Roles() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
+                  className="px-6 py-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="px-8 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                  className="px-8 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
                 >
                   {editingRole ? 'Update Role' : 'Simpan Role'}
                 </button>

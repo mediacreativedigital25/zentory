@@ -259,7 +259,7 @@ export default function Changelog() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+        <div className="w-12 h-12 bg-indigo-600 rounded-md flex items-center justify-center text-white shadow-lg shadow-indigo-100">
           <History className="w-6 h-6" />
         </div>
         <div>
@@ -282,12 +282,12 @@ export default function Changelog() {
               className="relative flex flex-col sm:flex-row gap-8"
             >
               {/* Icon Dot */}
-              <div className={`hidden sm:flex sticky top-24 w-16 h-16 rounded-2xl ${item.bgColor} ${item.color} items-center justify-center z-10 shadow-sm border border-white`}>
+              <div className={`hidden sm:flex sticky top-24 w-16 h-16 rounded-md ${item.bgColor} ${item.color} items-center justify-center z-10 shadow-sm border border-white`}>
                 <item.icon className="w-8 h-8" />
               </div>
 
               {/* Content Card */}
-              <div className="flex-1 bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+              <div className="flex-1 bg-white rounded-md p-8 shadow-sm border border-gray-100 hover:shadow-md transition-all">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
@@ -328,7 +328,7 @@ export default function Changelog() {
         <History className="absolute -right-8 -bottom-8 w-48 h-48 text-white/10 rotate-12" />
       </div>
 
-      <div className="bg-white rounded-3xl p-8 text-center border border-gray-100">
+      <div className="bg-white rounded-md p-8 text-center border border-gray-100">
         <p className="text-gray-900 font-bold">Terus berkembang untuk bisnis Anda.</p>
         <p className="text-gray-400 text-sm mt-1">Zentory Development Team</p>
       </div>

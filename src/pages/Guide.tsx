@@ -186,7 +186,7 @@ export default function Guide() {
           <h2 className="text-3xl font-black text-gray-900">Panduan Penggunaan</h2>
           <p className="text-gray-500 mt-1">Pelajari cara mengoperasikan sistem Zentory secara efektif.</p>
         </div>
-        <div className="p-3 bg-indigo-100 text-indigo-600 rounded-2xl">
+        <div className="p-3 bg-indigo-100 text-indigo-600 rounded-md">
           <BookOpen className="w-8 h-8" />
         </div>
       </header>
@@ -194,13 +194,13 @@ export default function Guide() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Sidebar Navigation */}
         <div className="md:col-span-1 space-y-2">
-          <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm sticky top-24">
+          <div className="bg-white rounded-md p-4 border border-gray-100 shadow-sm sticky top-24">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 mb-4">Daftar Isi</p>
             {filteredGuides.map((section) => (
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                className="flex items-center p-3 rounded-xl text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
+                className="flex items-center p-3 rounded-md text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all group"
               >
                 <section.icon className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-bold">{section.title}</span>
@@ -208,7 +208,7 @@ export default function Guide() {
               </a>
             ))}
             <div className="mt-6 pt-6 border-t border-gray-50">
-              <div className="p-4 bg-gray-50 rounded-2xl">
+              <div className="p-4 bg-gray-50 rounded-md">
                 <div className="flex items-center text-indigo-600 mb-2">
                   <HelpCircle className="w-4 h-4 mr-2" />
                   <span className="text-xs font-black uppercase">Butuh Bantuan?</span>
@@ -234,7 +234,7 @@ export default function Guide() {
               className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm scroll-mt-24"
             >
               <div className="flex items-center gap-4 mb-8">
-                <div className="p-4 bg-gray-50 text-indigo-600 rounded-2xl">
+                <div className="p-4 bg-gray-50 text-indigo-600 rounded-md">
                   <section.icon className="w-6 h-6" />
                 </div>
                 <div>

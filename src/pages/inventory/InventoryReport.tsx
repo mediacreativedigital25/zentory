@@ -168,13 +168,13 @@ export default function InventoryReport() {
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Inventory Report</h2>
           <p className="text-gray-500 font-medium">Analisis pergerakan produk dan efisiensi stok.</p>
         </div>
-        <div className="flex items-center gap-3 bg-white p-1.5 rounded-lg border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-3 bg-white p-1.5 rounded-md border border-gray-100 shadow-sm">
           <span className="text-xs font-black text-gray-400 uppercase tracking-widest ml-3">Periode:</span>
           {[7, 30, 60, 90].map(d => (
             <button
               key={d}
               onClick={() => setDaysFilter(d)}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+              className={`px-4 py-2 rounded-md text-xs font-black transition-all ${
                 daysFilter === d 
                   ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
                   : 'text-gray-500 hover:bg-gray-50'
@@ -188,9 +188,9 @@ export default function InventoryReport() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div whileHover={{ y: -5 }} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <motion.div whileHover={{ y: -5 }} className="bg-white p-6 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
+            <div className="p-3 bg-emerald-50 rounded-md text-emerald-600">
               <TrendingUp className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full uppercase">Fast Moving</span>
@@ -199,9 +199,9 @@ export default function InventoryReport() {
           <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wider">Produk Laris</p>
         </motion.div>
 
-        <motion.div whileHover={{ y: -5 }} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <motion.div whileHover={{ y: -5 }} className="bg-white p-6 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-amber-50 rounded-2xl text-amber-600">
+            <div className="p-3 bg-amber-50 rounded-md text-amber-600">
               <TrendingDown className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-full uppercase">Slow Moving</span>
@@ -210,9 +210,9 @@ export default function InventoryReport() {
           <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wider">Pergerakan Lambat</p>
         </motion.div>
 
-        <motion.div whileHover={{ y: -5 }} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <motion.div whileHover={{ y: -5 }} className="bg-white p-6 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-red-50 rounded-2xl text-red-600">
+            <div className="p-3 bg-red-50 rounded-md text-red-600">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-full uppercase">Dead Stock</span>
@@ -221,9 +221,9 @@ export default function InventoryReport() {
           <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-wider">Stok Mengendap</p>
         </motion.div>
 
-        <motion.div whileHover={{ y: -5 }} className="bg-indigo-600 p-6 rounded-3xl shadow-xl shadow-indigo-100">
+        <motion.div whileHover={{ y: -5 }} className="bg-indigo-600 p-6 rounded-md shadow-xl shadow-indigo-100">
           <div className="flex items-center justify-between mb-4 text-white/80">
-            <div className="p-3 bg-white/10 rounded-2xl">
+            <div className="p-3 bg-white/10 rounded-md">
               <Package className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest">Total Value</span>
@@ -235,7 +235,7 @@ export default function InventoryReport() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center gap-2 mb-6">
             <PieChartIcon className="w-5 h-5 text-indigo-600" />
             <h3 className="font-black text-gray-900 uppercase tracking-wider">Komposisi Pergerakan Stok</h3>
@@ -265,7 +265,7 @@ export default function InventoryReport() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center gap-2 mb-6">
             <BarChart3 className="w-5 h-5 text-indigo-600" />
             <h3 className="font-black text-gray-900 uppercase tracking-wider">Top 5 Produk Terlaris</h3>
@@ -293,7 +293,7 @@ export default function InventoryReport() {
       </div>
 
       {/* Detailed Table */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-indigo-600" />
@@ -307,13 +307,13 @@ export default function InventoryReport() {
                 placeholder="Cari SKU atau Nama..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 outline-none focus:ring-2 focus:ring-indigo-500"
+              className="p-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-600 outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="all">Semua Status</option>
               <option value="fast">Fast Moving</option>
@@ -341,7 +341,7 @@ export default function InventoryReport() {
                 <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group items-center">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden">
+                      <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
                         {item.imageUrl ? (
                           <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
@@ -384,7 +384,7 @@ export default function InventoryReport() {
                   <td className="px-6 py-4 text-center">
                     <Link 
                       to={`/inventory/products?tab=history&search=${item.sku || item.name}`}
-                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest"
+                      className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest"
                     >
                       <History className="w-4 h-4" />
                       Riwayat
@@ -403,7 +403,7 @@ export default function InventoryReport() {
               <p className="text-xs text-gray-500 font-bold">
                 Menampilkan <span className="text-gray-900">{Math.min(filteredData.length, (currentPage - 1) * rowsPerPage + 1)}</span> - <span className="text-gray-900">{Math.min(filteredData.length, currentPage * rowsPerPage)}</span> dari <span className="text-gray-900">{filteredData.length}</span> produk
               </p>
-              <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+              <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-md border border-gray-100">
                 <span className="font-black uppercase tracking-widest">Baris:</span>
                 <select 
                   value={rowsPerPage} 
@@ -420,7 +420,7 @@ export default function InventoryReport() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+                className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -432,7 +432,7 @@ export default function InventoryReport() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded-xl text-xs font-black transition-all ${
+                        className={`w-8 h-8 rounded-md text-xs font-black transition-all ${
                           currentPage === page 
                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
                             : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
@@ -450,7 +450,7 @@ export default function InventoryReport() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+                className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -467,9 +467,9 @@ export default function InventoryReport() {
       </div>
 
       {/* Recommendations */}
-      <div className="bg-indigo-50 p-8 rounded-3xl border border-indigo-100">
+      <div className="bg-indigo-50 p-8 rounded-md border border-indigo-100">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-indigo-600 rounded-xl text-white">
+          <div className="p-2 bg-indigo-600 rounded-md text-white">
             <TrendingUp className="w-5 h-5" />
           </div>
           <h3 className="text-xl font-black text-indigo-900 tracking-tight">Rekomendasi Strategi</h3>

@@ -238,14 +238,14 @@ export default function DataCheck() {
         <button
           onClick={fetchAnomalies}
           disabled={loading}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Periksa Ulang
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Memeriksa data...</div>
         ) : anomalies.length === 0 ? (
@@ -262,7 +262,7 @@ export default function DataCheck() {
               <div key={anom.id} className="p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start">
-                    <div className="p-2 bg-red-50 rounded-lg mr-4 mt-1">
+                    <div className="p-2 bg-red-50 rounded-md mr-4 mt-1">
                       <AlertCircle className="w-5 h-5 text-red-500" />
                     </div>
                     <div>
@@ -270,7 +270,7 @@ export default function DataCheck() {
                       <p className="text-sm text-gray-600 mt-1 max-w-2xl">{anom.description}</p>
                       
                       {expandedRow === anom.id && (
-                        <div className="mt-4 p-4 bg-gray-900 rounded-lg overflow-x-auto">
+                        <div className="mt-4 p-4 bg-gray-900 rounded-md overflow-x-auto">
                           <pre className="text-xs text-green-400 font-mono">
                             {JSON.stringify(anom.data, null, 2)}
                           </pre>
@@ -281,13 +281,13 @@ export default function DataCheck() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setExpandedRow(expandedRow === anom.id ? null : anom.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-200"
+                      className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-md border border-gray-200"
                     >
                       {expandedRow === anom.id ? 'Tutup Data' : 'Lihat Raw Data'}
                     </button>
                     <button
                       onClick={() => handleFix(anom)}
-                      className="flex items-center px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg"
+                      className="flex items-center px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-md"
                     >
                       <Wrench className="w-3 h-3 mr-1" />
                       {anom.actionLabel}

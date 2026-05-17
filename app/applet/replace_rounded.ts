@@ -1,0 +1,26 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
+function walkDir(dir: string, callback: (filePath: string) => void) {
+  fs.readdirSync(dir).forEach(f => {
+    let dirPath = path.join(dir, f);
+    let isDirectory = fs.statSync(dirPath).isDirectory();
+    isDirectory ? 
+      walkDir(dirPath, callback) : callback(path.join(dir, f));
+  });
+}
+
+walkDir('./src', (filePath) => {
+  if (filePath.endsWith('.tsx')) {
+    let content = fs.readFileSync(filePath, 'utf-8');
+    let newContent = content
+      .replace(/rounded-\[2\.5rem\]/g, 'rounded-xl')
+      .replace(/rounded-3xl/g, 'rounded-xl')
+      .replace(/rounded-2xl/g, 'rounded-lg');
+      
+    if (content !== newContent) {
+      fs.writeFileSync(filePath, newContent, 'utf-8');
+      console.log('Updated:', filePath);
+    }
+  }
+});

@@ -297,14 +297,14 @@ export default function BankTransfers() {
         </div>
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-bold shadow-lg shadow-indigo-200"
+          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-all font-bold shadow-lg shadow-indigo-200"
         >
           <Plus className="w-5 h-5" />
           Transfer Baru
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
           <div className="relative flex-1 max-w-md">
             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -313,7 +313,7 @@ export default function BankTransfers() {
               placeholder="Cari referensi, akun, atau deskripsi..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
         </div>
@@ -346,12 +346,12 @@ export default function BankTransfers() {
                       {t.referenceNumber || '-'}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-red-50 text-red-700 rounded-lg font-medium whitespace-nowrap text-xs">
+                      <span className="px-3 py-1 bg-red-50 text-red-700 rounded-md font-medium whitespace-nowrap text-xs">
                         {t.fromAccountName}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg font-medium whitespace-nowrap text-xs">
+                      <span className="px-3 py-1 bg-green-50 text-green-700 rounded-md font-medium whitespace-nowrap text-xs">
                         {t.toAccountName}
                       </span>
                     </td>
@@ -365,21 +365,21 @@ export default function BankTransfers() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => setViewingTransfer(t)}
-                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                           title="Detail"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => openEditModal(t)}
-                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-md transition-colors"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(t)}
-                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                           title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -415,7 +415,7 @@ export default function BankTransfers() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed top-10 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-2xl shadow-xl z-50 overflow-hidden"
+              className="fixed top-10 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-md shadow-xl z-50 overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                 <h2 className="text-xl font-bold flex items-center gap-2">
@@ -424,7 +424,7 @@ export default function BankTransfers() {
                 </h2>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+                  className="p-2 hover:bg-gray-200 rounded-md transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -438,7 +438,7 @@ export default function BankTransfers() {
                     required
                     value={formData.date}
                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-md border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
 
@@ -449,7 +449,7 @@ export default function BankTransfers() {
                       required
                       value={formData.fromAccountId}
                       onChange={(e) => setFormData(prev => ({ ...prev, fromAccountId: e.target.value }))}
-                      className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full p-2 rounded-md border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="">Pilih Asal...</option>
                       {bankAccounts.map(b => (
@@ -463,7 +463,7 @@ export default function BankTransfers() {
                       required
                       value={formData.toAccountId}
                       onChange={(e) => setFormData(prev => ({ ...prev, toAccountId: e.target.value }))}
-                      className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full p-2 rounded-md border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="">Pilih Tujuan...</option>
                       {bankAccounts.map(b => (
@@ -486,7 +486,7 @@ export default function BankTransfers() {
                         val = val.replace(/\D/g, '');
                         setFormData(prev => ({ ...prev, amount: Number(val) || '' }));
                       }}
-                      className="w-full pl-12 pr-4 py-3 rounded-lg border-2 border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-lg font-medium font-mono tracking-wider text-right"
+                      className="w-full pl-12 pr-4 py-3 rounded-md border-2 border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 text-lg font-medium font-mono tracking-wider text-right"
                       placeholder="0"
                     />
                   </div>
@@ -499,7 +499,7 @@ export default function BankTransfers() {
                       type="text"
                       value={formData.referenceNumber}
                       onChange={(e) => setFormData(prev => ({ ...prev, referenceNumber: e.target.value }))}
-                      className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase font-mono"
+                      className="w-full p-2 rounded-md border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase font-mono"
                       placeholder="TRX-123"
                     />
                   </div>
@@ -514,7 +514,7 @@ export default function BankTransfers() {
                     rows={2}
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full p-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full p-2 rounded-md border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Contoh: Pindah dana operasional mingguan"
                   />
                 </div>
@@ -523,13 +523,13 @@ export default function BankTransfers() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-xl transition-colors"
+                    className="px-6 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-md transition-colors"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all flex items-center gap-2"
+                    className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-md hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
                     Simpan Transfer
@@ -555,7 +555,7 @@ export default function BankTransfers() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-2xl shadow-xl z-50 overflow-hidden"
+              className="fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-md shadow-xl z-50 overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                 <h2 className="text-xl font-bold flex items-center gap-2">
@@ -564,7 +564,7 @@ export default function BankTransfers() {
                 </h2>
                 <button
                   onClick={() => setViewingTransfer(null)}
-                  className="p-2 hover:bg-gray-200 rounded-xl transition-colors"
+                  className="p-2 hover:bg-gray-200 rounded-md transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
@@ -587,13 +587,13 @@ export default function BankTransfers() {
                 <div className="grid grid-cols-2 gap-4 border-b border-gray-100 pb-4">
                   <div>
                     <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">Dari Kas / Bank</label>
-                    <div className="text-gray-900 font-medium px-3 py-1 bg-red-50 text-red-700 rounded-lg inline-block text-sm">
+                    <div className="text-gray-900 font-medium px-3 py-1 bg-red-50 text-red-700 rounded-md inline-block text-sm">
                       {viewingTransfer.fromAccountName}
                     </div>
                   </div>
                   <div>
                     <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">Ke Kas / Bank</label>
-                    <div className="text-gray-900 font-medium px-3 py-1 bg-green-50 text-green-700 rounded-lg inline-block text-sm">
+                    <div className="text-gray-900 font-medium px-3 py-1 bg-green-50 text-green-700 rounded-md inline-block text-sm">
                       {viewingTransfer.toAccountName}
                     </div>
                   </div>
@@ -618,7 +618,7 @@ export default function BankTransfers() {
               <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
                 <button
                   onClick={() => setViewingTransfer(null)}
-                  className="px-6 py-2 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300 transition-colors"
+                  className="px-6 py-2 bg-gray-200 text-gray-700 font-bold rounded-md hover:bg-gray-300 transition-colors"
                 >
                   Tutup
                 </button>

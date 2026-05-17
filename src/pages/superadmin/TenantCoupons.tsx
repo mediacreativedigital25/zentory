@@ -104,9 +104,9 @@ export default function TenantCoupons() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+      <div className="flex justify-between items-center bg-white p-6 rounded-md shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
             <Ticket className="w-8 h-8" />
           </div>
           <div>
@@ -120,14 +120,14 @@ export default function TenantCoupons() {
             setEditingId(null);
             setIsModalOpen(true);
           }}
-          className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold flex items-center shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl transition-all"
+          className="px-6 py-3 bg-indigo-600 text-white rounded-md font-bold flex items-center shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl transition-all"
         >
           <Plus className="w-5 h-5 mr-2" />
           Buat Kupon
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -188,13 +188,13 @@ export default function TenantCoupons() {
                             setEditingId(coupon.id);
                             setIsModalOpen(true);
                           }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(coupon.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-md transition"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -215,7 +215,7 @@ export default function TenantCoupons() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden"
+              className="bg-white rounded-md shadow-xl w-full max-w-lg overflow-hidden"
             >
               <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <h3 className="font-bold text-gray-900 flex items-center">
@@ -224,7 +224,7 @@ export default function TenantCoupons() {
                 </h3>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -239,7 +239,7 @@ export default function TenantCoupons() {
                     value={formData.code}
                     onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase().replace(/\s/g, '') })}
                     disabled={!!editingId}
-                    className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase font-mono font-medium"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase font-mono font-medium"
                     placeholder="Contoh: PROMO100"
                   />
                 </div>
@@ -250,7 +250,7 @@ export default function TenantCoupons() {
                     <select
                       value={formData.type}
                       onChange={e => setFormData({ ...formData, type: e.target.value as any })}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-medium"
                     >
                       <option value="percentage">Diskon Persentase (%)</option>
                       <option value="nominal">Diskon Nominal (Rp)</option>
@@ -265,7 +265,7 @@ export default function TenantCoupons() {
                       min="1"
                       value={formData.value || ''}
                       onChange={e => setFormData({ ...formData, value: Number(e.target.value) })}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500"
                       placeholder="Contoh: 10"
                     />
                   </div>
@@ -278,7 +278,7 @@ export default function TenantCoupons() {
                     min="0"
                     value={formData.maxUses || 0}
                     onChange={e => setFormData({ ...formData, maxUses: Number(e.target.value) })}
-                    className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -288,7 +288,7 @@ export default function TenantCoupons() {
                     type="text"
                     value={formData.notes || ''}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500"
                     placeholder="Promo Kemerdekaan"
                   />
                 </div>
@@ -297,14 +297,14 @@ export default function TenantCoupons() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition"
+                    className="px-6 py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-md transition"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={isProcessing}
-                    className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center shadow-lg hover:bg-indigo-700 transition"
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-md font-bold flex items-center shadow-lg hover:bg-indigo-700 transition"
                   >
                     {isProcessing ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
                     Simpan Kupon

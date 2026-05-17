@@ -51,7 +51,8 @@ export default function Invoices() {
     const unsubscribeOrders = onSnapshot(ordersQuery, (snap) => {
       const ordersData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
       // Sort by date descending for UI (latest first)
-      setOrders(ordersData.filter(o => !o.isInCollection).sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)));
+      const validOrders = ordersData.filter(o => !o.isInCollection && o.status !== 'cancelled' && (o as any).status !== 'deleted');
+      setOrders(validOrders.sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)));
       setLoading(false);
     }, (err) => {
       console.error('Error fetching orders:', err);
@@ -296,14 +297,14 @@ export default function Invoices() {
         <button
           onClick={() => setIsTagihkanModalOpen(true)}
           disabled={selectedOrderIds.length === 0}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:shadow-none font-black uppercase tracking-widest text-xs"
+          className="bg-indigo-600 text-white px-6 py-3 rounded-md flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 disabled:shadow-none font-black uppercase tracking-widest text-xs"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tagihkan
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
+      <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -311,10 +312,10 @@ export default function Invoices() {
             placeholder="Cari berdasarkan No. Order, Nama Pelanggan, atau Kode..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-100">
           <span className="font-bold uppercase tracking-widest">Show:</span>
           <select 
             value={rowsPerPage} 
@@ -328,7 +329,7 @@ export default function Invoices() {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -336,7 +337,7 @@ export default function Invoices() {
                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
                   <input 
                     type="checkbox" 
-                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-lg"
+                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-md"
                     checked={selectedOrderIds.length === paginatedOrders.length && paginatedOrders.length > 0}
                     onChange={toggleSelectAll}
                   />
@@ -361,7 +362,7 @@ export default function Invoices() {
                     <td className="px-6 py-4 text-center">
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-lg"
+                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-md"
                         checked={isSelected}
                         onChange={() => toggleSelectOrder(order.id)}
                       />
@@ -407,7 +408,7 @@ export default function Invoices() {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => { setSelectedOrder(order); setIsDetailModalOpen(true); }}
-                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
                           title="Detail"
                         >
                           <Eye className="w-5 h-5" />
@@ -431,7 +432,7 @@ export default function Invoices() {
 
       {/* Pagination */}
       {filteredOrders.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-lg border border-gray-100 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-md border border-gray-100 gap-4">
           <p className="text-xs text-gray-500">
             Menampilkan <span className="font-bold text-gray-900">{Math.min(filteredOrders.length, (currentPage - 1) * rowsPerPage + 1)}</span> sampai <span className="font-bold text-gray-900">{Math.min(filteredOrders.length, currentPage * rowsPerPage)}</span> dari <span className="font-bold text-gray-900">{filteredOrders.length}</span> invoice
           </p>
@@ -439,7 +440,7 @@ export default function Invoices() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -448,7 +449,7 @@ export default function Invoices() {
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                  className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${
                     currentPage === i + 1 
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
                       : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
@@ -461,7 +462,7 @@ export default function Invoices() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -477,7 +478,7 @@ export default function Invoices() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col"
+              className="bg-white rounded-md shadow-2xl w-full max-w-lg overflow-hidden flex flex-col"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-2xl font-black tracking-tight">Ringkasan Tagihan</h3>
@@ -488,21 +489,21 @@ export default function Invoices() {
               
               <div className="p-8 space-y-6">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-100">
+                  <div className="flex justify-between items-center p-4 bg-white rounded-md border border-gray-100">
                     <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">Total Pesanan</span>
                     <span className="text-lg font-black text-gray-900">{selectedOrderIds.length} Item</span>
                   </div>
-                  <div className="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-100">
+                  <div className="flex justify-between items-center p-4 bg-white rounded-md border border-gray-100">
                     <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">Total Nominal</span>
                     <span className="text-lg font-black text-gray-900">Rp.{totalSelectedNominal.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between items-center p-6 bg-red-50 rounded-lg border border-red-100">
+                  <div className="flex justify-between items-center p-6 bg-red-50 rounded-md border border-red-100">
                     <span className="text-sm font-black text-red-700 uppercase tracking-widest">Total Sisa Tagihan</span>
                     <span className="text-2xl font-black text-red-600">Rp.{totalSelectedSisa.toLocaleString()}</span>
                   </div>
                 </div>
 
-                <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 flex items-start gap-3">
+                <div className="bg-indigo-50 p-4 rounded-md border border-indigo-100 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-indigo-700 font-medium leading-relaxed">
                     Anda akan mencetak ringkasan tagihan untuk {selectedOrderIds.length} pesanan yang dipilih. Pastikan data sudah benar sebelum mencetak.
@@ -513,20 +514,20 @@ export default function Invoices() {
               <div className="p-8 bg-gray-50 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <button
                   onClick={() => setIsTagihkanModalOpen(false)}
-                  className="col-span-2 sm:col-span-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all text-xs"
+                  className="col-span-2 sm:col-span-1 px-6 py-4 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all text-xs"
                 >
                   BATAL
                 </button>
                 <button
                   onClick={handleSaveCollection}
-                  className="px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                  className="px-6 py-4 bg-emerald-600 text-white rounded-md font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
                 >
                   <Check className="w-4 h-4" />
                   SIMPAN
                 </button>
                 <button
                   onClick={generatePDF}
-                  className="px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                  className="px-6 py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
                 >
                   <Printer className="w-4 h-4" />
                   CETAK
@@ -545,7 +546,7 @@ export default function Invoices() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div>
@@ -599,7 +600,7 @@ export default function Invoices() {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg border border-gray-100 space-y-3">
+                <div className="bg-white p-6 rounded-md border border-gray-100 space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500 font-bold">Total Tagihan</span>
                     <span className="font-black text-gray-900">Rp.{selectedOrder.totalAmount.toLocaleString()}</span>
@@ -616,7 +617,7 @@ export default function Invoices() {
 
                 <div className="space-y-4">
                   <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Item Pesanan</h4>
-                  <div className="border border-gray-100 rounded-lg overflow-hidden">
+                  <div className="border border-gray-100 rounded-md overflow-hidden">
                     <table className="w-full text-left border-collapse">
                       <thead className="bg-gray-50">
                         <tr>
@@ -644,7 +645,7 @@ export default function Invoices() {
               <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-6 py-3 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
+                  className="px-6 py-3 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all"
                 >
                   TUTUP
                 </button>

@@ -120,9 +120,9 @@ export default function SuperAdminResetData() {
         <p className="text-gray-500">Hapus data spesifik untuk tenant tertentu. Gunakan dengan sangat hati-hati.</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 p-8">
         <div className="max-w-2xl space-y-8">
-          <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg flex items-start">
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-md flex items-start">
             <AlertTriangle className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-bold text-amber-800">Peringatan Kritis</p>
@@ -135,7 +135,7 @@ export default function SuperAdminResetData() {
             <select
               value={selectedResetTenant}
               onChange={(e) => setSelectedResetTenant(e.target.value)}
-              className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">-- Pilih Tenant --</option>
               {tenants.map(t => (
@@ -148,7 +148,7 @@ export default function SuperAdminResetData() {
             <label className="block text-xs font-semibold text-gray-600">2. Pilih Data yang Akan Dihapus</label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {collectionsToReset.map(coll => (
-                <label key={coll.id} className="flex items-center p-3 border border-gray-100 rounded-lg hover:bg-white cursor-pointer transition-colors text-xs font-medium text-gray-600">
+                <label key={coll.id} className="flex items-center p-3 border border-gray-100 rounded-md hover:bg-white cursor-pointer transition-colors text-xs font-medium text-gray-600">
                   <input
                     type="checkbox"
                     checked={resetCollections.includes(coll.id)}
@@ -182,7 +182,7 @@ export default function SuperAdminResetData() {
             <button
               onClick={handleReset}
               disabled={!selectedResetTenant || resetCollections.length === 0 || isResetting}
-              className="w-full py-4 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-100 transition-all disabled:opacity-50 flex items-center justify-center"
+              className="w-full py-4 bg-red-600 text-white rounded-md font-bold hover:bg-red-700 shadow-lg shadow-red-100 transition-all disabled:opacity-50 flex items-center justify-center"
             >
               {isResetting ? (
                 <>

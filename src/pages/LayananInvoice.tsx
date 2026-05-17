@@ -39,7 +39,7 @@ export default function LayananInvoice() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -104,7 +104,7 @@ export default function LayananInvoice() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Download Invoice">
+                      <button className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Download Invoice">
                         <Download className="w-4 h-4" />
                       </button>
                     </td>

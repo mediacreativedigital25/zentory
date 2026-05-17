@@ -141,7 +141,7 @@ export default function Achievement() {
           </h2>
           <p className="text-gray-500 font-medium">Bandingkan realisasi transaksi terhadap target yang telah ditetapkan.</p>
         </div>
-        <div className="flex bg-white p-1 rounded-lg shadow-sm border border-gray-100">
+        <div className="flex bg-white p-1 rounded-md shadow-sm border border-gray-100">
           {[
             { label: 'Bulanan', value: '1m' },
             { label: '3 Bulan', value: '3m' },
@@ -151,7 +151,7 @@ export default function Achievement() {
             <button
               key={p.value}
               onClick={() => setPeriod(p.value as any)}
-              className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${
+              className={`px-4 py-2 text-xs font-black rounded-md transition-all ${
                 period === p.value 
                   ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
                   : 'text-gray-500 hover:text-gray-800'
@@ -165,9 +165,9 @@ export default function Achievement() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+            <div className="bg-white p-8 rounded-md border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-md">
                         <TrendingUp className="w-5 h-5" />
                     </div>
                     <h4 className="font-black text-gray-900 text-sm uppercase tracking-tight">Total Sales ({period === '1m' ? 'Bulan Ini' : `${periodMonths} Bln`})</h4>
@@ -182,7 +182,7 @@ export default function Achievement() {
             </div>
 
             {achievement && (
-                <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 text-white p-8 rounded-[2.5rem] shadow-2xl shadow-indigo-200">
+                <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 text-white p-8 rounded-md shadow-2xl shadow-indigo-200">
                     <div className="flex justify-between items-start mb-6">
                         <div>
                             <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Progress Target {achievement.level + 1}</p>
@@ -214,7 +214,7 @@ export default function Achievement() {
         </div>
 
         <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm h-[400px]">
+            <div className="bg-white p-8 rounded-md border border-gray-100 shadow-sm h-[400px]">
                 <div className="flex justify-between items-center mb-10">
                     <h3 className="font-black text-gray-800 uppercase tracking-tight text-lg">Visual Pencapaian</h3>
                     <div className="flex gap-4">
@@ -262,10 +262,10 @@ export default function Achievement() {
                 </ResponsiveContainer>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
                 <div className="p-8 border-b border-gray-50 flex justify-between items-center">
                     <h3 className="font-black text-gray-800 uppercase tracking-tight">Rincian Performa Bulanan</h3>
-                    <div className="p-2 bg-gray-50 rounded-xl px-4 py-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{periodMonths} Bulan Terakhir</div>
+                    <div className="p-2 bg-gray-50 rounded-md px-4 py-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{periodMonths} Bulan Terakhir</div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">

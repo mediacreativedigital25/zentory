@@ -113,7 +113,7 @@ export default function CostRatio() {
           </h2>
           <p className="text-gray-500 font-medium">Persentase Biaya Operasional terhadap Pendapatan (Makin Kecil Makin Baik).</p>
         </div>
-        <div className="flex bg-white p-1 rounded-lg shadow-sm border border-gray-100">
+        <div className="flex bg-white p-1 rounded-md shadow-sm border border-gray-100">
           {[
             { label: 'Bulanan', value: '1m' },
             { label: '3 Bulan', value: '3m' },
@@ -123,7 +123,7 @@ export default function CostRatio() {
             <button
               key={p.value}
               onClick={() => setPeriod(p.value as any)}
-              className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${
+              className={`px-4 py-2 text-xs font-black rounded-md transition-all ${
                 period === p.value 
                   ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
                   : 'text-gray-500 hover:text-gray-800'
@@ -138,7 +138,7 @@ export default function CostRatio() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-green-50 text-green-600 rounded-xl">
+            <div className="p-2 bg-green-50 text-green-600 rounded-md">
               <TrendingUp className="w-5 h-5" />
             </div>
             <h4 className="font-black text-gray-900 text-xs uppercase tracking-tight">Total Pendapatan</h4>
@@ -149,7 +149,7 @@ export default function CostRatio() {
 
         <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-red-50 text-red-600 rounded-xl">
+            <div className="p-2 bg-red-50 text-red-600 rounded-md">
               <Wallet className="w-5 h-5" />
             </div>
             <h4 className="font-black text-gray-900 text-xs uppercase tracking-tight">Total Biaya Operasional</h4>
@@ -164,7 +164,7 @@ export default function CostRatio() {
           'bg-gradient-to-br from-red-600 to-red-700 shadow-red-100'
         }`}>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-white/20 text-white rounded-xl">
+            <div className="p-2 bg-white/20 text-white rounded-md">
               <Activity className="w-5 h-5" />
             </div>
             <h4 className="font-black text-white/80 text-xs uppercase tracking-tight text-white">Rata-rata Cost Ratio</h4>
@@ -179,7 +179,7 @@ export default function CostRatio() {
         </div>
       </div>
 
-      <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm h-[450px]">
+      <div className="bg-white p-8 rounded-md border border-gray-100 shadow-sm h-[450px]">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h3 className="font-black text-gray-800 uppercase tracking-tight text-lg">Tren Cost Ratio (Efisiensi)</h3>
@@ -225,7 +225,7 @@ export default function CostRatio() {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex justify-between items-center">
           <h3 className="font-black text-gray-800 uppercase tracking-tight">Rincian Efisiensi Operasional</h3>
           <div className="flex gap-4">

@@ -73,7 +73,7 @@ export default function SuperAdminGlobalSettings() {
         <button
           onClick={handleSaveGlobalSettings}
           disabled={isSavingSettings}
-          className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center disabled:opacity-50"
+          className="px-8 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center disabled:opacity-50"
         >
           {isSavingSettings ? 'Menyimpan...' : (
             <>
@@ -86,7 +86,7 @@ export default function SuperAdminGlobalSettings() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Manual Payment Settings */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 space-y-6">
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 p-8 space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
@@ -125,7 +125,7 @@ export default function SuperAdminGlobalSettings() {
                   }
                 })}
                 placeholder="Contoh: Bank BCA"
-                className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
@@ -141,7 +141,7 @@ export default function SuperAdminGlobalSettings() {
                   }
                 })}
                 placeholder="Contoh: 1234567890"
-                className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
@@ -157,7 +157,7 @@ export default function SuperAdminGlobalSettings() {
                   }
                 })}
                 placeholder="Contoh: PT Zentory Indonesia"
-                className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
@@ -173,14 +173,14 @@ export default function SuperAdminGlobalSettings() {
                   }
                 })}
                 placeholder="https://example.com/qris.jpg"
-                className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
         </div>
 
         {/* TriPay Settings */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 space-y-6">
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 p-8 space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <Zap className="w-5 h-5 mr-2 text-indigo-600" />
@@ -218,7 +218,7 @@ export default function SuperAdminGlobalSettings() {
                       tripay: { ...globalSettings.paymentMethods?.tripay, mode: e.target.value }
                     }
                   })}
-                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="sandbox">Sandbox (Testing)</option>
                   <option value="production">Production (Live)</option>
@@ -237,7 +237,7 @@ export default function SuperAdminGlobalSettings() {
                     }
                   })}
                   placeholder="T12345"
-                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -254,7 +254,7 @@ export default function SuperAdminGlobalSettings() {
                       tripay: { ...globalSettings.paymentMethods?.tripay, apiKey: e.target.value }
                     }
                   })}
-                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                  className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
                 />
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
               </div>
@@ -272,7 +272,7 @@ export default function SuperAdminGlobalSettings() {
                       tripay: { ...globalSettings.paymentMethods?.tripay, privateKey: e.target.value }
                     }
                   })}
-                  className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                  className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
                 />
                 <Unlock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
               </div>

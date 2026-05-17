@@ -106,7 +106,7 @@ export default function Finance() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Expense
@@ -115,9 +115,9 @@ export default function Finance() {
 
       {/* Financial Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-lg">
+            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-md">
               <Wallet className="w-6 h-6" />
             </div>
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Current Balance</span>
@@ -129,9 +129,9 @@ export default function Finance() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-100 text-green-600 rounded-lg">
+            <div className="p-3 bg-green-100 text-green-600 rounded-md">
               <TrendingUp className="w-6 h-6" />
             </div>
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Income</span>
@@ -143,9 +143,9 @@ export default function Finance() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-red-100 text-red-600 rounded-lg">
+            <div className="p-3 bg-red-100 text-red-600 rounded-md">
               <TrendingDown className="w-6 h-6" />
             </div>
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Expenses</span>
@@ -159,11 +159,11 @@ export default function Finance() {
       </div>
 
       {/* Transaction History */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <h3 className="text-lg font-semibold">Transaction History</h3>
-            <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
               <span>Show:</span>
               <select 
                 value={rowsPerPage} 
@@ -184,13 +184,13 @@ export default function Finance() {
                 placeholder="Search transactions..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <button className="p-2 border border-gray-200 rounded-lg hover:bg-white">
+            <button className="p-2 border border-gray-200 rounded-md hover:bg-white">
               <Calendar className="w-5 h-5 text-gray-500" />
             </button>
-            <button className="p-2 border border-gray-200 rounded-lg hover:bg-white">
+            <button className="p-2 border border-gray-200 rounded-md hover:bg-white">
               <Filter className="w-5 h-5 text-gray-500" />
             </button>
           </div>
@@ -267,7 +267,7 @@ export default function Finance() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -284,7 +284,7 @@ export default function Finance() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${
                         currentPage === page 
                           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
                           : 'text-gray-500 hover:bg-white border border-transparent hover:border-gray-200'
@@ -305,7 +305,7 @@ export default function Finance() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -321,7 +321,7 @@ export default function Finance() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-gray-900">Add New Expense</h3>
@@ -341,7 +341,7 @@ export default function Finance() {
                        val = val.replace(/\D/g, '');
                        setFormData({ ...formData, amount: Number(val) });
                     }}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
@@ -349,7 +349,7 @@ export default function Finance() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Select Category</option>
                     <option value="Rent">Rent</option>
@@ -366,7 +366,7 @@ export default function Finance() {
                     required
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                     placeholder="What was this expense for?"
                   />
                 </div>
@@ -374,13 +374,13 @@ export default function Finance() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-white"
+                    className="px-6 py-2 border border-gray-200 rounded-md text-gray-600 hover:bg-white"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold"
+                    className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold"
                   >
                     Save Expense
                   </button>

@@ -110,10 +110,10 @@ export default function CustomerAuth() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-gray-100"
+        className="max-w-md w-full bg-white rounded-md shadow-xl p-8 border border-gray-100"
       >
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mx-auto mb-4">
+          <div className="w-16 h-16 bg-indigo-100 rounded-md flex items-center justify-center text-indigo-600 mx-auto mb-4">
             {mode === 'login' ? <LogIn className="w-8 h-8" /> : <UserPlus className="w-8 h-8" />}
           </div>
           <h1 className="text-2xl font-black text-gray-900">
@@ -145,7 +145,7 @@ export default function CustomerAuth() {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                       placeholder="Nama Anda"
                     />
                   </div>
@@ -158,7 +158,7 @@ export default function CustomerAuth() {
                       required
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all min-h-[100px]"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all min-h-[100px]"
                       placeholder="Alamat Lengkap"
                     />
                   </div>
@@ -176,7 +176,7 @@ export default function CustomerAuth() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                 placeholder="email@contoh.com"
               />
             </div>
@@ -191,14 +191,14 @@ export default function CustomerAuth() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                 placeholder="••••••••"
               />
             </div>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 font-medium">
+            <div className="p-4 bg-red-50 text-red-600 text-sm rounded-md border border-red-100 font-medium">
               {error}
             </div>
           )}
@@ -206,7 +206,7 @@ export default function CustomerAuth() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50"
+            className="w-full bg-indigo-600 text-white py-4 rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50"
           >
             {loading ? (
               <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -355,14 +355,14 @@ export default function PurchaseOrders() {
         </div>
         <button
           onClick={() => { setEditingOrder(null); setFormData({ supplierId: '', prId: '', items: [{ productId: '', variantId: '', name: '', quantity: 1, price: 0 }], status: 'draft' }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Buat PO Baru
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -399,13 +399,13 @@ export default function PurchaseOrders() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end space-x-2">
-                      <button onClick={() => handlePrint(po)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Print PO">
+                      <button onClick={() => handlePrint(po)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Print PO">
                         <Printer className="w-4 h-4" />
                       </button>
-                      <button onClick={() => { setEditingOrder(po); setFormData({ supplierId: po.supplierId, prId: po.prId || '', items: po.items, status: po.status }); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                      <button onClick={() => { setEditingOrder(po); setFormData({ supplierId: po.supplierId, prId: po.prId || '', items: po.items, status: po.status }); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors">
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(po.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <button onClick={() => handleDelete(po.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -430,7 +430,7 @@ export default function PurchaseOrders() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">{editingOrder ? 'Edit PO' : 'Buat Purchase Order'}</h3>
@@ -446,7 +446,7 @@ export default function PurchaseOrders() {
                       required
                       value={formData.supplierId}
                       onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="">Pilih Supplier</option>
                       {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -457,7 +457,7 @@ export default function PurchaseOrders() {
                     <select
                       value={formData.prId}
                       onChange={(e) => handlePRSelection(e.target.value)}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="">Pilih PR yang disetujui</option>
                       {requests.map(r => <option key={r.id} value={r.id}>{r.prNumber} ({r.items.length} Items)</option>)}
@@ -482,13 +482,13 @@ export default function PurchaseOrders() {
                   
                   <div className="space-y-3">
                     {formData.items.map((item, index) => (
-                      <div key={index} className="flex gap-3 items-start bg-white p-3 rounded-lg border border-gray-100">
+                      <div key={index} className="flex gap-3 items-start bg-white p-3 rounded-md border border-gray-100">
                         <div className="flex-1">
                           <select
                             required
                             value={item.productId}
                             onChange={(e) => updateItem(index, e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                           >
                             <option value="">Pilih Produk</option>
                             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -499,7 +499,7 @@ export default function PurchaseOrders() {
                             <select
                               value={(item as any).variantId || ''}
                               onChange={(e) => updateItem(index, item.productId, e.target.value)}
-                              className="w-full mt-2 px-3 py-1.5 border border-indigo-100 bg-indigo-50/50 rounded-lg text-[11px] font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full mt-2 px-3 py-1.5 border border-indigo-100 bg-indigo-50/50 rounded-md text-[11px] font-medium outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                               {products.find(p => p.id === item.productId)?.variants?.map((v: any) => (
                                 <option key={v.id} value={v.id}>{v.name} (HPP: Rp.{v.hpp.toLocaleString()})</option>
@@ -514,7 +514,7 @@ export default function PurchaseOrders() {
                             min="1"
                             value={item.quantity}
                             onChange={(e) => updateField(index, 'quantity', Number(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="Qty"
                           />
                         </div>
@@ -530,7 +530,7 @@ export default function PurchaseOrders() {
                                  val = val.replace(/\D/g, '');
                                  updateField(index, 'price', Number(val));
                               }}
-                              className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                               placeholder="Harga"
                             />
                           </div>
@@ -550,7 +550,7 @@ export default function PurchaseOrders() {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-xl">
+                <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-md">
                   <span className="font-bold text-indigo-900">GRAND TOTAL</span>
                   <span className="text-xl font-black text-indigo-600">
                     Rp.{formData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0).toLocaleString()}
@@ -561,13 +561,13 @@ export default function PurchaseOrders() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100"
+                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100"
                   >
                     {editingOrder ? 'Simpan Perubahan' : 'Buat Purchase Order'}
                   </button>

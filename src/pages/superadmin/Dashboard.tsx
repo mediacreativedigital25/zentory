@@ -123,7 +123,7 @@ export default function SuperAdminDashboard() {
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Superadmin Dashboard</h2>
           <p className="text-gray-500 font-medium">Monitoring sistem & aliran pendapatan global.</p>
         </div>
-        <div className="bg-emerald-50 text-emerald-700 p-2 rounded-lg flex items-center border border-emerald-100 font-medium text-sm shadow-sm">
+        <div className="bg-emerald-50 text-emerald-700 p-2 rounded-md flex items-center border border-emerald-100 font-medium text-sm shadow-sm">
           <ShieldCheck className="w-4 h-4 mr-2" />
           Sistem Online & Optimal
         </div>
@@ -132,9 +132,9 @@ export default function SuperAdminDashboard() {
       {/* Main Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Revenue */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 transition-all hover:shadow-md">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-2xl">
+            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-md">
               <TrendingUp className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full uppercase">TOTAL REVENUE</span>
@@ -149,11 +149,11 @@ export default function SuperAdminDashboard() {
 
         {/* Total Tenants */}
         <div 
-          className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group"
+          className="bg-white p-6 rounded-md shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group"
           onClick={() => navigate('/superadmin/tenants')}
         >
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-blue-100 text-blue-600 rounded-2xl">
+            <div className="p-3 bg-blue-100 text-blue-600 rounded-md">
               <Building2 className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-full uppercase">USER B2B</span>
@@ -168,11 +168,11 @@ export default function SuperAdminDashboard() {
 
         {/* Total Users */}
         <div 
-          className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group"
+          className="bg-white p-6 rounded-md shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group"
           onClick={() => navigate('/superadmin/users')}
         >
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-purple-100 text-purple-600 rounded-2xl">
+            <div className="p-3 bg-purple-100 text-purple-600 rounded-md">
               <Users className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black bg-purple-50 text-purple-600 px-2 py-1 rounded-full uppercase">CUST BASE</span>
@@ -187,11 +187,11 @@ export default function SuperAdminDashboard() {
 
         {/* Billing Status */}
         <div 
-          className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group"
+          className="bg-white p-6 rounded-md shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all group"
           onClick={() => navigate('/superadmin/invoices')}
         >
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl">
+            <div className="p-3 bg-amber-100 text-amber-600 rounded-md">
               <CreditCard className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black bg-amber-50 text-amber-600 px-2 py-1 rounded-full uppercase">BILLING</span>
@@ -215,7 +215,7 @@ export default function SuperAdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Plan Distribution Chart */}
-        <div className="lg:col-span-1 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="lg:col-span-1 bg-white p-6 rounded-md border border-gray-100 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-black text-gray-900 uppercase tracking-widest text-xs">Distribusi Paket</h3>
             <span className="text-[10px] font-bold text-gray-400 uppercase">Per Tenant</span>
@@ -239,7 +239,7 @@ export default function SuperAdminDashboard() {
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-white p-3 rounded-lg shadow-xl border border-gray-100">
+                        <div className="bg-white p-3 rounded-md shadow-xl border border-gray-100">
                           <p className="text-xs font-black text-gray-900 uppercase tracking-widest leading-none mb-1">{payload[0].payload.name}</p>
                           <p className="text-lg font-black text-indigo-600">{payload[0].value} <span className="text-[10px] text-gray-400 font-bold">Tenants</span></p>
                         </div>
@@ -259,7 +259,7 @@ export default function SuperAdminDashboard() {
 
           <div className="mt-auto space-y-2">
             {stats.planDistribution.slice(0, 3).map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-gray-50/50">
+              <div key={idx} className="flex items-center justify-between p-2 rounded-md bg-gray-50/50">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{item.name}</span>
@@ -271,7 +271,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Recent Invoices List */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col">
+        <div className="lg:col-span-2 bg-white rounded-md border border-gray-100 shadow-sm flex flex-col">
           <div className="p-6 border-b border-gray-50 flex items-center justify-between">
             <h3 className="font-black text-gray-900 uppercase tracking-widest text-xs flex items-center">
               <FileText className="w-4 h-4 mr-2 text-indigo-600" />

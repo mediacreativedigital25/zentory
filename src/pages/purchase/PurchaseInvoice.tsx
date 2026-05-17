@@ -336,14 +336,14 @@ export default function PurchaseInvoices() {
         </div>
         <button
           onClick={() => { setEditingInvoice(null); setFormData({ poId: '', amount: 0, dueDate: '', status: 'unpaid' }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Input Invoice
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -363,7 +363,7 @@ export default function PurchaseInvoices() {
                   <tr key={pi.id} className="hover:bg-gray-50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 bg-red-50 text-red-600 rounded-lg flex items-center justify-center mr-3">
+                        <div className="w-8 h-8 bg-red-50 text-red-600 rounded-md flex items-center justify-center mr-3">
                           <FileText className="w-4 h-4" />
                         </div>
                         <div>
@@ -385,7 +385,7 @@ export default function PurchaseInvoices() {
                       <p className="text-sm font-black text-red-600">Rp.{pi.amount.toLocaleString()}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase border ${
+                      <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${
                         pi.status === 'paid' ? 'bg-green-50 text-green-700 border-green-100' :
                         pi.status === 'partial' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
                         'bg-red-50 text-red-700 border-red-100'
@@ -398,19 +398,19 @@ export default function PurchaseInvoices() {
                         {pi.status !== 'paid' && (
                           <button
                             onClick={() => { setSelectedInvoice(pi); setIsPaymentModalOpen(true); }}
-                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                             title="Bayar"
                           >
                             <DollarSign className="w-4 h-4" />
                           </button>
                         )}
-                        <button onClick={() => handlePrint(pi)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Cetak">
+                        <button onClick={() => handlePrint(pi)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Cetak">
                           <Printer className="w-4 h-4" />
                         </button>
-                        <button onClick={() => { setEditingInvoice(pi); setFormData({ poId: pi.poId, amount: pi.amount, dueDate: pi.dueDate, status: pi.status }); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
+                        <button onClick={() => { setEditingInvoice(pi); setFormData({ poId: pi.poId, amount: pi.amount, dueDate: pi.dueDate, status: pi.status }); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDeleteRequest(pi)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
+                        <button onClick={() => handleDeleteRequest(pi)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Hapus">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -436,7 +436,7 @@ export default function PurchaseInvoices() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-red-600 text-white">
                 <div className="flex items-center gap-2">
@@ -448,7 +448,7 @@ export default function PurchaseInvoices() {
                 </button>
               </div>
               <form onSubmit={submitDeleteRequest} className="p-6 space-y-4">
-                <div className="bg-red-50 p-4 rounded-lg mb-4 border border-red-100">
+                <div className="bg-red-50 p-4 rounded-md mb-4 border border-red-100">
                   <p className="text-xs text-red-600 font-bold mb-1 uppercase">MENGHAPUS INVOICE:</p>
                   <p className="text-sm font-black text-red-700">{deleteFormData.piNumber}</p>
                 </div>
@@ -459,7 +459,7 @@ export default function PurchaseInvoices() {
                     required
                     value={deleteFormData.reason}
                     onChange={(e) => setDeleteFormData({ ...deleteFormData, reason: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-red-500"
                   >
                     <option value="">Pilih Alasan</option>
                     <option value="Salah Metode Pembayaran">Salah Metode Pembayaran</option>
@@ -481,7 +481,7 @@ export default function PurchaseInvoices() {
                       value={deleteFormData.notes}
                       onChange={(e) => setDeleteFormData({ ...deleteFormData, notes: e.target.value })}
                       placeholder="Jelaskan alasan lainnya..."
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500 h-24"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-red-500 h-24"
                     />
                   </motion.div>
                 )}
@@ -492,7 +492,7 @@ export default function PurchaseInvoices() {
                     type="date"
                     readOnly
                     value={deleteFormData.deadline}
-                    className="w-full bg-white text-gray-500 cursor-not-allowed outline-none p-2 border border-gray-200 rounded-lg text-sm font-medium"
+                    className="w-full bg-white text-gray-500 cursor-not-allowed outline-none p-2 border border-gray-200 rounded-md text-sm font-medium"
                   />
                   <p className="text-[10px] text-gray-400 mt-1 italic">*Deadline diatur otomatis H+1</p>
                 </div>
@@ -501,14 +501,14 @@ export default function PurchaseInvoices() {
                   <button
                     type="button"
                     onClick={() => setIsDeleteModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmittingDelete || !deleteFormData.reason}
-                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center gap-2 transition-all active:scale-95"
+                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-md font-bold hover:bg-red-700 disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center gap-2 transition-all active:scale-95"
                   >
                     {isSubmittingDelete ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -528,7 +528,7 @@ export default function PurchaseInvoices() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">Pembayaran Supplier</h3>
@@ -537,7 +537,7 @@ export default function PurchaseInvoices() {
                 </button>
               </div>
               <div className="p-6 space-y-6">
-                <div className="bg-gray-50 p-4 rounded-xl space-y-2">
+                <div className="bg-gray-50 p-4 rounded-md space-y-2">
                   <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-widest">
                     <span>Invoice No</span>
                     <span>Total Tagihan</span>
@@ -555,7 +555,7 @@ export default function PurchaseInvoices() {
                       <button
                         key={bank.id}
                         onClick={() => setSelectedBankAccountId(bank.id)}
-                        className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                        className={`flex items-center justify-between p-4 rounded-md border-2 transition-all ${
                           selectedBankAccountId === bank.id 
                             ? 'border-indigo-600 bg-indigo-50 text-indigo-700' 
                             : 'border-gray-100 bg-white hover:border-gray-200 text-gray-600'
@@ -577,14 +577,14 @@ export default function PurchaseInvoices() {
                 <div className="pt-4 flex space-x-3">
                   <button
                     onClick={() => setIsPaymentModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handlePayment}
                     disabled={!selectedBankAccountId || isPaying}
-                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center gap-2"
                   >
                     {isPaying ? (
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -607,7 +607,7 @@ export default function PurchaseInvoices() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">{editingInvoice ? 'Edit Invoice' : 'Input Invoice Supplier'}</h3>
@@ -622,7 +622,7 @@ export default function PurchaseInvoices() {
                     required
                     value={formData.poId}
                     onChange={(e) => handlePOSelection(e.target.value)}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Pilih Purchase Order</option>
                     {orders.map(o => <option key={o.id} value={o.id}>{o.poNumber} - {o.supplierName}</option>)}
@@ -637,7 +637,7 @@ export default function PurchaseInvoices() {
                       required
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                      className="w-full pl-12 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                      className="w-full pl-12 pr-4 py-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                     />
                   </div>
                 </div>
@@ -648,7 +648,7 @@ export default function PurchaseInvoices() {
                     required
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
@@ -656,7 +656,7 @@ export default function PurchaseInvoices() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="unpaid">Belum Dibayar</option>
                     <option value="partial">Dibayar Sebagian</option>
@@ -667,13 +667,13 @@ export default function PurchaseInvoices() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700"
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700"
                   >
                     Simpan Invoice
                   </button>

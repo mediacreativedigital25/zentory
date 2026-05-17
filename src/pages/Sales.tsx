@@ -486,7 +486,7 @@ export default function Sales() {
       </div>
 
       {/* POS Terminal / Product List */}
-      <div className={`flex-1 flex flex-col bg-white md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${activeTab === 'products' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`flex-1 flex flex-col bg-white md:rounded-md shadow-sm border border-gray-100 overflow-hidden ${activeTab === 'products' ? 'flex' : 'hidden md:flex'}`}>
         <div className="p-3 sm:p-4 md:p-6 border-b border-gray-100">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -495,7 +495,7 @@ export default function Sales() {
               placeholder="Cari produk..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
           </div>
         </div>
@@ -507,9 +507,9 @@ export default function Sales() {
                 key={product.id}
                 onClick={() => addToCart(product)}
                 disabled={product.stock <= 0}
-                className="flex flex-col text-left group bg-white border border-gray-100 rounded-lg p-2 sm:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
+                className="flex flex-col text-left group bg-white border border-gray-100 rounded-md p-2 sm:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
               >
-                <div className="aspect-square bg-gray-50 rounded-lg mb-2 sm:mb-3 overflow-hidden relative">
+                <div className="aspect-square bg-gray-50 rounded-md mb-2 sm:mb-3 overflow-hidden relative">
                   <img
                     src={product.imageUrl || `https://picsum.photos/seed/${product.id}/200/200`}
                     alt={product.name}
@@ -560,7 +560,7 @@ export default function Sales() {
       </div>
 
       {/* Cart / Checkout */}
-      <div className={`w-full md:w-72 lg:w-80 xl:w-96 flex flex-col bg-white md:rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${activeTab === 'cart' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`w-full md:w-72 lg:w-80 xl:w-96 flex flex-col bg-white md:rounded-md shadow-sm border border-gray-100 overflow-hidden ${activeTab === 'cart' ? 'flex' : 'hidden md:flex'}`}>
         <div className="p-3 sm:p-4 md:p-6 border-b border-gray-100 flex items-center justify-between">
           <h3 className="text-base md:text-lg font-bold flex items-center">
             <ShoppingCart className="w-5 h-5 mr-2 text-indigo-600" />
@@ -570,7 +570,7 @@ export default function Sales() {
             <select
               value={selectedCustomer}
               onChange={(e) => setSelectedCustomer(e.target.value)}
-              className="text-[10px] md:text-xs border border-gray-200 rounded-lg px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 max-w-[100px] md:max-w-[120px]"
+              className="text-[10px] md:text-xs border border-gray-200 rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 max-w-[100px] md:max-w-[120px]"
             >
               <option value="">Pelanggan Umum</option>
               {customers.map(c => (
@@ -590,7 +590,7 @@ export default function Sales() {
             const cartItemId = itemVid ? `${item.product.id}-${itemVid}` : item.product.id;
 
             return (
-              <div key={cartItemId} className="flex items-center justify-between bg-white p-2 md:p-3 rounded-lg border border-gray-100 hover:border-indigo-100 transition-colors">
+              <div key={cartItemId} className="flex items-center justify-between bg-white p-2 md:p-3 rounded-md border border-gray-100 hover:border-indigo-100 transition-colors">
                 <div className="flex-1 min-w-0 mr-2 md:mr-4">
                   <p className="text-xs md:text-sm font-bold text-gray-900 truncate">
                     {item.product.name}
@@ -610,7 +610,7 @@ export default function Sales() {
                   <p className="text-[10px] md:text-xs text-gray-400">Total: Rp.{Math.round(unitPrice * item.quantity).toLocaleString('id-ID')}</p>
                 </div>
                 <div className="flex items-center space-x-1 md:space-x-2">
-                  <button onClick={() => updateQuantity(cartItemId, -1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                  <button onClick={() => updateQuantity(cartItemId, -1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-md hover:bg-gray-100 transition-colors">
                     <Minus className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                   <input 
@@ -620,10 +620,10 @@ export default function Sales() {
                     className="text-xs md:text-sm font-medium w-8 md:w-10 text-center bg-transparent border border-gray-200 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
                     onFocus={(e) => e.target.select()}
                   />
-                  <button onClick={() => updateQuantity(cartItemId, 1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                  <button onClick={() => updateQuantity(cartItemId, 1)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center bg-white border border-gray-200 rounded-md hover:bg-gray-100 transition-colors">
                     <Plus className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
-                  <button onClick={() => updateQuantity(cartItemId, -item.quantity)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-1 md:ml-2">
+                  <button onClick={() => updateQuantity(cartItemId, -item.quantity)} className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-md transition-colors ml-1 md:ml-2">
                     <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                 </div>
@@ -655,7 +655,7 @@ export default function Sales() {
           <button
             onClick={() => setIsCheckoutModalOpen(true)}
             disabled={cart.length === 0 || isProcessing}
-            className="w-full bg-indigo-600 text-white py-3 md:py-4 rounded-2xl font-black text-base md:text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-xl shadow-indigo-100 active:scale-95"
+            className="w-full bg-indigo-600 text-white py-3 md:py-4 rounded-md font-black text-base md:text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-xl shadow-indigo-100 active:scale-95"
           >
             {isProcessing ? 'Memproses...' : (
               <>
@@ -688,7 +688,7 @@ export default function Sales() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-sm overflow-hidden"
             >
               <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
                 <div>
@@ -705,7 +705,7 @@ export default function Sales() {
                     key={v.id}
                     onClick={() => setSelectedVariantId(v.id)}
                     disabled={v.stock <= 0}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                    className={`w-full flex items-center justify-between p-4 rounded-md border-2 transition-all ${
                       selectedVariantId === v.id 
                         ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50' 
                         : 'border-gray-100 hover:border-indigo-200 bg-white'
@@ -728,7 +728,7 @@ export default function Sales() {
                 <button
                   onClick={() => addToCart(selectedVariantProduct, selectedVariantId)}
                   disabled={!selectedVariantId}
-                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
+                  className="w-full bg-indigo-600 text-white py-4 rounded-md font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
                 >
                   MASUKKAN KERANJANG
                 </button>
@@ -755,7 +755,7 @@ export default function Sales() {
                 </h3>
                 <button
                   onClick={() => setIsCheckoutModalOpen(false)}
-                  className="p-1.5 md:p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  className="p-1.5 md:p-2 hover:bg-white/10 rounded-md transition-colors"
                 >
                   <X className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
@@ -767,14 +767,14 @@ export default function Sales() {
                   <div className="flex gap-2 md:gap-3">
                     <button
                       onClick={() => setPaymentMethodType('tunai')}
-                      className={`flex-1 py-2 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-1 md:gap-2 ${paymentMethodType === 'tunai' ? 'bg-green-50 text-green-600 border-green-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-2 md:py-3 rounded-md text-[10px] font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-1 md:gap-2 ${paymentMethodType === 'tunai' ? 'bg-green-50 text-green-600 border-green-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
                       <Landmark className="w-5 h-5 md:w-6 md:h-6" />
                       Tunai
                     </button>
                     <button
                       onClick={() => setPaymentMethodType('transfer')}
-                      className={`flex-1 py-2 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-1 md:gap-2 ${paymentMethodType === 'transfer' ? 'bg-blue-50 text-blue-600 border-blue-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-2 md:py-3 rounded-md text-[10px] font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-1 md:gap-2 ${paymentMethodType === 'transfer' ? 'bg-blue-50 text-blue-600 border-blue-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
                       <CreditCard className="w-5 h-5 md:w-6 md:h-6" />
                       Transfer
@@ -787,7 +787,7 @@ export default function Sales() {
                   <div className="flex gap-2 md:gap-3">
                     <button
                       onClick={() => setPaymentType('cash')}
-                      className={`flex-1 py-2 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'cash' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-2 md:py-3 rounded-md text-[10px] font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'cash' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
                       Lunas
                     </button>
@@ -798,7 +798,7 @@ export default function Sales() {
                         }
                       }}
                       disabled={!canUseTempo}
-                      className={`flex-1 py-2 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'credit' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'} ${!canUseTempo ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`flex-1 py-2 md:py-3 rounded-md text-[10px] font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'credit' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'} ${!canUseTempo ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       Tempo
                     </button>
@@ -824,7 +824,7 @@ export default function Sales() {
                   <button
                     onClick={handleCheckout}
                     disabled={isProcessing}
-                    className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                    className="w-full bg-indigo-600 text-white py-4 rounded-md font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
                   >
                     {isProcessing ? 'Memproses...' : 'Konfirmasi & Bayar'}
                   </button>
@@ -865,14 +865,14 @@ export default function Sales() {
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <button
                   onClick={() => handlePrint('invoice')}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-md border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
                 >
                   <FileText className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
                   <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Faktur (A4)</span>
                 </button>
                 <button
                   onClick={() => handlePrint('receipt')}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-md border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
                 >
                   <Printer className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
                   <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Struk (80mm)</span>
@@ -881,7 +881,7 @@ export default function Sales() {
 
               <button
                 onClick={() => setShowSuccessModal(false)}
-                className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gray-900 text-white rounded-md font-black uppercase tracking-widest hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
               >
                 Transaksi Baru
                 <ArrowRight className="w-4 h-4" />

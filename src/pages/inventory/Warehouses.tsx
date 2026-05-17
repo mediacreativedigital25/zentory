@@ -95,7 +95,7 @@ export default function Warehouses() {
         </div>
         <button
           onClick={() => { setEditingWarehouse(null); setFormData({ name: '', location: '', description: '' }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah Gudang
@@ -107,17 +107,17 @@ export default function Warehouses() {
           <motion.div
             key={warehouse.id}
             layout
-            className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all"
+            className="bg-white p-6 rounded-md shadow-sm border border-gray-100 hover:shadow-md transition-all"
           >
             <div className="flex justify-between items-start mb-4">
               <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                 <Building2 className="w-6 h-6" />
               </div>
               <div className="flex space-x-1">
-                <button onClick={() => { setEditingWarehouse(warehouse); setFormData({ name: warehouse.name, location: warehouse.location || '', description: warehouse.description || '' }); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                <button onClick={() => { setEditingWarehouse(warehouse); setFormData({ name: warehouse.name, location: warehouse.location || '', description: warehouse.description || '' }); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors">
                   <Edit2 className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleDelete(warehouse.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <button onClick={() => handleDelete(warehouse.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -131,7 +131,7 @@ export default function Warehouses() {
           </motion.div>
         ))}
         {warehouses.length === 0 && (
-          <div className="col-span-full text-center py-12 bg-white rounded-lg border border-dashed border-gray-200">
+          <div className="col-span-full text-center py-12 bg-white rounded-md border border-dashed border-gray-200">
             <Building2 className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             <p className="text-gray-500">Belum ada gudang. Mulai dengan menambah satu!</p>
           </div>
@@ -145,7 +145,7 @@ export default function Warehouses() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-xl font-bold">{editingWarehouse ? 'Edit Gudang' : 'Tambah Gudang Baru'}</h3>
@@ -161,7 +161,7 @@ export default function Warehouses() {
                     required
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
@@ -171,7 +171,7 @@ export default function Warehouses() {
                     required
                     value={formData.location || ''}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
@@ -179,12 +179,12 @@ export default function Warehouses() {
                   <textarea
                     value={formData.description || ''}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                   />
                 </div>
                 <div className="pt-4 flex justify-end space-x-3">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-white">Batal</button>
-                  <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 border border-gray-200 rounded-md text-gray-600 hover:bg-white">Batal</button>
+                  <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold">
                     {editingWarehouse ? 'Simpan Perubahan' : 'Tambah Gudang'}
                   </button>
                 </div>

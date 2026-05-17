@@ -28,7 +28,7 @@ export default function SubscriptionExpired() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100"
+        className="max-w-md w-full bg-white rounded-md shadow-2xl overflow-hidden border border-gray-100"
       >
         <div className="p-10 text-center">
           <div className="w-24 h-24 bg-red-50 rounded-[2rem] flex items-center justify-center text-red-600 mx-auto mb-8">
@@ -40,7 +40,7 @@ export default function SubscriptionExpired() {
             Masa berlaku langganan bisnis <span className="text-indigo-600 font-bold uppercase">{tenant?.name}</span> telah berakhir pada <span className="text-red-600 font-bold">{expiryDate}</span>.
           </p>
 
-          <div className="bg-white rounded-lg p-6 mb-8 text-left space-y-3 border border-gray-100">
+          <div className="bg-white rounded-md p-6 mb-8 text-left space-y-3 border border-gray-100">
             <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-400">
               <span>Status Paket</span>
               <span className="text-red-500">EXPIRED</span>

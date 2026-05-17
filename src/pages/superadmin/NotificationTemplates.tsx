@@ -78,8 +78,8 @@ export default function SuperAdminNotificationTemplates() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+      <div className="flex items-center gap-4 bg-white p-6 rounded-md shadow-sm border border-gray-100">
+        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
           <MessageSquare className="w-8 h-8" />
         </div>
         <div>
@@ -108,44 +108,44 @@ export default function SuperAdminNotificationTemplates() {
         {activeTab === 'wa' && (
           <div className="space-y-6">
             {/* Invoice Created */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 space-y-4">
               <h2 className="font-bold text-gray-900">Tagihan Baru Dibuat</h2>
-              <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-xs font-mono">
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-xs font-mono">
                 <strong>Variabel tersedia:</strong> {INVOICE_VARS}
               </div>
               <textarea
                 value={templates.invoiceCreate}
                 onChange={e => setTemplates({...templates, invoiceCreate: e.target.value})}
                 rows={6}
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
             </div>
 
             {/* Payment Success */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 space-y-4">
               <h2 className="font-bold text-gray-900">Pembayaran Berhasil</h2>
-              <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-xs font-mono">
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-xs font-mono">
                 <strong>Variabel tersedia:</strong> {PAY_VARS}
               </div>
               <textarea
                 value={templates.paymentSuccess}
                 onChange={e => setTemplates({...templates, paymentSuccess: e.target.value})}
                 rows={6}
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
             </div>
 
             {/* Subscription Info */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 space-y-4">
               <h2 className="font-bold text-gray-900">Info Layanan Aktif</h2>
-              <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-xs font-mono">
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-xs font-mono">
                 <strong>Variabel tersedia:</strong> {INFO_VARS}
               </div>
               <textarea
                 value={templates.subscriptionInfo}
                 onChange={e => setTemplates({...templates, subscriptionInfo: e.target.value})}
                 rows={5}
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
             </div>
           </div>
@@ -154,9 +154,9 @@ export default function SuperAdminNotificationTemplates() {
         {activeTab === 'email' && (
           <div className="space-y-6">
             {/* EMAIL Invoice Created */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 space-y-4">
               <h2 className="font-bold text-gray-900">Tagihan Baru Dibuat</h2>
-              <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-xs font-mono">
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-xs font-mono">
                 <strong>Variabel tersedia:</strong> {INVOICE_VARS}
               </div>
               <input
@@ -164,21 +164,21 @@ export default function SuperAdminNotificationTemplates() {
                 placeholder="Subject Email"
                 value={templates.invoiceCreateEmailSubject}
                 onChange={e => setTemplates({...templates, invoiceCreateEmailSubject: e.target.value})}
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
               <textarea
                 value={templates.invoiceCreateEmailHtml}
                 onChange={e => setTemplates({...templates, invoiceCreateEmailHtml: e.target.value})}
                 rows={6}
                 placeholder="HTML Body"
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
               />
             </div>
 
             {/* EMAIL Payment Success */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 space-y-4">
               <h2 className="font-bold text-gray-900">Pembayaran Berhasil</h2>
-              <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-xs font-mono">
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-xs font-mono">
                 <strong>Variabel tersedia:</strong> {PAY_VARS}
               </div>
               <input
@@ -186,21 +186,21 @@ export default function SuperAdminNotificationTemplates() {
                 placeholder="Subject Email"
                 value={templates.paymentSuccessEmailSubject}
                 onChange={e => setTemplates({...templates, paymentSuccessEmailSubject: e.target.value})}
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
               <textarea
                 value={templates.paymentSuccessEmailHtml}
                 onChange={e => setTemplates({...templates, paymentSuccessEmailHtml: e.target.value})}
                 rows={6}
                 placeholder="HTML Body"
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
               />
             </div>
 
             {/* EMAIL Subscription Info */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 space-y-4">
               <h2 className="font-bold text-gray-900">Info Layanan Aktif</h2>
-              <div className="bg-blue-50 text-blue-800 p-3 rounded-xl text-xs font-mono">
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-xs font-mono">
                 <strong>Variabel tersedia:</strong> {INFO_VARS}
               </div>
               <input
@@ -208,14 +208,14 @@ export default function SuperAdminNotificationTemplates() {
                 placeholder="Subject Email"
                 value={templates.subscriptionInfoEmailSubject}
                 onChange={e => setTemplates({...templates, subscriptionInfoEmailSubject: e.target.value})}
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-medium text-sm"
               />
               <textarea
                 value={templates.subscriptionInfoEmailHtml}
                 onChange={e => setTemplates({...templates, subscriptionInfoEmailHtml: e.target.value})}
                 rows={5}
                 placeholder="HTML Body"
-                className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
               />
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function SuperAdminNotificationTemplates() {
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold flex items-center shadow-lg hover:bg-indigo-700 transition disabled:opacity-50"
+            className="px-6 py-3 bg-indigo-600 text-white rounded-md font-bold flex items-center shadow-lg hover:bg-indigo-700 transition disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
             Simpan Template

@@ -244,7 +244,7 @@ export default function SuperAdminApprovals() {
         {approvals.length > 0 && (
           <button
             onClick={handleDeleteAllApprovals}
-            className="flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all"
+            className="flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-md text-sm font-bold hover:bg-red-100 transition-all"
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Hapus Semua List
@@ -252,7 +252,7 @@ export default function SuperAdminApprovals() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -308,14 +308,14 @@ export default function SuperAdminApprovals() {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleApproval(request, 'approve')}
-                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors"
                           title="Setujui"
                         >
                           <CheckCircle2 className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleApproval(request, 'reject')}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
                           title="Tolak"
                         >
                           <XCircle className="w-5 h-5" />

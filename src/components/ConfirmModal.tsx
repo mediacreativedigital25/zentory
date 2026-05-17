@@ -33,7 +33,7 @@ export default function ConfirmModal({
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-[650px] overflow-hidden"
+            className="bg-white rounded-md shadow-2xl w-full max-w-[650px] overflow-hidden"
           >
             <div className="p-6">
               <div className="flex items-center mb-4">
@@ -50,14 +50,14 @@ export default function ConfirmModal({
                 {showCancel && (
                   <button
                     onClick={onCancel}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-colors"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white transition-colors"
                   >
                     {cancelText}
                   </button>
                 )}
                 <button
                   onClick={onConfirm}
-                  className={`${showCancel ? 'flex-1' : 'w-full'} px-4 py-3 rounded-xl text-white font-bold transition-all shadow-lg ${
+                  className={`${showCancel ? 'flex-1' : 'w-full'} px-4 py-3 rounded-md text-white font-bold transition-all shadow-lg ${
                     type === 'danger' ? 'bg-red-600 hover:bg-red-700 shadow-red-200' : 
                     type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700 shadow-yellow-200' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
                   }`}

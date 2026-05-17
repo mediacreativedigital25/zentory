@@ -163,7 +163,7 @@ export default function CustomerDashboard() {
                 {tenant.settings?.logoUrl ? (
                   <img src={tenant.settings.logoUrl} alt={tenant.name} className="h-8 w-auto mr-2" referrerPolicy="no-referrer" />
                 ) : (
-                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-2">
+                  <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center text-white font-bold text-sm mr-2">
                     {tenant.name.charAt(0)}
                   </div>
                 )}
@@ -176,7 +176,7 @@ export default function CustomerDashboard() {
           
           <button 
             onClick={() => logout()}
-            className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl font-bold text-sm transition-all"
+            className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md font-bold text-sm transition-all"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Logout
@@ -195,7 +195,7 @@ export default function CustomerDashboard() {
         <div className="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex items-center px-6 py-3 rounded-2xl font-bold text-sm transition-all whitespace-nowrap ${
+            className={`flex items-center px-6 py-3 rounded-md font-bold text-sm transition-all whitespace-nowrap ${
               activeTab === 'history' 
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
                 : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
@@ -206,7 +206,7 @@ export default function CustomerDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('status')}
-            className={`flex items-center px-6 py-3 rounded-2xl font-bold text-sm transition-all whitespace-nowrap ${
+            className={`flex items-center px-6 py-3 rounded-md font-bold text-sm transition-all whitespace-nowrap ${
               activeTab === 'status' 
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
                 : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
@@ -217,7 +217,7 @@ export default function CustomerDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('address')}
-            className={`flex items-center px-6 py-3 rounded-2xl font-bold text-sm transition-all whitespace-nowrap ${
+            className={`flex items-center px-6 py-3 rounded-md font-bold text-sm transition-all whitespace-nowrap ${
               activeTab === 'address' 
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
                 : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
@@ -239,13 +239,13 @@ export default function CustomerDashboard() {
               className="space-y-4"
             >
               {orders.length === 0 ? (
-                <div className="bg-white rounded-3xl p-12 text-center border border-gray-100">
+                <div className="bg-white rounded-md p-12 text-center border border-gray-100">
                   <ShoppingBag className="w-16 h-16 text-gray-200 mx-auto mb-4" />
                   <p className="text-gray-500 font-medium">Belum ada riwayat pembelian.</p>
                 </div>
               ) : (
                 orders.map((order) => (
-                  <div key={order.id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-indigo-100 transition-all group">
+                  <div key={order.id} className="bg-white rounded-md p-6 shadow-sm border border-gray-100 hover:border-indigo-100 transition-all group">
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <p className="text-xs font-bold text-indigo-600 mb-1">{order.orderNumber}</p>
@@ -287,15 +287,15 @@ export default function CustomerDashboard() {
               className="space-y-4"
             >
               {orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').length === 0 ? (
-                <div className="bg-white rounded-3xl p-12 text-center border border-gray-100">
+                <div className="bg-white rounded-md p-12 text-center border border-gray-100">
                   <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
                   <p className="text-gray-500 font-medium">Tidak ada pesanan aktif saat ini.</p>
                 </div>
               ) : (
                 orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').map((order) => (
-                  <div key={order.id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                  <div key={order.id} className="bg-white rounded-md p-6 shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4 mb-6">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                      <div className={`w-12 h-12 rounded-md flex items-center justify-center ${
                         order.status === 'processing' ? 'bg-blue-100 text-blue-600' : 'bg-yellow-100 text-yellow-600'
                       }`}>
                         {order.status === 'processing' ? <Package className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
@@ -332,9 +332,9 @@ export default function CustomerDashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+              <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                  <div className="w-10 h-10 bg-indigo-50 rounded-md flex items-center justify-center text-indigo-600">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <h3 className="text-lg font-black text-gray-900">Alamat Pengiriman</h3>
@@ -348,14 +348,14 @@ export default function CustomerDashboard() {
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Masukkan alamat lengkap Anda..."
                       rows={4}
-                      className="w-full p-2 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
+                      className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSavingAddress}
-                    className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50"
+                    className="w-full py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50"
                   >
                     {isSavingAddress ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

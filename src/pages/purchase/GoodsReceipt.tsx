@@ -339,14 +339,14 @@ export default function GoodsReceipts() {
         </div>
         <button
           onClick={() => { setEditingReceipt(null); setFormData({ poId: '', items: [], status: 'draft' }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Terima Barang
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -375,15 +375,15 @@ export default function GoodsReceipts() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end space-x-2">
-                      <button onClick={() => handlePrint(gr)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Print GR">
+                      <button onClick={() => handlePrint(gr)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Print GR">
                         <Printer className="w-4 h-4" />
                       </button>
                       {gr.status === 'draft' && (
                         <>
-                          <button onClick={() => { setEditingReceipt(gr); setFormData({ poId: gr.poId, items: gr.items, status: gr.status }); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                          <button onClick={() => { setEditingReceipt(gr); setFormData({ poId: gr.poId, items: gr.items, status: gr.status }); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleComplete(gr)} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Selesaikan & Update Stok">
+                          <button onClick={() => handleComplete(gr)} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Selesaikan & Update Stok">
                             <CheckCircle2 className="w-4 h-4" />
                           </button>
                         </>
@@ -404,7 +404,7 @@ export default function GoodsReceipts() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">Validasi Penerimaan Barang</h3>
@@ -420,7 +420,7 @@ export default function GoodsReceipts() {
                     disabled={!!editingReceipt}
                     value={formData.poId}
                     onChange={(e) => handlePOSelection(e.target.value)}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-white"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-white"
                   >
                     <option value="">Pilih PO yang akan diterima</option>
                     {orders.map(o => <option key={o.id} value={o.id}>{o.poNumber} - {o.supplierName}</option>)}
@@ -435,11 +435,11 @@ export default function GoodsReceipts() {
                   
                   <div className="space-y-3">
                     {formData.items.map((item, index) => (
-                      <div key={index} className="flex gap-3 items-center bg-white p-4 rounded-lg border border-gray-100">
+                      <div key={index} className="flex gap-3 items-center bg-white p-4 rounded-md border border-gray-100">
                         <button
                           type="button"
                           onClick={() => toggleCheck(index)}
-                          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
                             item.isChecked ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-gray-200'
                           }`}
                         >
@@ -461,7 +461,7 @@ export default function GoodsReceipts() {
                               newItems[index].quantityReceived = Number(e.target.value);
                               setFormData({ ...formData, items: newItems });
                             }}
-                            className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-1.5 border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         </div>
                       </div>
@@ -470,7 +470,7 @@ export default function GoodsReceipts() {
                 </div>
 
                 {formData.items.length > 0 && (
-                  <div className="p-4 bg-blue-50 rounded-xl flex items-start">
+                  <div className="p-4 bg-blue-50 rounded-md flex items-start">
                     <AlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-0.5" />
                     <p className="text-sm text-blue-700">
                       Pastikan jumlah barang sesuai dengan fisik yang datang. Centang item untuk memvalidasi.
@@ -482,13 +482,13 @@ export default function GoodsReceipts() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100"
+                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100"
                   >
                     Simpan Draft
                   </button>

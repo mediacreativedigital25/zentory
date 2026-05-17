@@ -143,7 +143,7 @@ export default function ImageUpload({
 
   if (isConfigLoading) {
     return (
-      <div className={`w-full ${compact ? 'h-12 w-12' : 'h-24'} rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center animate-pulse`}>
+      <div className={`w-full ${compact ? 'h-12 w-12' : 'h-24'} rounded-md border border-gray-100 bg-gray-50 flex items-center justify-center animate-pulse`}>
         <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
       </div>
     );
@@ -160,7 +160,7 @@ export default function ImageUpload({
       <div className="relative">
         {/* Loading Overlay */}
         {isUploading && (
-          <div className="absolute inset-0 z-20 bg-white/90 backdrop-blur-[2px] rounded-lg flex flex-col items-center justify-center gap-2 border border-indigo-100 shadow-inner">
+          <div className="absolute inset-0 z-20 bg-white/90 backdrop-blur-[2px] rounded-md flex flex-col items-center justify-center gap-2 border border-indigo-100 shadow-inner">
             <Loader2 className={`${compact ? 'w-5 h-5' : 'w-8 h-8'} text-indigo-600 animate-spin`} />
             {!compact && (
               <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest animate-pulse">
@@ -171,7 +171,7 @@ export default function ImageUpload({
         )}
 
         {value ? (
-          <div className={`relative group ${compact ? 'h-12 w-12' : 'h-24 w-full'} rounded-xl overflow-hidden border border-gray-100 shadow-sm`}>
+          <div className={`relative group ${compact ? 'h-12 w-12' : 'h-24 w-full'} rounded-md overflow-hidden border border-gray-100 shadow-sm`}>
             <img 
               src={value} 
               alt="Preview" 
@@ -195,7 +195,7 @@ export default function ImageUpload({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className={`w-full ${compact ? 'h-12 w-12' : 'h-24'} rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full ${compact ? 'h-12 w-12' : 'h-24'} rounded-md border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className={`${compact ? 'p-1' : 'p-2'} bg-gray-50 text-gray-400 rounded-full group-hover:text-indigo-600 transition-colors`}>
               <Upload className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
@@ -214,7 +214,7 @@ export default function ImageUpload({
           ref={fileInputRef}
           onChange={handleFileChange}
           accept="image/*"
-          className="hidden p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium"
+          className="hidden p-2 bg-white border border-gray-200 rounded-md text-sm font-medium"
         />
       </div>
 

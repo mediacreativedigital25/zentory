@@ -402,14 +402,14 @@ export default function StockOpnamePage() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+          className="bg-indigo-600 text-white px-6 py-3 rounded-md flex items-center font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
         >
           <Plus className="w-5 h-5 mr-2" />
           STOCK PLANNING
         </button>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -430,7 +430,7 @@ export default function StockOpnamePage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                      <div className="p-2 bg-indigo-50 rounded-md text-indigo-600">
                         <Calendar className="w-4 h-4" />
                       </div>
                       <span className="text-sm font-bold text-gray-900">
@@ -460,21 +460,21 @@ export default function StockOpnamePage() {
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => { setSelectedRecord(record); setIsDetailModalOpen(true); }}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
                         title="Detail"
                       >
                         <Eye className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handlePrint(record)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
                         title="Print PDF"
                       >
                         <FileText className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleExportExcel(record)}
-                        className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all"
                         title="Export Excel"
                       >
                         <FileSpreadsheet className="w-5 h-5" />
@@ -497,7 +497,7 @@ export default function StockOpnamePage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+                className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -506,7 +506,7 @@ export default function StockOpnamePage() {
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`w-8 h-8 rounded-xl text-xs font-black transition-all ${
+                    className={`w-8 h-8 rounded-md text-xs font-black transition-all ${
                       currentPage === i + 1 
                         ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
                         : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
@@ -519,7 +519,7 @@ export default function StockOpnamePage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+                className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -543,7 +543,7 @@ export default function StockOpnamePage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-lg overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-2xl font-black tracking-tight">Stock Planning</h3>
@@ -560,7 +560,7 @@ export default function StockOpnamePage() {
                       required
                       value={formData.period}
                       onChange={(e) => setFormData({ ...formData, period: e.target.value as any })}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="Harian">Harian</option>
                       <option value="Mingguan">Mingguan</option>
@@ -574,7 +574,7 @@ export default function StockOpnamePage() {
                       required
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="all">Semua Kategori</option>
                       {categories.map(cat => (
@@ -589,7 +589,7 @@ export default function StockOpnamePage() {
                       required
                       value={formData.warehouseId}
                       onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="">Pilih Gudang</option>
                       {warehouses.map(wh => (
@@ -604,7 +604,7 @@ export default function StockOpnamePage() {
                       value={formData.remark}
                       onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
                       placeholder="Contoh: Pemeriksaan stok akhir bulan..."
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all h-32 resize-none"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all h-32 resize-none"
                     />
                   </div>
                 </div>
@@ -613,13 +613,13 @@ export default function StockOpnamePage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
+                    className="flex-1 px-6 py-4 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     BATAL
                   </button>
                   <button
                     type="submit"
-                    className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+                    className="flex-[2] px-6 py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
                   >
                     BUAT PLANNING
                   </button>
@@ -638,7 +638,7 @@ export default function StockOpnamePage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div>
@@ -654,30 +654,30 @@ export default function StockOpnamePage() {
               
               <div className="flex-1 overflow-y-auto p-8 space-y-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 font-mono">
+                  <div className="bg-white p-4 rounded-md border border-gray-100 font-mono">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">No. Stock Opname</p>
                     <p className="text-sm font-black text-indigo-600">{selectedRecord.soNumber || '-'}</p>
                   </div>
-                  <div className="bg-white p-4 rounded-lg border border-gray-100">
+                  <div className="bg-white p-4 rounded-md border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Periode</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.period}</p>
                   </div>
-                  <div className="bg-white p-4 rounded-lg border border-gray-100">
+                  <div className="bg-white p-4 rounded-md border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Kategori</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.category}</p>
                   </div>
-                  <div className="bg-white p-4 rounded-lg border border-gray-100">
+                  <div className="bg-white p-4 rounded-md border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Gudang</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.warehouseName}</p>
                   </div>
-                  <div className="bg-white p-4 rounded-lg border border-gray-100">
+                  <div className="bg-white p-4 rounded-md border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Dibuat Oleh</p>
                     <p className="text-sm font-black text-gray-900">{selectedRecord.createdByName}</p>
                   </div>
                 </div>
 
                 {selectedRecord.remark && (
-                  <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                  <div className="bg-indigo-50 p-4 rounded-md border border-indigo-100">
                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Remark</p>
                     <p className="text-sm font-medium text-indigo-900">{selectedRecord.remark}</p>
                   </div>
@@ -688,7 +688,7 @@ export default function StockOpnamePage() {
                     <FileText className="w-5 h-5 text-indigo-600" />
                     <h4 className="font-black text-gray-900 uppercase tracking-wider text-sm">Daftar Produk ({selectedRecord.items.length})</h4>
                   </div>
-                  <div className="border border-gray-100 rounded-lg overflow-hidden">
+                  <div className="border border-gray-100 rounded-md overflow-hidden">
                     <table className="w-full text-left border-collapse">
                       <thead className="bg-gray-50">
                         <tr>
@@ -721,20 +721,20 @@ export default function StockOpnamePage() {
               <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-6 py-3 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
+                  className="px-6 py-3 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all"
                 >
                   TUTUP
                 </button>
                 <button
                   onClick={() => handleExportExcel(selectedRecord)}
-                  className="px-6 py-3 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 flex items-center"
+                  className="px-6 py-3 bg-emerald-600 text-white rounded-md font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 flex items-center"
                 >
                   <FileSpreadsheet className="w-5 h-5 mr-2" />
                   EXCEL
                 </button>
                 <button
                   onClick={() => handlePrint(selectedRecord)}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center"
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center"
                 >
                   <FileText className="w-5 h-5 mr-2" />
                   PDF

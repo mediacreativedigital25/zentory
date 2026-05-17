@@ -229,14 +229,14 @@ export default function ServiceTenant() {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
+          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah Layanan
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -245,7 +245,7 @@ export default function ServiceTenant() {
               placeholder="Cari layanan..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
             />
           </div>
         </div>
@@ -280,7 +280,7 @@ export default function ServiceTenant() {
                   <tr key={service.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
                           {React.createElement(icons.find(i => i.name === service.icon)?.icon || Zap, { className: 'w-5 h-5' })}
                         </div>
                         <div>
@@ -314,13 +314,13 @@ export default function ServiceTenant() {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => handleOpenModal(service)}
-                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setConfirmModal({ isOpen: true, serviceId: service.id })}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -341,7 +341,7 @@ export default function ServiceTenant() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-8 border-b border-gray-100">
                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">
@@ -358,7 +358,7 @@ export default function ServiceTenant() {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
                     />
                   </div>
                   <div className="space-y-2">
@@ -369,7 +369,7 @@ export default function ServiceTenant() {
                           key={item.name}
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, icon: item.name }))}
-                          className={`p-3 rounded-xl border-2 transition-all ${
+                          className={`p-3 rounded-md border-2 transition-all ${
                             formData.icon === item.name ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-gray-100 text-gray-400 hover:border-gray-200'
                           }`}
                         >
@@ -385,7 +385,7 @@ export default function ServiceTenant() {
                       type="number"
                       value={formData.price}
                       onChange={(e) => setFormData(prev => ({ ...prev, price: parseInt(e.target.value) }))}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
                     />
                   </div>
                   <div className="space-y-2">
@@ -393,7 +393,7 @@ export default function ServiceTenant() {
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as any }))}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
                     >
                       <option value="subscription">Subscription (Paket)</option>
                       <option value="addon">Add-on (Tambahan)</option>
@@ -408,7 +408,7 @@ export default function ServiceTenant() {
                     rows={2}
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-sm"
+                    className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-sm"
                   />
                 </div>
 
@@ -431,12 +431,12 @@ export default function ServiceTenant() {
                           value={feature}
                           onChange={(e) => updateFeature(index, e.target.value)}
                           placeholder="Contoh: Unlimited Produk"
-                          className="flex-1 p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                          className="flex-1 p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
                         />
                         <button
                           type="button"
                           onClick={() => removeFeature(index)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl"
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-md"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -458,7 +458,7 @@ export default function ServiceTenant() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {MENU_GROUPS.map((group, groupIdx) => (
-                      <div key={groupIdx} className="border border-gray-100 rounded-lg overflow-hidden">
+                      <div key={groupIdx} className="border border-gray-100 rounded-md overflow-hidden">
                         <div className="bg-gray-50 px-3 py-2 border-b border-gray-100 font-black text-gray-700 text-xs uppercase tracking-wider">
                           {group.name}
                         </div>
@@ -468,7 +468,7 @@ export default function ServiceTenant() {
                               <div className="relative flex items-center">
                                 <input
                                   type="checkbox"
-                                  className="peer sr-only p-2 rounded-lg border border-gray-200 text-sm"
+                                  className="peer sr-only p-2 rounded-md border border-gray-200 text-sm"
                                   checked={formData.menuPermissions.includes(item.key)}
                                   onChange={() => toggleMenuPermission(item.key)}
                                 />
@@ -485,13 +485,13 @@ export default function ServiceTenant() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-md border border-indigo-100">
                   <input
                     type="checkbox"
                     id="isEnabled"
                     checked={formData.isEnabled}
                     onChange={(e) => setFormData(prev => ({ ...prev, isEnabled: e.target.checked }))}
-                    className="w-5 h-5 text-indigo-600 rounded-lg border-gray-300 focus:ring-indigo-500"
+                    className="w-5 h-5 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500"
                   />
                   <label htmlFor="isEnabled" className="text-indigo-900 cursor-pointer text-xs font-semibold text-gray-600">
                     Aktifkan Layanan (Akan muncul di halaman pilihan paket untuk tenant)
@@ -503,13 +503,13 @@ export default function ServiceTenant() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-4 border border-gray-200 bg-white rounded-lg font-medium text-gray-500 hover:bg-white active:scale-95 transition-all"
+                  className="flex-1 py-4 border border-gray-200 bg-white rounded-md font-medium text-gray-500 hover:bg-white active:scale-95 transition-all"
                 >
                   BATAL
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex-1 py-4 bg-gray-900 text-white rounded-2xl font-black hover:bg-black shadow-xl active:scale-95 transition-all"
+                  className="flex-1 py-4 bg-gray-900 text-white rounded-md font-black hover:bg-black shadow-xl active:scale-95 transition-all"
                 >
                   SIMPAN LAYANAN
                 </button>

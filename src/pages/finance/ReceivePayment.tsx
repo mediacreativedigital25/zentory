@@ -428,7 +428,7 @@ export default function ReceivePayment() {
         </div>
         <button
           onClick={() => { resetForm(); setIsAddModalOpen(true); }}
-          className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2 text-sm uppercase tracking-widest active:scale-95"
+          className="px-6 py-3 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-2 text-sm uppercase tracking-widest active:scale-95"
         >
           <Plus className="w-5 h-5" />
           TERIMA BAYAR
@@ -464,10 +464,10 @@ export default function ReceivePayment() {
 
       {/* Pending Corrections Table */}
       {pendingCorrections.length > 0 && (
-        <div className="bg-amber-50/50 rounded-[2.5rem] border border-amber-100 shadow-sm overflow-hidden mb-6">
+        <div className="bg-amber-50/50 rounded-md border border-amber-100 shadow-sm overflow-hidden mb-6">
           <div className="p-6 border-b border-amber-100/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+              <div className="p-2 bg-amber-100 text-amber-600 rounded-md">
                 <AlertCircle className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-amber-900 leading-tight">Status Pengajuan Koreksi</h3>
@@ -513,7 +513,7 @@ export default function ReceivePayment() {
       )}
 
       {/* Main Table Container */}
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
         <div className="p-6 border-b border-gray-50 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/30">
           <div className="relative flex-1 w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -522,7 +522,7 @@ export default function ReceivePayment() {
               placeholder="Cari No. Bukti atau Pelanggan..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2.5 w-full border border-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+              className="pl-10 pr-4 py-2.5 w-full border border-gray-100 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
             />
           </div>
         </div>
@@ -571,14 +571,14 @@ export default function ReceivePayment() {
                     <div className="flex justify-center items-center gap-2">
                        <button 
                          onClick={() => setViewReceipt(r)}
-                         className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                         className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
                          title="Lihat Detail"
                        >
                          <Eye className="w-5 h-5" />
                        </button>
                        <button 
                          onClick={() => { setRequestKoreksiReceipt(r); setKoreksiReasonType(''); setKoreksiReasonDetail(''); }}
-                         className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                         className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all"
                          title="Koreksi Payment"
                        >
                          <AlertCircle className="w-5 h-5" />
@@ -611,7 +611,7 @@ export default function ReceivePayment() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               {/* Header */}
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
@@ -636,7 +636,7 @@ export default function ReceivePayment() {
                       <select
                         value={selectedCustomerId}
                         onChange={(e) => { setSelectedCustomerId(e.target.value); setSelectedCollections([]); }}
-                        className="w-full p-2 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                       >
                         <option value="">-- Pilih Nama Pelanggan --</option>
                         {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.type})</option>)}
@@ -648,7 +648,7 @@ export default function ReceivePayment() {
                         <label className="block text-xs font-semibold text-gray-600">Pilih Koleksi Tagihan Yang Akan Dibayar</label>
                         <div className="space-y-2">
                           {unpaidCollections.length === 0 ? (
-                            <p className="p-8 text-center text-gray-400 font-medium bg-white rounded-lg border border-dashed border-gray-200">Tidak ada koleksi tagihan untuk pelanggan ini.</p>
+                            <p className="p-8 text-center text-gray-400 font-medium bg-white rounded-md border border-dashed border-gray-200">Tidak ada koleksi tagihan untuk pelanggan ini.</p>
                           ) : unpaidCollections.map(col => {
                             const selected = selectedCollections.find(i => i.collectionId === col.id);
                             const sisa = col.totalSisa || (col.totalAmount - col.totalPaid);
@@ -661,7 +661,7 @@ export default function ReceivePayment() {
                                 onClick={() => toggleCollectionSelection(col)}
                               >
                                 <div className="flex items-center gap-4">
-                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                                  <div className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${
                                     selected ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
                                   }`}>
                                     <Layers className="w-5 h-5" />
@@ -691,7 +691,7 @@ export default function ReceivePayment() {
                       </h4>
                       <div className="space-y-4">
                         {selectedCollections.map(item => (
-                          <div key={item.collectionId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-lg border border-indigo-50">
+                          <div key={item.collectionId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-md border border-indigo-50">
                             <div>
                               <p className="text-xs font-black text-gray-900 uppercase">#{item.collectionNumber}</p>
                               <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">Sisa: Rp.{item.remaining.toLocaleString()}</p>
@@ -706,7 +706,7 @@ export default function ReceivePayment() {
                                   val = val.replace(/\D/g, '');
                                   handleAmountChange(item.collectionId, Number(val));
                                 }}
-                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-indigo-600"
+                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-indigo-600"
                               />
                             </div>
                           </div>
@@ -720,7 +720,7 @@ export default function ReceivePayment() {
                         <div className="grid grid-cols-2 gap-3">
                           <button
                             onClick={() => setPaymentMethod('Tunai')}
-                            className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${
+                            className={`p-4 rounded-md border-2 flex flex-col items-center gap-2 transition-all ${
                               paymentMethod === 'Tunai' ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-gray-100 text-gray-400 hover:bg-gray-50'
                             }`}
                           >
@@ -729,7 +729,7 @@ export default function ReceivePayment() {
                           </button>
                           <button
                             onClick={() => setPaymentMethod('Bank Transfer')}
-                            className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${
+                            className={`p-4 rounded-md border-2 flex flex-col items-center gap-2 transition-all ${
                               paymentMethod === 'Bank Transfer' ? 'bg-indigo-50 border-indigo-600 text-indigo-600' : 'bg-white border-gray-100 text-gray-400 hover:bg-gray-50'
                             }`}
                           >
@@ -745,7 +745,7 @@ export default function ReceivePayment() {
                           <select
                             value={selectedBankAccountId}
                             onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                            className="w-full p-2 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                            className="w-full p-2 bg-white border border-gray-100 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                           >
                             <option value="">-- Pilih Bank --</option>
                             {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.name} - {b.accountNumber}</option>)}
@@ -761,7 +761,7 @@ export default function ReceivePayment() {
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                         placeholder="Contoh: Titipan pembayaran bulan Januari..."
-                        className="w-full p-2 bg-white border border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
                       />
                     </div>
                   </div>
@@ -774,7 +774,7 @@ export default function ReceivePayment() {
                   <button
                     disabled={!selectedCustomerId || selectedCollections.length === 0}
                     onClick={() => setStep(2)}
-                    className="w-full px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 text-sm uppercase tracking-widest active:scale-95"
+                    className="w-full px-8 py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 text-sm uppercase tracking-widest active:scale-95"
                   >
                     LANJUT KE PEMBAYARAN
                     <ArrowRight className="w-5 h-5" />
@@ -783,14 +783,14 @@ export default function ReceivePayment() {
                   <>
                     <button
                       onClick={() => setStep(1)}
-                      className="px-8 py-4 bg-white border border-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-100 transition-all text-sm uppercase tracking-widest"
+                      className="px-8 py-4 bg-white border border-gray-200 text-gray-600 rounded-md font-medium hover:bg-gray-100 transition-all text-sm uppercase tracking-widest"
                     >
                       KEMBALI
                     </button>
                     <button
                       disabled={isSubmitting || (paymentMethod === 'Bank Transfer' && !selectedBankAccountId)}
                       onClick={handleSaveReceipt}
-                      className="flex-1 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm uppercase tracking-widest active:scale-95"
+                      className="flex-1 px-8 py-4 bg-emerald-600 text-white rounded-md font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm uppercase tracking-widest active:scale-95"
                     >
                       {isSubmitting ? 'MENYIMPAN...' : 'SIMPAN & SELESAI'}
                     </button>
@@ -810,7 +810,7 @@ export default function ReceivePayment() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] w-full max-w-3xl overflow-hidden ring-1 ring-gray-100"
+              className="bg-white rounded-md shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] w-full max-w-3xl overflow-hidden ring-1 ring-gray-100"
             >
               {/* Header */}
               <div className="p-8 border-b border-gray-100 flex justify-between items-start bg-gradient-to-r from-gray-50 to-white">
@@ -826,7 +826,7 @@ export default function ReceivePayment() {
                 </div>
                 <button 
                   onClick={() => setViewReceipt(null)} 
-                  className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400 hover:text-gray-900 hover:rotate-90"
+                  className="p-3 hover:bg-gray-100 rounded-md transition-all text-gray-400 hover:text-gray-900 hover:rotate-90"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -863,7 +863,7 @@ export default function ReceivePayment() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="bg-white/60 backdrop-blur-md p-2 rounded-lg border border-emerald-100 inline-block">
+                      <div className="bg-white/60 backdrop-blur-md p-2 rounded-md border border-emerald-100 inline-block">
                         <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">Payment Method</p>
                         <p className="text-sm font-black text-emerald-700 uppercase">{viewReceipt.paymentMethod}</p>
                         {viewReceipt.bankAccountName && (
@@ -917,7 +917,7 @@ export default function ReceivePayment() {
                               </span>
                             </td>
                             <td className="p-5 text-right">
-                              <div className="inline-block py-1 px-3 bg-emerald-50 rounded-lg group-hover:bg-emerald-100/50 transition-colors">
+                              <div className="inline-block py-1 px-3 bg-emerald-50 rounded-md group-hover:bg-emerald-100/50 transition-colors">
                                 <span className="text-xs font-black text-emerald-600 tabular-nums">
                                   {inv.amountPaid.toLocaleString()}
                                 </span>
@@ -985,7 +985,7 @@ export default function ReceivePayment() {
                 </div>
                 <button
                   onClick={() => setViewReceipt(null)}
-                  className="px-8 py-3.5 bg-gray-900 text-white rounded-2xl text-xs font-black hover:bg-gray-800 transition-all shadow-xl shadow-gray-200 active:scale-95 uppercase tracking-[0.2em]"
+                  className="px-8 py-3.5 bg-gray-900 text-white rounded-md text-xs font-black hover:bg-gray-800 transition-all shadow-xl shadow-gray-200 active:scale-95 uppercase tracking-[0.2em]"
                 >
                   Selesai & Tutup
                 </button>
@@ -1006,7 +1006,7 @@ export default function ReceivePayment() {
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-amber-50">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                  <div className="p-2 bg-amber-100 text-amber-600 rounded-md">
                     <AlertCircle className="w-6 h-6" />
                   </div>
                   <div>
@@ -1033,7 +1033,7 @@ export default function ReceivePayment() {
                     <select
                       value={koreksiReasonType}
                       onChange={(e) => setKoreksiReasonType(e.target.value)}
-                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all appearance-none"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all appearance-none"
                     >
                       <option value="Salah Salesman">Salah Salesman</option>
                       <option value="Salah Input Nominal">Salah Input Nominal</option>
@@ -1050,7 +1050,7 @@ export default function ReceivePayment() {
                         value={koreksiReasonDetail}
                         onChange={(e) => setKoreksiReasonDetail(e.target.value)}
                         placeholder="Masukkan alasan yang lebih detail..."
-                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all resize-none"
+                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all resize-none"
                       />
                     </div>
                   )}
@@ -1061,14 +1061,14 @@ export default function ReceivePayment() {
                 <button
                   onClick={() => setRequestKoreksiReceipt(null)}
                   disabled={isRequestingKoreksi}
-                  className="flex-1 py-3 text-gray-600 font-bold rounded-xl hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest"
+                  className="flex-1 py-3 text-gray-600 font-bold rounded-md hover:bg-gray-100 transition-colors text-sm uppercase tracking-widest"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleRequestKoreksi}
                   disabled={(koreksiReasonType === 'Lainnya' && !koreksiReasonDetail.trim()) || isRequestingKoreksi}
-                  className="flex-1 py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:bg-amber-600 transition-all disabled:opacity-50 disabled:grayscale text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-amber-500 text-white font-bold rounded-md shadow-lg shadow-amber-500/30 hover:bg-amber-600 transition-all disabled:opacity-50 disabled:grayscale text-sm uppercase tracking-widest flex items-center justify-center gap-2"
                 >
                   {isRequestingKoreksi ? 'Memproses...' : 'Ajukan Koreksi'}
                 </button>

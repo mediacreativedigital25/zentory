@@ -675,7 +675,7 @@ export default function SalesOrder() {
 
   return (
     <div className={`flex flex-col lg:flex-row gap-6 ${isKasir ? 'h-[calc(100vh-73px)]' : 'lg:h-[calc(100vh-120px)]'} overflow-hidden lg:overflow-visible ${isKasir ? 'p-4' : ''}`}>
-      <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden min-h-[500px] lg:min-h-0">
+      <div className="flex-1 flex flex-col bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden min-h-[500px] lg:min-h-0">
         {isSettledToday && (
           <div className="p-4 bg-red-50 border-b border-red-100 flex items-center text-red-700 text-sm font-bold animate-pulse">
             <AlertCircle className="w-5 h-5 mr-2" />
@@ -689,7 +689,7 @@ export default function SalesOrder() {
             </div>
             <button
               onClick={() => navigate('/sales/receive')}
-              className="flex items-center px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-xs lg:text-sm font-bold"
+              className="flex items-center px-3 py-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors text-xs lg:text-sm font-bold"
             >
               <ListOrdered className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Daftar Pesanan</span>
@@ -705,7 +705,7 @@ export default function SalesOrder() {
                 placeholder="Scan Barcode / SKU..."
                 value={barcodeSearch}
                 onChange={(e) => setBarcodeSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-2.5 lg:py-3 bg-indigo-50 border border-indigo-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-indigo-900 placeholder:text-indigo-300 text-sm"
+                className="w-full pl-12 pr-4 py-2.5 lg:py-3 bg-indigo-50 border border-indigo-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-indigo-900 placeholder:text-indigo-300 text-sm"
               />
             </form>
             <div className="flex-1 relative">
@@ -715,21 +715,21 @@ export default function SalesOrder() {
                 placeholder="Search items..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-2.5 lg:py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full pl-12 pr-4 py-2.5 lg:py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
             </div>
           </div>
           <div className="flex gap-2 lg:gap-4">
             <button 
               onClick={() => setOrderType('manual')}
-              className={`flex-1 py-2 rounded-lg text-xs lg:text-sm font-bold flex items-center justify-center border transition-all ${orderType === 'manual' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+              className={`flex-1 py-2 rounded-md text-xs lg:text-sm font-bold flex items-center justify-center border transition-all ${orderType === 'manual' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
             >
               <Tag className="w-3 h-3 lg:w-4 lg:h-4 mr-1 lg:mr-2" />
               Manual
             </button>
             <button 
               onClick={() => setOrderType('service')}
-              className={`flex-1 py-2 rounded-lg text-xs lg:text-sm font-bold flex items-center justify-center border transition-all ${orderType === 'service' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+              className={`flex-1 py-2 rounded-md text-xs lg:text-sm font-bold flex items-center justify-center border transition-all ${orderType === 'service' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
             >
               <Briefcase className="w-3 h-3 lg:w-4 lg:h-4 mr-1 lg:mr-2" />
               Service
@@ -747,9 +747,9 @@ export default function SalesOrder() {
                 key={product.id}
                 onClick={() => addToCart(product)}
                 disabled={orderType === 'manual' && product.stock <= 0}
-                className="flex flex-col text-left group bg-white border border-gray-100 rounded-lg p-2 lg:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
+                className="flex flex-col text-left group bg-white border border-gray-100 rounded-md p-2 lg:p-3 hover:border-indigo-500 hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
               >
-                <div className="aspect-square bg-gray-50 rounded-lg mb-2 lg:mb-3 overflow-hidden relative">
+                <div className="aspect-square bg-gray-50 rounded-md mb-2 lg:mb-3 overflow-hidden relative">
                   <img src={product.imageUrl || `https://picsum.photos/seed/${product.id}/200/200`} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   {orderType === 'manual' && product.stock <= 0 && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -789,7 +789,7 @@ export default function SalesOrder() {
         </div>
       </div>
 
-      <div className="w-full lg:w-96 flex flex-col bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden lg:h-[calc(100vh-120px)] lg:sticky lg:top-0">
+      <div className="w-full lg:w-96 flex flex-col bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden lg:h-[calc(100vh-120px)] lg:sticky lg:top-0">
         <div className="p-3 lg:p-4 border-b border-gray-100 space-y-3">
           <h3 className="text-base lg:text-lg font-bold flex items-center">
             <ShoppingCart className="w-5 h-5 mr-2 text-indigo-600" />
@@ -801,7 +801,7 @@ export default function SalesOrder() {
               <select 
                 value={selectedCustomer}
                 onChange={(e) => setSelectedCustomer(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-100 rounded-lg text-xs lg:text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-white border border-gray-100 rounded-md text-xs lg:text-sm outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Guest Customer</option>
                 {customers.map(c => (
@@ -848,15 +848,15 @@ export default function SalesOrder() {
                     <p className="text-[10px] lg:text-xs text-gray-400 font-medium">Total: Rp.{Math.round(unitPrice * item.quantity).toLocaleString('id-ID')}</p>
                   </div>
                   <div className="flex items-center space-x-1 shrink-0">
-                    <button onClick={() => updateQuantity(cartItemId, -1)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"><Minus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
+                    <button onClick={() => updateQuantity(cartItemId, -1)} className="p-1.5 hover:bg-gray-100 rounded-md text-gray-400 transition-colors"><Minus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
                     <input
                       type="number"
                       value={item.quantity}
                       onChange={(e) => setQuantity(cartItemId, parseInt(e.target.value) || 0)}
                       className="text-xs lg:text-sm font-medium w-10 lg:w-12 text-center text-indigo-600 bg-white border border-gray-200 outline-none focus:ring-1 focus:ring-indigo-500 rounded py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
-                    <button onClick={() => updateQuantity(cartItemId, 1)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"><Plus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
-                    <button onClick={() => updateQuantity(cartItemId, -item.quantity)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors ml-1"><Trash2 className="w-3 h-3 lg:w-4 lg:h-4" /></button>
+                    <button onClick={() => updateQuantity(cartItemId, 1)} className="p-1.5 hover:bg-gray-100 rounded-md text-gray-400 transition-colors"><Plus className="w-3 h-3 lg:w-4 lg:h-4" /></button>
+                    <button onClick={() => updateQuantity(cartItemId, -item.quantity)} className="p-1.5 hover:bg-red-50 rounded-md text-red-500 transition-colors ml-1"><Trash2 className="w-3 h-3 lg:w-4 lg:h-4" /></button>
                   </div>
                 </div>
               );
@@ -875,7 +875,7 @@ export default function SalesOrder() {
           setIsCheckoutModalOpen(true);
         }}
         disabled={cart.length === 0 || isProcessing}
-        className="w-full bg-indigo-600 text-white py-3 lg:py-4 rounded-xl font-bold text-base lg:text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-lg shadow-indigo-200 active:scale-95"
+        className="w-full bg-indigo-600 text-white py-3 lg:py-4 rounded-md font-bold text-base lg:text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-lg shadow-indigo-200 active:scale-95"
       >
         <CreditCard className="w-5 h-5 lg:w-6 lg:h-6 mr-2" />
         Checkout
@@ -889,7 +889,7 @@ export default function SalesOrder() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-sm overflow-hidden"
             >
               <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
                 <div>
@@ -906,7 +906,7 @@ export default function SalesOrder() {
                     key={v.id}
                     onClick={() => setSelectedVariantId(v.id)}
                     disabled={v.stock <= 0}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                    className={`w-full flex items-center justify-between p-4 rounded-md border-2 transition-all ${
                       selectedVariantId === v.id 
                         ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50' 
                         : 'border-gray-100 hover:border-indigo-200 bg-white'
@@ -914,7 +914,7 @@ export default function SalesOrder() {
                   >
                     <div className="flex items-center gap-4 text-left">
                         {v.imageUrl && (
-                          <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0">
+                          <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-100 flex-shrink-0">
                             <img src={v.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" alt={v.name} />
                           </div>
                         )}
@@ -936,7 +936,7 @@ export default function SalesOrder() {
                 <button
                   onClick={() => addToCart(selectedVariantProduct, selectedVariantId)}
                   disabled={!selectedVariantId}
-                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
+                  className="w-full bg-indigo-600 text-white py-4 rounded-md font-black shadow-xl shadow-indigo-100 h-full active:scale-95 disabled:opacity-50"
                 >
                   MASUKKAN PESANAN
                 </button>
@@ -965,7 +965,7 @@ export default function SalesOrder() {
                 </h3>
                 <button
                   onClick={() => setIsCheckoutModalOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-md transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -977,14 +977,14 @@ export default function SalesOrder() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => setPaymentMethodType('tunai')}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethodType === 'tunai' ? 'bg-green-50 text-green-600 border-green-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-3 rounded-md text-xs font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethodType === 'tunai' ? 'bg-green-50 text-green-600 border-green-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
                       <Landmark className="w-6 h-6" />
                       Tunai
                     </button>
                     <button
                       onClick={() => setPaymentMethodType('transfer')}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethodType === 'transfer' ? 'bg-blue-50 text-blue-600 border-blue-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-3 rounded-md text-xs font-black uppercase tracking-widest border-2 transition-all flex flex-col items-center justify-center gap-2 ${paymentMethodType === 'transfer' ? 'bg-blue-50 text-blue-600 border-blue-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
                       <CreditCard className="w-6 h-6" />
                       Transfer
@@ -1002,7 +1002,7 @@ export default function SalesOrder() {
                     <select 
                       value={selectedBankAccountId}
                       onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                      className="w-full p-2 bg-white border-2 border-gray-100 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-2 bg-white border-2 border-gray-100 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       {bankAccounts.filter(b => b.name.toUpperCase() !== 'TUNAI').map(b => (
                         <option key={b.id} value={b.id}>{b.name} {b.accountNumber ? `(${b.accountNumber})` : ''}</option>
@@ -1019,7 +1019,7 @@ export default function SalesOrder() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => setPaymentType('cash')}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'cash' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
+                      className={`flex-1 py-3 rounded-md text-xs font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'cash' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'}`}
                     >
                       Lunas
                     </button>
@@ -1030,7 +1030,7 @@ export default function SalesOrder() {
                         }
                       }}
                       disabled={!canUseTempo}
-                      className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'credit' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'} ${!canUseTempo ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`flex-1 py-3 rounded-md text-xs font-black uppercase tracking-widest border-2 transition-all ${paymentType === 'credit' ? 'bg-indigo-50 text-indigo-600 border-indigo-600' : 'bg-gray-50 text-gray-400 border-gray-100'} ${!canUseTempo ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       Tempo
                     </button>
@@ -1065,11 +1065,11 @@ export default function SalesOrder() {
                             val = val.replace(/\D/g, '');
                             setCashReceived(Number(val));
                           }}
-                          className="w-full pl-12 pr-4 py-3 bg-green-50 border-2 border-green-100 rounded-lg text-lg font-medium text-green-900 outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                          className="w-full pl-12 pr-4 py-3 bg-green-50 border-2 border-green-100 rounded-md text-lg font-medium text-green-900 outline-none focus:ring-2 focus:ring-green-500 transition-all"
                         />
                       </div>
                     </div>
-                    <div className="p-4 bg-white rounded-lg border-2 border-gray-100 flex justify-between items-center">
+                    <div className="p-4 bg-white rounded-md border-2 border-gray-100 flex justify-between items-center">
                       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kembalian</span>
                       <span className={`text-xl font-black ${change >= 0 ? 'text-indigo-600' : 'text-red-500'}`}>
                         Rp.{Math.round(change).toLocaleString('id-ID')}
@@ -1095,7 +1095,7 @@ export default function SalesOrder() {
                           val = val.replace(/\D/g, '');
                           setAmountPaid(Number(val));
                         }}
-                        className="w-full pl-12 pr-4 py-3 bg-indigo-50 border-2 border-indigo-100 rounded-lg text-lg font-medium text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-indigo-50 border-2 border-indigo-100 rounded-md text-lg font-medium text-indigo-900 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                       />
                     </div>
                     {amountPaid < total && (
@@ -1110,7 +1110,7 @@ export default function SalesOrder() {
               <div className="p-6 border-t border-gray-100 bg-gray-50">
                 
                 <div className="space-y-4 pt-4 border-t border-gray-100">
-                  <div className="bg-white/50 p-4 border border-gray-100 rounded-lg space-y-3">
+                  <div className="bg-white/50 p-4 border border-gray-100 rounded-md space-y-3">
                     <label className="block text-xs font-semibold text-gray-600">Kupon Diskon (Opsional)</label>
                     <div className="flex gap-2">
                        <input
@@ -1119,12 +1119,12 @@ export default function SalesOrder() {
                           value={couponCodeInput}
                           onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
                           disabled={!!appliedCoupon || isLoadingCoupon}
-                          className="flex-1 p-2 border border-gray-200 bg-white rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="flex-1 p-2 border border-gray-200 bg-white rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                        />
                        {!appliedCoupon ? (
-                         <button onClick={(e) => { e.preventDefault(); handleApplyCoupon(); }} disabled={isLoadingCoupon || !couponCodeInput} className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold w-24">Pasang</button>
+                         <button onClick={(e) => { e.preventDefault(); handleApplyCoupon(); }} disabled={isLoadingCoupon || !couponCodeInput} className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-bold w-24">Pasang</button>
                        ) : (
-                         <button onClick={(e) => { e.preventDefault(); setAppliedCoupon(null); setCouponSuccess(''); setCouponError(''); setCouponCodeInput(''); }} className="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-sm font-bold w-24">Hapus</button>
+                         <button onClick={(e) => { e.preventDefault(); setAppliedCoupon(null); setCouponSuccess(''); setCouponError(''); setCouponCodeInput(''); }} className="px-4 py-2 bg-red-100 text-red-600 rounded-md text-sm font-bold w-24">Hapus</button>
                        )}
                     </div>
                     {couponError && <p className="text-xs text-red-500 font-bold">{couponError}</p>}
@@ -1145,7 +1145,7 @@ export default function SalesOrder() {
                 <button
                   onClick={handleCheckout}
                   disabled={isProcessing || (paymentType === 'cash' && paymentMethodType === 'tunai' && cashReceived < total) || (paymentMethodType === 'transfer' && !selectedBankAccountId)}
-                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-xl shadow-indigo-100 active:scale-95"
+                  className="w-full bg-indigo-600 text-white py-4 rounded-md font-black text-lg hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 shadow-xl shadow-indigo-100 active:scale-95"
                 >
                   {isProcessing ? (
                     <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mr-3" />
@@ -1191,14 +1191,14 @@ export default function SalesOrder() {
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <button
                   onClick={() => handlePrint('invoice')}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-md border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
                 >
                   <FileText className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
                   <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Faktur (A4)</span>
                 </button>
                 <button
                   onClick={() => handlePrint('receipt')}
-                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
+                  className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-md border border-gray-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all group"
                 >
                   <Printer className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 mb-2" />
                   <span className="text-xs font-bold text-gray-600 group-hover:text-indigo-700">Struk (80mm)</span>
@@ -1211,13 +1211,13 @@ export default function SalesOrder() {
                     setShowSuccessModal(false);
                     navigate('/sales/receive');
                   }}
-                  className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                  className="w-full py-4 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
                 >
                   Lihat Daftar Pesanan
                 </button>
                 <button
                   onClick={() => setShowSuccessModal(false)}
-                  className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all"
+                  className="w-full py-4 bg-gray-900 text-white rounded-md font-bold hover:bg-gray-800 transition-all"
                 >
                   Buat Pesanan Baru
                 </button>

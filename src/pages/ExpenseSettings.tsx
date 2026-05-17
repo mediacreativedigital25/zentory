@@ -123,14 +123,14 @@ export default function ExpenseSettings() {
             setFormData({ category: '', defaultActivity: '' });
             setIsModalOpen(true);
           }}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 font-bold"
+          className="bg-indigo-600 text-white px-6 py-3 rounded-md flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 font-bold"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah Aturan
         </button>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -165,13 +165,13 @@ export default function ExpenseSettings() {
                     <div className="flex justify-end gap-2">
                       <button 
                         onClick={() => handleEdit(rule)}
-                        className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                        className="p-2 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
                       >
                         <Edit2 className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => handleDelete(rule.id)}
-                        className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -192,7 +192,7 @@ export default function ExpenseSettings() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>
@@ -215,7 +215,7 @@ export default function ExpenseSettings() {
                       placeholder="Contoh: Internet dan Telephon"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
                     />
                   </div>
                 </div>
@@ -230,7 +230,7 @@ export default function ExpenseSettings() {
                       placeholder="Contoh: Operasional"
                       value={formData.defaultActivity}
                       onChange={(e) => setFormData({ ...formData, defaultActivity: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
                     />
                   </div>
                 </div>
@@ -239,14 +239,14 @@ export default function ExpenseSettings() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-4 border border-gray-100 rounded-lg text-gray-500 font-medium hover:bg-white transition-all"
+                    className="flex-1 py-4 border border-gray-100 rounded-md text-gray-500 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50"
+                    className="flex-1 py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50"
                   >
                     {isSubmitting ? 'Menyimpan...' : 'Simpan Aturan'}
                   </button>

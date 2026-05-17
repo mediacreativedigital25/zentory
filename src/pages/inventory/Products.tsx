@@ -487,7 +487,7 @@ export default function Products() {
           {selectedProducts.length > 0 && (
             <button
               onClick={handleBulkPrint}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition-colors shadow-lg shadow-green-100"
+              className="bg-green-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-green-700 transition-colors shadow-lg shadow-green-100"
             >
               <Printer className="w-5 h-5 mr-2" />
               Cetak Label ({selectedProducts.length})
@@ -510,7 +510,7 @@ export default function Products() {
               }]);
               setIsBulkModalOpen(true); 
             }}
-            className="bg-indigo-50 text-indigo-600 p-2 rounded-lg flex items-center hover:bg-indigo-100 transition-colors border border-indigo-100"
+            className="bg-indigo-50 text-indigo-600 p-2 rounded-md flex items-center hover:bg-indigo-100 transition-colors border border-indigo-100"
           >
             <Barcode className="w-5 h-5 mr-2" />
             Bulk Scan Barcode
@@ -538,7 +538,7 @@ export default function Products() {
               setShowPriceSettings(false);
               setIsModalOpen(true); 
             }}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
           >
             <Plus className="w-5 h-5 mr-2" />
             Tambah Manual
@@ -546,10 +546,10 @@ export default function Products() {
         </div>
       </div>
 
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex space-x-1 bg-gray-100 p-1 rounded-md w-fit">
         <button
           onClick={() => setActiveTab('products')}
-          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+          className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${
             activeTab === 'products' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -557,7 +557,7 @@ export default function Products() {
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+          className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${
             activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -566,9 +566,9 @@ export default function Products() {
       </div>
 
       {activeTab === 'products' ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
-            <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
               <span>Show:</span>
               <select 
                 value={rowsPerPage} 
@@ -588,7 +588,7 @@ export default function Products() {
                 <th className="px-6 py-4 font-medium w-10">
                   <input 
                     type="checkbox" 
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-lg"
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-md"
                     onChange={(e) => {
                       if (e.target.checked) {
                         setSelectedProducts(products.map(p => p.id));
@@ -615,14 +615,14 @@ export default function Products() {
                   <td className="px-6 py-4">
                     <input 
                       type="checkbox" 
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-lg"
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 p-2 rounded-md"
                       checked={selectedProducts.includes(product.id)}
                       onChange={() => toggleProductSelection(product.id)}
                     />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-lg bg-gray-100 mr-3 overflow-hidden border border-gray-100">
+                      <div className="w-8 h-8 rounded-md bg-gray-100 mr-3 overflow-hidden border border-gray-100">
                         <img
                           src={product.imageUrl || `https://picsum.photos/seed/${product.id}/100/100`}
                           alt={product.name}
@@ -689,12 +689,12 @@ export default function Products() {
                           setSelectedProductForHistory(product);
                           setIsHistoryModalOpen(true);
                         }}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                         title="Riwayat Stok"
                       >
                         <History className="w-4 h-4" />
                       </button>
-                      <button onClick={() => openEditModal(product)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                      <button onClick={() => openEditModal(product)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors">
                         <Edit2 className="w-4 h-4" />
                       </button>
                       {product.barcode && (
@@ -703,13 +703,13 @@ export default function Products() {
                             setPrintData([{ name: product.name, barcode: product.barcode! }]);
                             setIsPrintModalOpen(true);
                           }} 
-                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                           title="Print Barcode"
                         >
                           <Printer className="w-4 h-4" />
                         </button>
                       )}
-                      <button onClick={() => handleDelete(product.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <button onClick={() => handleDelete(product.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -729,7 +729,7 @@ export default function Products() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -741,7 +741,7 @@ export default function Products() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${
                         currentPage === page 
                           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
                           : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
@@ -759,7 +759,7 @@ export default function Products() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -775,7 +775,7 @@ export default function Products() {
       </div>
     ) : (
       <div className="space-y-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
             <label className="block mb-2 text-xs font-semibold text-gray-600">Cari Produk / SKU</label>
             <div className="relative">
@@ -785,7 +785,7 @@ export default function Products() {
                 placeholder="Cari nama produk atau SKU..."
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
             </div>
           </div>
@@ -795,7 +795,7 @@ export default function Products() {
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="w-full p-2 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
           </div>
           <div className="w-48">
@@ -804,7 +804,7 @@ export default function Products() {
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="w-full p-2 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
           </div>
           <button
@@ -821,9 +821,9 @@ export default function Products() {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
-            <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-md border border-gray-200">
               <span>Show:</span>
               <select 
                 value={historyRowsPerPage} 
@@ -915,7 +915,7 @@ export default function Products() {
             <button
               onClick={() => setHistoryPage(prev => Math.max(1, prev - 1))}
               disabled={historyPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -927,7 +927,7 @@ export default function Products() {
                     <button
                       key={page}
                       onClick={() => setHistoryPage(page)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${
                         historyPage === page 
                           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
                           : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
@@ -945,7 +945,7 @@ export default function Products() {
             <button
               onClick={() => setHistoryPage(prev => Math.min(totalHistoryPages, prev + 1))}
               disabled={historyPage === totalHistoryPages || totalHistoryPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -961,7 +961,7 @@ export default function Products() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] h-[90vh] overflow-hidden flex flex-col"
+              className="bg-white rounded-md shadow-2xl w-full max-w-[95vw] h-[90vh] overflow-hidden flex flex-col"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div>
@@ -1002,7 +1002,7 @@ export default function Products() {
                                   value={row.barcode || ''}
                                   onChange={(e) => updateBulkRow(index, 'barcode', e.target.value)}
                                   placeholder="Scan..."
-                                  className="w-full pl-3 pr-16 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                                  className="w-full pl-3 pr-16 py-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
                                 />
                               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                 <button
@@ -1033,7 +1033,7 @@ export default function Products() {
                               required
                               value={row.name || ''}
                               onChange={(e) => updateBulkRow(index, 'name', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                             />
                           </td>
                           <td className="py-3 px-2">
@@ -1041,7 +1041,7 @@ export default function Products() {
                               type="text"
                               readOnly
                               value={row.sku || ''}
-                              className="w-full text-gray-500 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium"
+                              className="w-full text-gray-500 p-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium"
                             />
                           </td>
                           <td className="py-3 px-2">
@@ -1050,7 +1050,7 @@ export default function Products() {
                                required
                                value={row.minStock || 0}
                                onChange={(e) => updateBulkRow(index, 'minStock', Number(e.target.value))}
-                               className="w-full px-3 py-2 border border-yellow-200 bg-yellow-50/30 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none text-sm"
+                               className="w-full px-3 py-2 border border-yellow-200 bg-yellow-50/30 rounded-md focus:ring-2 focus:ring-yellow-500 outline-none text-sm"
                              />
                            </td>
                            <td className="py-3 px-2">
@@ -1059,7 +1059,7 @@ export default function Products() {
                                required
                                value={row.hpp || 0}
                                onChange={(e) => updateBulkRow(index, 'hpp', Number(e.target.value))}
-                               className="w-full px-3 py-2 border border-red-200 bg-red-50/30 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm"
+                               className="w-full px-3 py-2 border border-red-200 bg-red-50/30 rounded-md focus:ring-2 focus:ring-red-500 outline-none text-sm"
                              />
                            </td>
                            <td className="py-3 px-2">
@@ -1068,7 +1068,7 @@ export default function Products() {
                                required
                                value={row.price || 0}
                                onChange={(e) => updateBulkRow(index, 'price', Number(e.target.value))}
-                               className="w-full px-3 py-2 border border-green-200 bg-green-50/30 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium text-green-700"
+                               className="w-full px-3 py-2 border border-green-200 bg-green-50/30 rounded-md focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium text-green-700"
                              />
                            </td>
                            <td className="py-3 px-2">
@@ -1077,7 +1077,7 @@ export default function Products() {
                                required
                                value={row.stock || 0}
                                onChange={(e) => updateBulkRow(index, 'stock', Number(e.target.value))}
-                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                               className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                              />
                            </td>
                           <td className="py-3 px-2">
@@ -1085,7 +1085,7 @@ export default function Products() {
                               required
                               value={row.category}
                               onChange={(e) => updateBulkRow(index, 'category', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                             >
                               <option value="">Pilih</option>
                               {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
@@ -1096,7 +1096,7 @@ export default function Products() {
                               required
                               value={row.warehouseId}
                               onChange={(e) => updateBulkRow(index, 'warehouseId', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                              className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                             >
                               <option value="">Pilih</option>
                               {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -1117,7 +1117,7 @@ export default function Products() {
                             <button
                               type="button"
                               onClick={() => removeBulkRow(index)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1133,7 +1133,7 @@ export default function Products() {
                 <button
                   type="button"
                   onClick={addBulkRow}
-                  className="px-6 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all flex items-center"
+                  className="px-6 py-2 bg-white border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all flex items-center"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Tambah Baris
@@ -1141,14 +1141,14 @@ export default function Products() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setIsBulkModalOpen(false)}
-                    className="px-8 py-3 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
+                    className="px-8 py-3 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all"
                   >
                     Batal
                   </button>
                   <button
                     form="bulkForm"
                     type="submit"
-                    className="px-12 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                    className="px-12 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
                   >
                     Simpan Semua Produk
                   </button>
@@ -1166,7 +1166,7 @@ export default function Products() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-xl font-bold">{editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</h3>
@@ -1202,7 +1202,7 @@ export default function Products() {
                           });
                           setShowPriceSettings(t.id === 'variasi');
                         }}
-                        className={`p-3 text-left rounded-xl border-2 transition-all group ${
+                        className={`p-3 text-left rounded-md border-2 transition-all group ${
                           formDisplayType === t.id 
                             ? 'border-indigo-600 bg-indigo-50/50 ring-4 ring-indigo-50' 
                             : 'border-gray-100 bg-white hover:border-indigo-200'
@@ -1223,7 +1223,7 @@ export default function Products() {
                       required
                       value={formData.name || ''}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
@@ -1234,7 +1234,7 @@ export default function Products() {
                         required
                         readOnly
                         value={formData.sku || ''}
-                        className="w-full outline-none bg-white text-gray-500 cursor-not-allowed p-2 border border-gray-200 rounded-lg text-sm font-medium pl-4"
+                        className="w-full outline-none bg-white text-gray-500 cursor-not-allowed p-2 border border-gray-200 rounded-md text-sm font-medium pl-4"
                       />
                       {!editingProduct && (
                         <button
@@ -1256,7 +1256,7 @@ export default function Products() {
                         type="text"
                         value={formData.barcode || ''}
                         onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                        className="w-full pl-10 pr-20 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full pl-10 pr-20 py-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="Manual / Scan / Generate"
                       />
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -1288,7 +1288,7 @@ export default function Products() {
                       required
                       value={formData.category || ''}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="">Pilih Kategori</option>
                       {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
@@ -1301,7 +1301,7 @@ export default function Products() {
                         <select
                           value={formData.warehouseId || ''}
                           onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                          className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="">Pilih Gudang</option>
                           {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -1310,7 +1310,7 @@ export default function Products() {
                       
                       {formDisplayType === 'variasi' && (
                         <div className="col-span-2 pt-2 border-t border-gray-100">
-                          <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 space-y-4">
+                          <div className="bg-indigo-50/50 p-4 rounded-md border border-indigo-100 space-y-4">
                               <div className="flex justify-between items-center">
                                   <h4 className="text-sm font-bold text-indigo-900 flex items-center">
                                       <Layers className="w-4 h-4 mr-2" /> Pengaturan Variasi
@@ -1330,7 +1330,7 @@ export default function Products() {
                                           }];
                                           setFormData({ ...formData, variants: newVariants });
                                       }}
-                                      className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center px-3 py-1.5 rounded-lg shadow-sm"
+                                      className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center px-3 py-1.5 rounded-md shadow-sm"
                                   >
                                       <Plus className="w-3.5 h-3.5 mr-1" /> Tambah Variasi
                                   </button>
@@ -1352,7 +1352,7 @@ export default function Products() {
                                       </thead>
                                       <tbody>
                                           {formData.variants.map((v, idx) => (
-                                              <tr key={v.id} className="bg-white rounded-lg shadow-sm border border-gray-100">
+                                              <tr key={v.id} className="bg-white rounded-md shadow-sm border border-gray-100">
                                                   <td className="p-2 first:rounded-l-xl">
                                                       <ImageUpload
                                                           value={v.imageUrl || ''}
@@ -1480,7 +1480,7 @@ export default function Products() {
                                 required
                                 value={formData.minStock || 0}
                                 onChange={(e) => setFormData({ ...formData, minStock: Number(e.target.value) })}
-                                className="w-full p-2 border border-yellow-100 rounded-lg outline-none focus:ring-2 focus:ring-yellow-500 bg-yellow-50/30"
+                                className="w-full p-2 border border-yellow-100 rounded-md outline-none focus:ring-2 focus:ring-yellow-500 bg-yellow-50/30"
                               />
                             </div>
                             <div>
@@ -1492,7 +1492,7 @@ export default function Products() {
                                 required
                                 value={formData.hpp || 0}
                                 onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
-                                className="w-full p-2 border border-red-100 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-medium"
+                                className="w-full p-2 border border-red-100 rounded-md outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-medium"
                               />
                             </div>
                             <div>
@@ -1504,7 +1504,7 @@ export default function Products() {
                                 required
                                 value={formData.price || 0}
                                 onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                                className="w-full p-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-medium text-green-700"
+                                className="w-full p-2 border border-green-200 rounded-md outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-medium text-green-700"
                               />
                             </div>
                             <div>
@@ -1515,7 +1515,7 @@ export default function Products() {
                                 value={formData.stock || 0}
                                 readOnly={!!editingProduct}
                                 onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
-                                className={`w-full px-4 py-2 border border-gray-200 rounded-lg outline-none font-bold ${editingProduct ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'focus:ring-2 focus:ring-indigo-500'}`}
+                                className={`w-full px-4 py-2 border border-gray-200 rounded-md outline-none font-bold ${editingProduct ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'focus:ring-2 focus:ring-indigo-500'}`}
                               />
                               {editingProduct && (
                                 <p className="text-[9px] text-gray-400 mt-1 italic leading-tight">
@@ -1548,7 +1548,7 @@ export default function Products() {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {formData.wholesalePrices.map((tier, idx) => (
-                                    <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100">
+                                    <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-md border border-gray-100">
                                         <div className="w-20">
                                             <label className="block mb-1 text-xs font-semibold text-gray-600">Min. Qty</label>
                                             <input 
@@ -1606,7 +1606,7 @@ export default function Products() {
                           required
                           value={formData.hpp || 0}
                           onChange={(e) => setFormData({ ...formData, hpp: Number(e.target.value) })}
-                          className="w-full p-2 border border-red-100 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-medium"
+                          className="w-full p-2 border border-red-100 rounded-md outline-none focus:ring-2 focus:ring-red-500 bg-red-50/30 font-medium"
                         />
                       </div>
                       <div>
@@ -1618,7 +1618,7 @@ export default function Products() {
                           required
                           value={formData.price || 0}
                           onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                          className="w-full p-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-medium text-green-700"
+                          className="w-full p-2 border border-green-200 rounded-md outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-medium text-green-700"
                         />
                       </div>
                       <div className="col-span-2">
@@ -1630,7 +1630,7 @@ export default function Products() {
                           min="0"
                           value={formData.serviceActiveDays || 0}
                           onChange={(e) => setFormData({ ...formData, serviceActiveDays: Number(e.target.value) })}
-                          className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                          className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                           placeholder="Contoh: 30 untuk 1 bulan (Opsional)"
                         />
                         <p className="text-[10px] text-gray-400 mt-1 italic">
@@ -1651,7 +1651,7 @@ export default function Products() {
                     <textarea
                       value={formData.description || ''}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                     />
                   </div>
                 </div>
@@ -1659,13 +1659,13 @@ export default function Products() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-6 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-white"
+                    className="px-6 py-2 border border-gray-200 rounded-md text-gray-600 hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold"
+                    className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold"
                   >
                     {editingProduct ? 'Simpan Perubahan' : 'Tambah Produk'}
                   </button>
@@ -1710,11 +1710,11 @@ export default function Products() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white rounded-md shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
           >
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
               <div className="flex items-center space-x-4">
-                <div className="p-2 bg-white/20 rounded-lg">
+                <div className="p-2 bg-white/20 rounded-md">
                   <History className="w-6 h-6" />
                 </div>
                 <div>
@@ -1734,7 +1734,7 @@ export default function Products() {
             </div>
 
             <div className="flex-1 overflow-auto p-6">
-              <div className="bg-gray-50 rounded-xl p-4 mb-6 flex justify-between items-center">
+              <div className="bg-gray-50 rounded-md p-4 mb-6 flex justify-between items-center">
                 <div className="flex space-x-8">
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Stok Saat Ini</p>

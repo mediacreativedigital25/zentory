@@ -54,12 +54,12 @@ export default function Pricing() {
           transition={{ delay: 0.3 }}
           className="flex flex-col items-center gap-4 pt-4"
         >
-          <div className="flex p-1 bg-gray-100 rounded-2xl w-fit">
+          <div className="flex p-1 bg-gray-100 rounded-md w-fit">
             {durations.map((d) => (
               <button
                 key={d}
                 onClick={() => setSelectedDuration(d)}
-                className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${
+                className={`px-6 py-2.5 rounded-md text-xs font-black transition-all ${
                   selectedDuration === d 
                     ? 'bg-white text-indigo-600 shadow-md' 
                     : 'text-gray-400 hover:text-gray-600'
@@ -102,7 +102,7 @@ export default function Pricing() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`relative flex flex-col p-8 rounded-[2.5rem] border-2 transition-all duration-500 ${
+              className={`relative flex flex-col p-8 rounded-md border-2 transition-all duration-500 ${
                 isRecommended 
                   ? 'border-indigo-600 bg-white shadow-2xl shadow-indigo-100 scale-105 z-10' 
                   : 'border-gray-100 bg-white hover:border-indigo-200 hover:shadow-xl'
@@ -122,7 +122,7 @@ export default function Pricing() {
               )}
 
               <div className="mb-8">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ${
+                <div className={`w-12 h-12 rounded-md flex items-center justify-center mb-6 ${
                   p.id === 'free' ? 'bg-gray-100 text-gray-600' :
                   p.id === 'starter' ? 'bg-blue-100 text-blue-600' :
                   p.id === 'lite' ? 'bg-indigo-100 text-indigo-600' :
@@ -160,7 +160,7 @@ export default function Pricing() {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fitur & Limit:</p>
                 <ul className="space-y-3 font-sans">
                   {/* Limits first */}
-                  <li className="flex items-start gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                  <li className="flex items-start gap-4 p-3 bg-white rounded-md border border-gray-100">
                     <Zap className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[10px] font-black text-gray-400 uppercase">Kapasitas Produk</p>
@@ -169,7 +169,7 @@ export default function Pricing() {
                       </p>
                     </div>
                   </li>
-                  <li className="flex items-start gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                  <li className="flex items-start gap-4 p-3 bg-white rounded-md border border-gray-100">
                     <Shield className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[10px] font-black text-gray-400 uppercase">Limit Transaksi</p>
@@ -178,7 +178,7 @@ export default function Pricing() {
                       </p>
                     </div>
                   </li>
-                  <li className="flex items-start gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                  <li className="flex items-start gap-4 p-3 bg-white rounded-md border border-gray-100">
                     <Star className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-[10px] font-black text-gray-400 uppercase">Akses Pengguna</p>
@@ -205,7 +205,7 @@ export default function Pricing() {
               <button
                 onClick={() => handleUpgrade(p.id)}
                 disabled={isCurrent}
-                className={`w-full py-4 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 ${
+                className={`w-full py-4 rounded-md font-black text-sm transition-all flex items-center justify-center gap-2 ${
                   isCurrent 
                     ? 'bg-gray-100 text-gray-400 cursor-default' 
                     : isRecommended
@@ -232,15 +232,15 @@ export default function Pricing() {
               Kami memahami bahwa setiap bisnis memiliki kebutuhan yang unik. Jika Anda memerlukan fitur khusus, integrasi API, atau skala yang lebih besar dari paket Business, tim kami siap membantu.
             </p>
             <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-lg border border-gray-100">
+              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-md border border-gray-100">
                 <Check className="w-5 h-5 text-green-600" />
                 <span className="text-sm font-bold text-gray-700">Custom Features</span>
               </div>
-              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-lg border border-gray-100">
+              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-md border border-gray-100">
                 <Check className="w-5 h-5 text-green-600" />
                 <span className="text-sm font-bold text-gray-700">Dedicated Support</span>
               </div>
-              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-lg border border-gray-100">
+              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-md border border-gray-100">
                 <Check className="w-5 h-5 text-green-600" />
                 <span className="text-sm font-bold text-gray-700">SLA Guarantee</span>
               </div>

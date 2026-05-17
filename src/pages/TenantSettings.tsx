@@ -77,7 +77,7 @@ export default function TenantSettings() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <Zap className="w-5 h-5 mr-2 text-indigo-600" />
@@ -112,7 +112,7 @@ export default function TenantSettings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <Building2 className="w-5 h-5 mr-2 text-indigo-600" />
@@ -147,7 +147,7 @@ export default function TenantSettings() {
                   required
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Nama Toko / Perusahaan"
                 />
               </div>
@@ -161,7 +161,7 @@ export default function TenantSettings() {
                   type="text"
                   value={formData.ownerName || ''}
                   onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Nama Lengkap"
                 />
               </div>
@@ -175,7 +175,7 @@ export default function TenantSettings() {
                   type="email"
                   value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="email@bisnis.com"
                 />
               </div>
@@ -189,7 +189,7 @@ export default function TenantSettings() {
                   type="text"
                   value={formData.phone || ''}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="0812..."
                 />
               </div>
@@ -202,7 +202,7 @@ export default function TenantSettings() {
                 <textarea
                   value={formData.address || ''}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
                   placeholder="Alamat Kantor / Toko"
                 />
               </div>
@@ -210,7 +210,7 @@ export default function TenantSettings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <Briefcase className="w-5 h-5 mr-2 text-indigo-600" />
@@ -227,7 +227,7 @@ export default function TenantSettings() {
                   type="text"
                   value={formData.businessType || ''}
                   onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Contoh: Retail, Kuliner, Jasa"
                 />
               </div>
@@ -241,7 +241,7 @@ export default function TenantSettings() {
                   type="text"
                   value={formData.taxId || ''}
                   onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                   placeholder="Nomor NPWP"
                 />
               </div>
@@ -249,7 +249,7 @@ export default function TenantSettings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <ImageIcon className="w-5 h-5 mr-2 text-indigo-600" />
@@ -264,7 +264,7 @@ export default function TenantSettings() {
                 type="text"
                 value={formData.cloudinaryCloudName || ''}
                 onChange={(e) => setFormData({ ...formData, cloudinaryCloudName: e.target.value })}
-                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 placeholder="Cloud Name dari Cloudinary"
               />
             </div>
@@ -275,7 +275,7 @@ export default function TenantSettings() {
                 type="text"
                 value={formData.cloudinaryUploadPreset || ''}
                 onChange={(e) => setFormData({ ...formData, cloudinaryUploadPreset: e.target.value })}
-                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 placeholder="Unsigned Upload Preset"
               />
             </div>
@@ -303,7 +303,7 @@ export default function TenantSettings() {
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 flex items-center"
+            className="px-8 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50 flex items-center"
           >
             {saving ? (
               <>

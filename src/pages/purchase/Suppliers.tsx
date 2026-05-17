@@ -127,12 +127,12 @@ export default function Suppliers() {
               placeholder="Cari supplier..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             />
           </div>
           <button
             onClick={() => { setEditingSupplier(null); setFormData({ name: '', contactName: '', email: '', phone: '', address: '', paymentTerm: '' }); setIsModalOpen(true); }}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors whitespace-nowrap"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
             <Plus className="w-5 h-5 mr-2" />
             Tambah Supplier
@@ -140,7 +140,7 @@ export default function Suppliers() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-gray-500 bg-white p-2 rounded-lg border border-gray-100 w-fit">
+      <div className="flex items-center gap-2 text-xs text-gray-500 bg-white p-2 rounded-md border border-gray-100 w-fit">
         <span className="font-bold uppercase tracking-widest">Tampilkan:</span>
         <select 
           value={rowsPerPage} 
@@ -158,17 +158,17 @@ export default function Suppliers() {
           <motion.div
             key={supplier.id}
             layout
-            className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-all space-y-4"
+            className="bg-white p-6 rounded-md border border-gray-100 shadow-sm hover:shadow-md transition-all space-y-4"
           >
             <div className="flex justify-between items-start">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center">
                 <Truck className="w-6 h-6" />
               </div>
               <div className="flex space-x-2">
-                <button onClick={() => openEditModal(supplier)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                <button onClick={() => openEditModal(supplier)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors">
                   <Edit2 className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleDelete(supplier.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <button onClick={() => handleDelete(supplier.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -181,7 +181,7 @@ export default function Suppliers() {
 
             <div className="space-y-2 pt-2">
               {supplier.paymentTerm && (
-                <div className="flex items-center text-sm font-bold text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center text-sm font-bold text-orange-600 bg-orange-50 px-3 py-2 rounded-md">
                   <Clock className="w-4 h-4 mr-2" />
                   Termin: {supplier.paymentTerm} Hari
                 </div>
@@ -211,7 +211,7 @@ export default function Suppliers() {
 
       {/* Pagination */}
       {filteredSuppliers.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-lg border border-gray-100 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-md border border-gray-100 gap-4">
           <p className="text-xs text-gray-500">
             Menampilkan <span className="font-bold text-gray-900">{Math.min(filteredSuppliers.length, (currentPage - 1) * rowsPerPage + 1)}</span> sampai <span className="font-bold text-gray-900">{Math.min(filteredSuppliers.length, currentPage * rowsPerPage)}</span> dari <span className="font-bold text-gray-900">{filteredSuppliers.length}</span> supplier
           </p>
@@ -219,7 +219,7 @@ export default function Suppliers() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -231,7 +231,7 @@ export default function Suppliers() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${
                         currentPage === page 
                           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
                           : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
@@ -249,7 +249,7 @@ export default function Suppliers() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -258,7 +258,7 @@ export default function Suppliers() {
       )}
 
       {filteredSuppliers.length === 0 && (
-        <div className="text-center py-20 bg-white rounded-lg border border-gray-100">
+        <div className="text-center py-20 bg-white rounded-md border border-gray-100">
           <Truck className="w-16 h-16 text-gray-100 mx-auto mb-4" />
           <p className="text-gray-500">Belum ada supplier yang terdaftar.</p>
         </div>
@@ -271,7 +271,7 @@ export default function Suppliers() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">{editingSupplier ? 'Edit Supplier' : 'Tambah Supplier'}</h3>
@@ -287,7 +287,7 @@ export default function Suppliers() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="Contoh: PT. Sumber Makmur"
                   />
                 </div>
@@ -297,7 +297,7 @@ export default function Suppliers() {
                     type="text"
                     value={formData.contactName}
                     onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="Nama orang yang bisa dihubungi"
                   />
                 </div>
@@ -308,7 +308,7 @@ export default function Suppliers() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
@@ -317,7 +317,7 @@ export default function Suppliers() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -326,7 +326,7 @@ export default function Suppliers() {
                   <textarea
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                   />
                 </div>
                 <div>
@@ -337,7 +337,7 @@ export default function Suppliers() {
                       type="number"
                       value={formData.paymentTerm}
                       onChange={(e) => setFormData({ ...formData, paymentTerm: e.target.value })}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                       placeholder="Contoh: 30"
                     />
                   </div>
@@ -347,13 +347,13 @@ export default function Suppliers() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700"
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700"
                   >
                     {editingSupplier ? 'Simpan Perubahan' : 'Tambah Supplier'}
                   </button>

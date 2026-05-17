@@ -539,21 +539,21 @@ export default function SalesOrderReceive() {
         <p className="text-gray-500">View and manage all incoming orders from various channels.</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-md shadow-sm border border-gray-100">
         <div className="flex-1 flex items-center gap-4 overflow-x-auto pb-2 sm:pb-0">
           <div className="flex gap-2">
             {(['all', 'pending', 'manual', 'pos', 'catalog', 'service', 'deleted'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setFilter(t)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all ${filter === t ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                className={`px-4 py-2 rounded-md text-sm font-bold whitespace-nowrap transition-all ${filter === t ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
               >
                 {t === 'pending' ? 'PENDING HARI INI' : t.toUpperCase()}
               </button>
             ))}
           </div>
           <div className="h-8 w-px bg-gray-200 hidden sm:block" />
-          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-100">
             <span className="font-bold uppercase tracking-widest">Show:</span>
             <select 
               value={rowsPerPage} 
@@ -573,12 +573,12 @@ export default function SalesOrderReceive() {
             placeholder="Search Order ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -644,7 +644,7 @@ export default function SalesOrderReceive() {
                     <div className="flex justify-end space-x-2">
                       <button 
                         onClick={() => handlePrint('invoice', order)}
-                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center group relative"
+                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors flex items-center group relative"
                         title="Cetak Faktur (A4)"
                       >
                         <Printer className="w-4 h-4" />
@@ -654,14 +654,14 @@ export default function SalesOrderReceive() {
                       </button>
                       <button 
                         onClick={() => setSelectedOrder(order)}
-                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center"
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors flex items-center"
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         <span className="text-xs font-bold">Detail</span>
                       </button>
                       <button 
                         onClick={() => updateStatus(order.id, 'deleted')}
-                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center"
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors flex items-center"
                         title="Hapus Pesanan (Ubah Status)"
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
@@ -684,7 +684,7 @@ export default function SalesOrderReceive() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -700,7 +700,7 @@ export default function SalesOrderReceive() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${
                         currentPage === page 
                           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
                           : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
@@ -721,7 +721,7 @@ export default function SalesOrderReceive() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -743,7 +743,7 @@ export default function SalesOrderReceive() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div>
@@ -808,7 +808,7 @@ export default function SalesOrderReceive() {
                     </div>
                   )}
                   {selectedOrder.remark && (
-                    <div className="col-span-2 space-y-1 bg-white p-3 rounded-lg border border-gray-100">
+                    <div className="col-span-2 space-y-1 bg-white p-3 rounded-md border border-gray-100">
                       <p className="text-xs font-bold text-gray-400 uppercase">Remark</p>
                       <p className="text-sm font-medium text-gray-700">{selectedOrder.remark}</p>
                     </div>
@@ -821,7 +821,7 @@ export default function SalesOrderReceive() {
                     <Package className="w-5 h-5 mr-2 text-indigo-600" />
                     Order Items
                   </h4>
-                  <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
+                  <div className="bg-white rounded-md overflow-hidden border border-gray-100">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-gray-100 text-gray-500 uppercase text-[10px] tracking-wider">
                         <tr>
@@ -877,7 +877,7 @@ export default function SalesOrderReceive() {
                   </h4>
                   
                   {selectedOrder.status !== 'cancelled' && (selectedOrder as any).paymentStatus !== 'paid' && (
-                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg space-y-3">
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-md space-y-3">
                       <div className="flex justify-between items-center">
                         <h5 className="text-sm font-bold text-indigo-900">Sisa Tagihan</h5>
                         <p className="text-lg font-black text-indigo-600">
@@ -889,7 +889,7 @@ export default function SalesOrderReceive() {
                           setPaymentAmount((selectedOrder.totalAmount || (selectedOrder as any).total || 0) - ((selectedOrder as any).paidAmount || 0));
                           setIsPaymentModalOpen(true);
                         }}
-                        className="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-all flex items-center justify-center shadow-lg shadow-indigo-100"
+                        className="w-full py-3 bg-indigo-600 text-white rounded-md font-bold text-sm hover:bg-indigo-700 transition-all flex items-center justify-center shadow-lg shadow-indigo-100"
                       >
                         <DollarSign className="w-4 h-4 mr-2" />
                         Catat Pembayaran Baru
@@ -898,14 +898,14 @@ export default function SalesOrderReceive() {
                   )}
 
                   {selectedOrder.status === 'cancelled' || selectedOrder.status === 'deleted' ? (
-                    <div className="p-4 bg-red-50 border border-red-100 rounded-lg space-y-3">
+                    <div className="p-4 bg-red-50 border border-red-100 rounded-md space-y-3">
                       <p className="text-xs text-red-700 font-medium">
                         Pesanan ini telah {selectedOrder.status === 'deleted' ? 'dihapus' : 'dibatalkan'} dan tidak dapat diubah secara langsung. 
                         Silakan hubungi Super Admin atau kirim permintaan aktivasi kembali.
                       </p>
                       <button
                         onClick={() => setIsRequestModalOpen(true)}
-                        className="w-full py-3 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-700 transition-all flex items-center justify-center shadow-lg shadow-red-100"
+                        className="w-full py-3 bg-red-600 text-white rounded-md font-bold text-sm hover:bg-red-700 transition-all flex items-center justify-center shadow-lg shadow-red-100"
                       >
                         <Send className="w-4 h-4 mr-2" />
                         Request Perubahan Status
@@ -916,7 +916,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'pending'}
                         onClick={() => updateStatus(selectedOrder.id, 'pending')}
-                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-md border border-yellow-100 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-all disabled:opacity-50"
                       >
                         <Clock className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">PENDING</span>
@@ -924,7 +924,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'processing'}
                         onClick={() => updateStatus(selectedOrder.id, 'processing')}
-                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-md border border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all disabled:opacity-50"
                       >
                         <Package className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">PROCESS</span>
@@ -932,7 +932,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'completed'}
                         onClick={() => updateStatus(selectedOrder.id, 'completed')}
-                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 transition-all disabled:opacity-50"
                       >
                         <CheckCircle className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">RECEIVED</span>
@@ -940,7 +940,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'cancelled'}
                         onClick={() => updateStatus(selectedOrder.id, 'cancelled')}
-                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-red-100 bg-red-50 text-red-700 hover:bg-red-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-md border border-red-100 bg-red-50 text-red-700 hover:bg-red-100 transition-all disabled:opacity-50"
                       >
                         <X className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">CANCEL</span>
@@ -948,7 +948,7 @@ export default function SalesOrderReceive() {
                       <button
                         disabled={isUpdating || selectedOrder.status === 'deleted'}
                         onClick={() => { updateStatus(selectedOrder.id, 'deleted'); setSelectedOrder(null); }}
-                        className="flex flex-col items-center justify-center p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-all disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-3 rounded-md border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 transition-all disabled:opacity-50"
                       >
                         <Trash2 className="w-5 h-5 mb-1 text-red-500" />
                         <span className="text-[10px] font-bold">DELETE</span>
@@ -962,7 +962,7 @@ export default function SalesOrderReceive() {
                 <div className="relative">
                   <button 
                     onClick={() => setIsPrintDropdownOpen(!isPrintDropdownOpen)}
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center shadow-lg shadow-indigo-100"
+                    className="px-6 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 transition-all flex items-center shadow-lg shadow-indigo-100"
                   >
                     <Printer className="w-4 h-4 mr-2" />
                     Print
@@ -979,7 +979,7 @@ export default function SalesOrderReceive() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
-                          className="absolute bottom-full right-0 mb-2 w-56 bg-white rounded-lg shadow-2xl border border-gray-100 overflow-hidden z-[60]"
+                          className="absolute bottom-full right-0 mb-2 w-56 bg-white rounded-md shadow-2xl border border-gray-100 overflow-hidden z-[60]"
                         >
                           <div className="p-2 bg-gray-50 border-b border-gray-100">
                             <p className="text-[10px] font-bold text-gray-400 uppercase px-3 py-1">Opsi Cetak</p>
@@ -1008,7 +1008,7 @@ export default function SalesOrderReceive() {
                     setSelectedOrder(null);
                     setIsPrintDropdownOpen(false);
                   }}
-                  className="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all"
+                  className="px-6 py-2 bg-gray-900 text-white rounded-md font-bold hover:bg-gray-800 transition-all"
                 >
                   Close Detail
                 </button>
@@ -1185,14 +1185,14 @@ export default function SalesOrderReceive() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100">
                 <h3 className="text-xl font-bold">Request Ubah Transaksi</h3>
                 <p className="text-sm text-gray-500">Kirim permintaan ke Super Admin untuk mengubah transaksi yang dibatalkan.</p>
               </div>
               <div className="p-6 space-y-4">
-                <div className="p-3 bg-yellow-50 border border-yellow-100 rounded-lg text-xs text-yellow-700">
+                <div className="p-3 bg-yellow-50 border border-yellow-100 rounded-md text-xs text-yellow-700">
                   Apakah anda yakin untuk mengubah transaksi cancel ini?
                 </div>
                 <div>
@@ -1200,7 +1200,7 @@ export default function SalesOrderReceive() {
                   <select
                     value={requestTargetStatus}
                     onChange={(e) => setRequestTargetStatus(e.target.value as any)}
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="pending">PENDING</option>
                     <option value="processing">PROCESS</option>
@@ -1213,20 +1213,20 @@ export default function SalesOrderReceive() {
                     value={requestReason}
                     onChange={(e) => setRequestReason(e.target.value)}
                     placeholder="Contoh: Salah input status, pelanggan ingin lanjut..."
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
                   />
                 </div>
                 <div className="flex space-x-3 pt-4">
                   <button
                     onClick={() => setIsRequestModalOpen(false)}
-                    className="flex-1 p-2 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white"
+                    className="flex-1 p-2 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleRequestChange}
                     disabled={isUpdating}
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {isUpdating ? 'Mengirim...' : 'Kirim Request'}
                   </button>
@@ -1255,7 +1255,7 @@ export default function SalesOrderReceive() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">Catat Pembayaran</h3>
@@ -1276,7 +1276,7 @@ export default function SalesOrderReceive() {
                          val = val.replace(/\D/g, '');
                          setPaymentAmount(Number(val));
                       }}
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-md font-medium text-gray-900 outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -1285,7 +1285,7 @@ export default function SalesOrderReceive() {
                   <select
                     value={selectedBankAccountId}
                     onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                    className="w-full p-2 bg-white border border-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full p-2 bg-white border border-gray-100 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Pilih Bank / Kas</option>
                     {bankAccounts.map(b => (
@@ -1296,14 +1296,14 @@ export default function SalesOrderReceive() {
                 <div className="pt-4 flex gap-3">
                   <button
                     onClick={() => setIsPaymentModalOpen(false)}
-                    className="flex-1 py-3 border border-gray-200 rounded-lg font-medium text-gray-600 hover:bg-white"
+                    className="flex-1 py-3 border border-gray-200 rounded-md font-medium text-gray-600 hover:bg-white"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleRecordPayment}
                     disabled={isUpdating || paymentAmount <= 0 || !selectedBankAccountId}
-                    className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50"
+                    className="flex-1 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {isUpdating ? 'Memproses...' : 'Simpan Pembayaran'}
                   </button>

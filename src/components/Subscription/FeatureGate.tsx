@@ -39,10 +39,10 @@ export default function FeatureGate({
         <div className="opacity-40 pointer-events-none filter blur-[1px]">
           {children}
         </div>
-        <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-[1px] rounded-lg border border-dashed border-gray-200 group-hover:bg-white/20 transition-all">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-[1px] rounded-md border border-dashed border-gray-200 group-hover:bg-white/20 transition-all">
           <button 
             onClick={() => setShowUpgradeModal(true)}
-            className="bg-white/90 shadow-xl border border-gray-100 p-2 rounded-lg flex items-center gap-2 text-xs font-medium text-indigo-600 hover:scale-105 transition-all"
+            className="bg-white/90 shadow-xl border border-gray-100 p-2 rounded-md flex items-center gap-2 text-xs font-medium text-indigo-600 hover:scale-105 transition-all"
           >
             <Lock className="w-3 h-3" />
             UPGRADE UNTUK AKSES

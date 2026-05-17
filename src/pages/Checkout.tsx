@@ -248,7 +248,7 @@ export default function Checkout() {
               Terima kasih telah memilih paket <span className="text-indigo-600 font-black">{planInfo.name}</span>. Tim kami akan memverifikasi pembayaran Anda dalam waktu maksimal 1x24 jam.
             </p>
           </div>
-          <div className="p-6 bg-white rounded-lg border border-gray-100 text-left space-y-3">
+          <div className="p-6 bg-white rounded-md border border-gray-100 text-left space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500 font-bold">Order ID</span>
               <span className="text-gray-900 font-black font-mono">#{generatedInvoiceNumber}</span>
@@ -283,9 +283,9 @@ export default function Checkout() {
         {/* Left Column: Payment & Info */}
         <div className="lg:col-span-2 space-y-8">
           {/* Business Info */}
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-6">
+          <div className="bg-white p-8 rounded-md shadow-sm border border-gray-100 space-y-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
                 <Building2 className="w-6 h-6" />
               </div>
               <div>
@@ -294,7 +294,7 @@ export default function Checkout() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-lg border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-md border border-gray-100">
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Bisnis</p>
                 <p className="font-bold text-gray-900">{tenant?.name || '---'}</p>
@@ -315,9 +315,9 @@ export default function Checkout() {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-8">
+          <div className="bg-white p-8 rounded-md shadow-sm border border-gray-100 space-y-8">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
                 <CreditCard className="w-6 h-6" />
               </div>
               <div>
@@ -331,13 +331,13 @@ export default function Checkout() {
                 <>
                   <button 
                     onClick={() => setPaymentMethod('bank')}
-                    className={`flex items-center p-6 rounded-3xl border-2 transition-all text-left ${
+                    className={`flex items-center p-6 rounded-md border-2 transition-all text-left ${
                       paymentMethod === 'bank' 
                         ? 'border-indigo-600 bg-indigo-50/30' 
                         : 'border-gray-100 hover:border-gray-200'
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mr-4 ${
+                    <div className={`w-12 h-12 rounded-md flex items-center justify-center mr-4 ${
                       paymentMethod === 'bank' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
                     }`}>
                       <Building2 className="w-6 h-6" />
@@ -350,13 +350,13 @@ export default function Checkout() {
 
                   <button 
                     onClick={() => setPaymentMethod('qris')}
-                    className={`flex items-center p-6 rounded-3xl border-2 transition-all text-left ${
+                    className={`flex items-center p-6 rounded-md border-2 transition-all text-left ${
                       paymentMethod === 'qris' 
                         ? 'border-indigo-600 bg-indigo-50/30' 
                         : 'border-gray-100 hover:border-gray-200'
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mr-4 ${
+                    <div className={`w-12 h-12 rounded-md flex items-center justify-center mr-4 ${
                       paymentMethod === 'qris' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
                     }`}>
                       <QrCode className="w-6 h-6" />
@@ -372,13 +372,13 @@ export default function Checkout() {
               {globalSettings?.paymentMethods?.tripay?.isEnabled && (
                 <button 
                   onClick={() => setPaymentMethod('tripay')}
-                  className={`flex items-center p-6 rounded-3xl border-2 transition-all text-left ${
+                  className={`flex items-center p-6 rounded-md border-2 transition-all text-left ${
                     paymentMethod === 'tripay' 
                       ? 'border-indigo-600 bg-indigo-50/30' 
                       : 'border-gray-100 hover:border-gray-200'
                   }`}
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mr-4 ${
+                  <div className={`w-12 h-12 rounded-md flex items-center justify-center mr-4 ${
                     paymentMethod === 'tripay' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
                   }`}>
                     <Zap className="w-6 h-6" />
@@ -402,7 +402,7 @@ export default function Checkout() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center font-medium text-indigo-600 uppercase">
+                      <div className="w-10 h-10 bg-white rounded-md border border-gray-200 flex items-center justify-center font-medium text-indigo-600 uppercase">
                         {globalSettings?.paymentMethods?.manual?.bankName || 'BCA'}
                       </div>
                       <div>
@@ -412,7 +412,7 @@ export default function Checkout() {
                     </div>
                     <button 
                       onClick={() => handleCopy(globalSettings?.paymentMethods?.manual?.accountNumber || '1234567890')}
-                      className="p-3 hover:bg-white rounded-xl transition-colors text-indigo-600"
+                      className="p-3 hover:bg-white rounded-md transition-colors text-indigo-600"
                     >
                       {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                     </button>
@@ -421,7 +421,7 @@ export default function Checkout() {
                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Atas Nama</p>
                     <p className="font-bold text-gray-900">{globalSettings?.paymentMethods?.manual?.accountHolder || 'PT ZENTORY DIGITAL INDONESIA'}</p>
                   </div>
-                  <div className="p-4 bg-amber-50 rounded-lg border border-amber-100 flex items-start gap-3">
+                  <div className="p-4 bg-amber-50 rounded-md border border-amber-100 flex items-start gap-3">
                     <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-[10px] text-amber-800 font-medium leading-relaxed">
                       Mohon sertakan <span className="font-black">ID Tenant</span> Anda pada berita transfer untuk mempercepat proses verifikasi.
@@ -436,7 +436,7 @@ export default function Checkout() {
                   exit={{ opacity: 0, y: -10 }}
                   className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 flex flex-col items-center text-center space-y-6"
                 >
-                  <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                  <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
                     {globalSettings?.paymentMethods?.manual?.qrisUrl ? (
                       <img src={globalSettings.paymentMethods.manual.qrisUrl} alt="QRIS" className="w-48 h-48 object-contain" referrerPolicy="no-referrer" />
                     ) : (
@@ -457,7 +457,7 @@ export default function Checkout() {
                   className="p-8 bg-indigo-600 rounded-[2rem] text-white space-y-6"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/20 rounded-2xl">
+                    <div className="p-3 bg-white/20 rounded-md">
                       <Zap className="w-6 h-6" />
                     </div>
                     <div>
@@ -481,13 +481,13 @@ export default function Checkout() {
 
         {/* Right Column: Order Summary */}
         <div className="space-y-6 lg:sticky lg:top-8">
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 space-y-8">
+          <div className="bg-white p-8 rounded-md shadow-xl border border-gray-100 space-y-8">
             <h3 className="text-xl font-black text-gray-900 tracking-tight">Ringkasan Pesanan</h3>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100">
+              <div className="flex items-center justify-between p-4 bg-white rounded-md border border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${planInfo.color}`}>
+                  <div className={`p-2 rounded-md ${planInfo.color}`}>
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
@@ -511,20 +511,20 @@ export default function Checkout() {
                     value={couponCodeInput}
                     onChange={e => setCouponCodeInput(e.target.value)}
                     disabled={!!appliedCoupon || isLoadingCoupon}
-                    className="flex-1 p-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase font-mono font-medium text-sm"
+                    className="flex-1 p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 uppercase font-mono font-medium text-sm"
                   />
                   {!appliedCoupon ? (
                     <button 
                       onClick={handleApplyCoupon}
                       disabled={isLoadingCoupon || !couponCodeInput}
-                      className="px-4 py-2 bg-gray-900 text-white rounded-xl font-bold w-24 flex items-center justify-center disabled:opacity-50"
+                      className="px-4 py-2 bg-gray-900 text-white rounded-md font-bold w-24 flex items-center justify-center disabled:opacity-50"
                     >
                       {isLoadingCoupon ? 'Cek...' : 'Terapkan'}
                     </button>
                   ) : (
                     <button 
                       onClick={() => setAppliedCoupon(null)}
-                      className="px-4 py-2 bg-red-100 text-red-600 rounded-xl font-bold hover:bg-red-200"
+                      className="px-4 py-2 bg-red-100 text-red-600 rounded-md font-bold hover:bg-red-200"
                     >
                       Hapus
                     </button>
@@ -567,7 +567,7 @@ export default function Checkout() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+              <div className="flex items-start gap-3 p-4 bg-indigo-50 rounded-md border border-indigo-100">
                 <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-indigo-700 font-medium leading-relaxed">
                   Pembayaran Anda aman dan terenkripsi. Dengan melanjutkan, Anda menyetujui <span className="font-black underline">Syarat & Ketentuan</span> Zentory.

@@ -345,7 +345,7 @@ export default function ClaimExpense() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 font-bold"
+          className="bg-indigo-600 text-white px-6 py-3 rounded-md flex items-center hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 font-bold"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah Pengeluaran
@@ -353,7 +353,7 @@ export default function ClaimExpense() {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex flex-col sm:flex-row gap-4">
+      <div className="bg-white p-4 rounded-md border border-gray-100 shadow-sm flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -361,17 +361,17 @@ export default function ClaimExpense() {
             placeholder="Cari pengeluaran, aktivitas, atau deskripsi..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
-        <button className="p-2 border border-gray-100 rounded-lg hover:bg-white flex items-center text-gray-600 font-medium text-sm">
+        <button className="p-2 border border-gray-100 rounded-md hover:bg-white flex items-center text-gray-600 font-medium text-sm">
           <Filter className="w-4 h-4 mr-2" />
           Filter
         </button>
       </div>
 
       {/* Expense Table */}
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -411,21 +411,21 @@ export default function ClaimExpense() {
                     <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => handleDetail(expense)}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
                         title="Detail"
                       >
                         <FileText className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => handleEdit(expense)}
-                        className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-md transition-all"
                         title="Edit"
                       >
                         <Edit2 className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => handleDelete(expense.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
                         title="Hapus"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -447,7 +447,7 @@ export default function ClaimExpense() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-lg overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>
@@ -471,7 +471,7 @@ export default function ClaimExpense() {
                 {/* Bank Account Selection */}
                 <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 space-y-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+                    <div className="p-2 bg-indigo-100 text-indigo-600 rounded-md">
                       <Landmark className="w-5 h-5" />
                     </div>
                     <div>
@@ -483,7 +483,7 @@ export default function ClaimExpense() {
                     required
                     value={formData.bankAccountId}
                     onChange={(e) => setFormData({ ...formData, bankAccountId: e.target.value })}
-                    className="w-full p-2 bg-white border border-indigo-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium appearance-none"
+                    className="w-full p-2 bg-white border border-indigo-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium appearance-none"
                   >
                     <option value="">Pilih Akun Bank</option>
                     {bankAccounts.map((bank) => (
@@ -504,7 +504,7 @@ export default function ClaimExpense() {
                     <button
                       type="button"
                       onClick={addItem}
-                      className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center hover:bg-indigo-100 transition-colors"
+                      className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest flex items-center hover:bg-indigo-100 transition-colors"
                     >
                       <Plus className="w-3 h-3 mr-1" />
                       Tambah Baris
@@ -537,7 +537,7 @@ export default function ClaimExpense() {
                               required
                               value={item.category}
                               onChange={(e) => updateItem(index, 'category', e.target.value)}
-                              className="w-full pl-9 pr-10 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium appearance-none"
+                              className="w-full pl-9 pr-10 py-2.5 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium appearance-none"
                             >
                               <option value="">Pilih Kategori</option>
                               {rules.map((rule) => (
@@ -563,7 +563,7 @@ export default function ClaimExpense() {
                               placeholder="Operasional, dll"
                               value={item.activity}
                               onChange={(e) => updateItem(index, 'activity', e.target.value)}
-                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
+                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
                             />
                           </div>
                         </div>
@@ -583,7 +583,7 @@ export default function ClaimExpense() {
                                  val = val.replace(/\D/g, '');
                                  updateItem(index, 'amount', Number(val));
                               }}
-                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
+                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
                             />
                           </div>
                         </div>
@@ -597,7 +597,7 @@ export default function ClaimExpense() {
                               placeholder="Keterangan singkat"
                               value={item.description}
                               onChange={(e) => updateItem(index, 'description', e.target.value)}
-                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
+                              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-medium"
                             />
                           </div>
                         </div>
@@ -616,7 +616,7 @@ export default function ClaimExpense() {
 
                 <div className="p-6 bg-indigo-600 rounded-[2rem] flex justify-between items-center shadow-xl shadow-indigo-100">
                   <div className="flex items-center">
-                    <div className="p-2 bg-white/20 rounded-lg mr-3">
+                    <div className="p-2 bg-white/20 rounded-md mr-3">
                       <Calculator className="w-5 h-5 text-white" />
                     </div>
                     <span className="text-xs font-black text-white uppercase tracking-widest">Total Keseluruhan</span>
@@ -631,14 +631,14 @@ export default function ClaimExpense() {
                       setIsModalOpen(false);
                       setEditingExpense(null);
                     }}
-                    className="flex-1 py-4 border border-gray-100 rounded-lg text-gray-500 font-medium hover:bg-white transition-all"
+                    className="flex-1 py-4 border border-gray-100 rounded-md text-gray-500 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50"
+                    className="flex-1 py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50"
                   >
                     {isSubmitting ? 'Menyimpan...' : (editingExpense ? 'Update Pengeluaran' : 'Simpan Semua')}
                   </button>
@@ -657,7 +657,7 @@ export default function ClaimExpense() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>
@@ -678,15 +678,15 @@ export default function ClaimExpense() {
 
               <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                  <div className="bg-gray-50 p-6 rounded-md border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Nominal</p>
                     <h4 className="text-xl font-black text-red-600">Rp.{selectedExpense.amount.toLocaleString()}</h4>
                   </div>
-                  <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                  <div className="bg-gray-50 p-6 rounded-md border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Item</p>
                     <h4 className="text-xl font-black text-gray-900">{selectedExpense.totalTransactions || 1} Item</h4>
                   </div>
-                  <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                  <div className="bg-gray-50 p-6 rounded-md border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</p>
                     <div className="flex items-center">
                       <div className="w-2 h-2 rounded-full bg-green-500 mr-2" />
@@ -694,7 +694,7 @@ export default function ClaimExpense() {
                     </div>
                   </div>
                   {selectedExpense.bankAccountId && (
-                    <div className="bg-indigo-50 p-6 rounded-3xl border border-indigo-100 md:col-span-3">
+                    <div className="bg-indigo-50 p-6 rounded-md border border-indigo-100 md:col-span-3">
                       <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Sumber Dana / Bank</p>
                       <div className="flex items-center text-indigo-700">
                         <Landmark className="w-5 h-5 mr-2" />
@@ -710,9 +710,9 @@ export default function ClaimExpense() {
                   <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Rincian Item</h4>
                   <div className="space-y-3">
                     {(selectedExpense.expenseItems || []).map((item, idx) => (
-                      <div key={idx} className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between gap-4">
+                      <div key={idx} className="p-6 bg-white border border-gray-100 rounded-md shadow-sm flex flex-col md:flex-row justify-between gap-4">
                         <div className="flex gap-4">
-                          <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center shrink-0">
                             <Tag className="w-5 h-5" />
                           </div>
                           <div>
@@ -748,7 +748,7 @@ export default function ClaimExpense() {
               <div className="p-8 bg-gray-50/50 border-t border-gray-100 flex justify-end">
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-8 py-3 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
+                  className="px-8 py-3 bg-white border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all"
                 >
                   Tutup
                 </button>

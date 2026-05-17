@@ -305,12 +305,12 @@ export default function Approvals() {
         </div>
         
         <div className="relative inline-block text-left">
-          <div className="flex bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex bg-white p-1 rounded-md border border-gray-200 shadow-sm">
             {tabs.map((tab) => (
               <button
                 key={tab.type}
                 onClick={() => setActiveTab(tab.type)}
-                className={`flex items-center px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                className={`flex items-center px-4 py-2 rounded-md text-sm font-bold transition-all ${
                   activeTab === tab.type
                     ? 'bg-indigo-600 text-white shadow-md'
                     : 'text-gray-500 hover:bg-gray-50'
@@ -338,7 +338,7 @@ export default function Approvals() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className={`p-6 text-white flex justify-between items-center ${
                 selectedItem.type === 'Sales' ? 'bg-indigo-600' :
@@ -347,7 +347,7 @@ export default function Approvals() {
                 'bg-orange-600'
               }`}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
+                  <div className="p-2 bg-white/20 rounded-md">
                     {selectedItem.type === 'Sales' ? <ShoppingCart className="w-5 h-5" /> :
                      selectedItem.type === 'Finance' ? <Wallet className="w-5 h-5" /> :
                      selectedItem.type === 'Deletion' ? <Trash2 className="w-5 h-5" /> :
@@ -366,13 +366,13 @@ export default function Approvals() {
               <div className="p-6 overflow-y-auto custom-scrollbar space-y-6">
                 {/* Common Info */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-2xl">
+                  <div className="bg-gray-50 p-4 rounded-md">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Status</p>
-                    <span className="px-2 py-1 rounded-lg bg-yellow-100 text-yellow-700 text-[10px] font-bold uppercase">
+                    <span className="px-2 py-1 rounded-md bg-yellow-100 text-yellow-700 text-[10px] font-bold uppercase">
                       {selectedItem.status}
                     </span>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-2xl">
+                  <div className="bg-gray-50 p-4 rounded-md">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tanggal</p>
                     <p className="text-sm font-bold text-gray-900">
                       {selectedItem.date?.seconds ? new Date(selectedItem.date.seconds * 1000).toLocaleDateString() : '-'}
@@ -388,7 +388,7 @@ export default function Approvals() {
                   
                   {selectedItem.type === 'Sales' && (
                     <div className="space-y-3">
-                      <div className="border border-gray-100 rounded-lg overflow-hidden">
+                      <div className="border border-gray-100 rounded-md overflow-hidden">
                         <table className="w-full text-sm">
                           <thead className="bg-gray-50 text-gray-500">
                             <tr>
@@ -408,7 +408,7 @@ export default function Approvals() {
                           </tbody>
                         </table>
                       </div>
-                      <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-2xl">
+                      <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-md">
                         <span className="font-bold text-indigo-900">Total Pesanan</span>
                         <span className="text-xl font-black text-indigo-600">Rp.{selectedItem.amount?.toLocaleString()}</span>
                       </div>
@@ -417,7 +417,7 @@ export default function Approvals() {
 
                   {selectedItem.type === 'Finance' && (
                     <div className="space-y-4">
-                      <div className="bg-gray-50 p-4 rounded-2xl space-y-3">
+                      <div className="bg-gray-50 p-4 rounded-md space-y-3">
                         <div>
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deskripsi</p>
                           <p className="text-sm text-gray-900 font-medium">{selectedItem.rawData.description || '-'}</p>
@@ -433,7 +433,7 @@ export default function Approvals() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center p-4 bg-green-50 rounded-2xl">
+                      <div className="flex justify-between items-center p-4 bg-green-50 rounded-md">
                         <span className="font-bold text-green-900">Jumlah Transaksi</span>
                         <span className="text-xl font-black text-green-600">Rp.{selectedItem.amount?.toLocaleString()}</span>
                       </div>
@@ -442,7 +442,7 @@ export default function Approvals() {
 
                   {selectedItem.type === 'Purchase' && (
                     <div className="space-y-3">
-                      <div className="border border-gray-100 rounded-lg overflow-hidden">
+                      <div className="border border-gray-100 rounded-md overflow-hidden">
                         <table className="w-full text-sm">
                           <thead className="bg-gray-50 text-gray-500">
                             <tr>
@@ -463,7 +463,7 @@ export default function Approvals() {
                           </tbody>
                         </table>
                       </div>
-                      <div className="p-4 bg-orange-50 rounded-2xl">
+                      <div className="p-4 bg-orange-50 rounded-md">
                         <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest">Alasan Pengajuan</p>
                         <p className="text-sm text-orange-900 font-medium">{selectedItem.rawData.reason || 'Tidak ada alasan spesifik.'}</p>
                       </div>
@@ -472,13 +472,13 @@ export default function Approvals() {
 
                   {selectedItem.type === 'Correction' && (
                     <div className="space-y-4">
-                      <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                      <div className="bg-amber-50 p-4 rounded-md border border-amber-100">
                         <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Target Koreksi Pembayaran</p>
                         <p className="font-bold text-amber-900">{selectedItem.rawData.receiptNumber}</p>
                         <p className="text-xs text-amber-700 mt-1 opacity-70">Refund / Undo nominal: Rp.{selectedItem.amount?.toLocaleString()}</p>
                       </div>
                       
-                      <div className="bg-gray-50 p-4 rounded-2xl space-y-4">
+                      <div className="bg-gray-50 p-4 rounded-md space-y-4">
                         <div>
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alasan Koreksi</p>
                           <p className="text-sm text-gray-900 font-bold">{selectedItem.rawData.reason}</p>
@@ -495,13 +495,13 @@ export default function Approvals() {
 
                   {selectedItem.type === 'Deletion' && (
                     <div className="space-y-4">
-                      <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                      <div className="bg-red-50 p-4 rounded-md border border-red-100">
                         <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Target Penghapusan</p>
                         <p className="font-bold text-red-900">{selectedItem.rawData.sourceNumber}</p>
                         <p className="text-xs text-red-600 mt-1 opacity-70">ID: {selectedItem.rawData.sourceId}</p>
                       </div>
                       
-                      <div className="bg-gray-50 p-4 rounded-2xl space-y-4">
+                      <div className="bg-gray-50 p-4 rounded-md space-y-4">
                         <div>
                           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alasan</p>
                           <p className="text-sm text-gray-900 font-bold">{selectedItem.rawData.reason}</p>
@@ -532,14 +532,14 @@ export default function Approvals() {
                 <button
                   onClick={() => { handleAction(selectedItem, 'reject'); setSelectedItem(null); }}
                   disabled={isProcessing === selectedItem.id}
-                  className="flex-1 py-3 border border-red-100 text-red-600 font-medium rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 py-3 border border-red-100 text-red-600 font-medium rounded-md hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
                 >
                   <XCircle className="w-5 h-5" /> Tolak
                 </button>
                 <button
                   onClick={() => { handleAction(selectedItem, 'approve'); setSelectedItem(null); }}
                   disabled={isProcessing === selectedItem.id}
-                  className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-md hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
                 >
                   <CheckCircle2 className="w-5 h-5" /> Setujui
                 </button>
@@ -566,7 +566,7 @@ export default function Approvals() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="py-20 bg-white rounded-lg border border-dashed border-gray-200 text-center"
+              className="py-20 bg-white rounded-md border border-dashed border-gray-200 text-center"
             >
               <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8" />
@@ -581,10 +581,10 @@ export default function Approvals() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
+                className="bg-white p-6 rounded-md border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
               >
                 <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-xl ${
+                  <div className={`p-3 rounded-md ${
                     item.type === 'Sales' ? 'bg-indigo-50 text-indigo-600' :
                     item.type === 'Finance' ? 'bg-green-50 text-green-600' :
                     item.type === 'Deletion' ? 'bg-red-50 text-red-600' :
@@ -629,7 +629,7 @@ export default function Approvals() {
                   <button
                     onClick={() => handleAction(item, 'reject')}
                     disabled={isProcessing === item.id}
-                    className="flex-1 md:flex-none px-6 py-2.5 border border-red-100 text-red-600 font-medium rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 md:flex-none px-6 py-2.5 border border-red-100 text-red-600 font-medium rounded-md hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
                   >
                     <XCircle className="w-4 h-4" />
                     Tolak
@@ -637,7 +637,7 @@ export default function Approvals() {
                   <button
                     onClick={() => handleAction(item, 'approve')}
                     disabled={isProcessing === item.id}
-                    className="flex-1 md:flex-none px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 md:flex-none px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-md hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
                   >
                     {isProcessing === item.id ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

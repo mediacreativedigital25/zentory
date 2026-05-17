@@ -172,7 +172,7 @@ export default function Coupons() {
             });
             setIsModalOpen(true);
           }}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-md font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
         >
           <Plus className="w-5 h-5" />
           Tambah Kupon
@@ -180,9 +180,9 @@ export default function Coupons() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center">
               <Tag className="w-6 h-6" />
             </div>
             <div>
@@ -191,9 +191,9 @@ export default function Coupons() {
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-green-50 text-green-600 rounded-md flex items-center justify-center">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
@@ -202,9 +202,9 @@ export default function Coupons() {
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-md border border-gray-100 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-md flex items-center justify-center">
               <Users className="w-6 h-6" />
             </div>
             <div>
@@ -215,7 +215,7 @@ export default function Coupons() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -224,7 +224,7 @@ export default function Coupons() {
               placeholder="Cari kode kupon..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
             />
           </div>
         </div>
@@ -247,7 +247,7 @@ export default function Coupons() {
                 <tr key={coupon.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black">
+                      <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center font-black">
                         {coupon.type === 'percentage' ? <Percent className="w-5 h-5" /> : <DollarSign className="w-5 h-5" />}
                       </div>
                       <div>
@@ -302,13 +302,13 @@ export default function Coupons() {
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => openEditModal(coupon)}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(coupon.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -346,7 +346,7 @@ export default function Coupons() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white z-50 rounded-[2.5rem] shadow-2xl overflow-hidden"
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white z-50 rounded-md shadow-2xl overflow-hidden"
             >
               <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
                 <div>
@@ -355,7 +355,7 @@ export default function Coupons() {
                   </h3>
                   <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Lengkapi detail promosi di bawah ini.</p>
                 </div>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white rounded-2xl transition-all shadow-sm">
+                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white rounded-md transition-all shadow-sm">
                   <XCircle className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
@@ -370,7 +370,7 @@ export default function Coupons() {
                       placeholder="MISAL: DISKON10"
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium uppercase outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-md text-sm font-medium uppercase outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -378,7 +378,7 @@ export default function Coupons() {
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="percentage">Persentase (%)</option>
                       <option value="fixed">Potongan Tetap (Rp)</option>
@@ -391,7 +391,7 @@ export default function Coupons() {
                       type="number"
                       value={formData.value}
                       onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -401,7 +401,7 @@ export default function Coupons() {
                       type="number"
                       value={formData.minPurchase}
                       onChange={(e) => setFormData({ ...formData, minPurchase: Number(e.target.value) })}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -411,7 +411,7 @@ export default function Coupons() {
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -421,7 +421,7 @@ export default function Coupons() {
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div className="space-y-2">
@@ -429,7 +429,7 @@ export default function Coupons() {
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     >
                       <option value="all">Semua Kategori</option>
                       {categories.map(cat => (
@@ -443,12 +443,12 @@ export default function Coupons() {
                       type="number"
                       value={formData.usageLimit}
                       onChange={(e) => setFormData({ ...formData, usageLimit: Number(e.target.value) })}
-                      className="w-full p-4 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md">
                   <input
                     type="checkbox"
                     id="isActive"
@@ -463,13 +463,13 @@ export default function Coupons() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                    className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-md font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-2 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                    className="flex-2 py-4 bg-indigo-600 text-white rounded-md font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
                   >
                     {editingCoupon ? 'Simpan Perubahan' : 'Buat Kupon'}
                   </button>

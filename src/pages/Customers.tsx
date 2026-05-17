@@ -305,11 +305,11 @@ export default function Customers() {
             ref={fileInputRef} 
             onChange={handleFileUpload} 
             accept=".xlsx,.xls" 
-            className="hidden p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium" 
+            className="hidden p-2 bg-white border border-gray-200 rounded-md text-sm font-medium" 
           />
           <button
             onClick={handleDownloadTemplate}
-            className="bg-white border border-gray-200 text-gray-600 p-2 rounded-lg flex items-center hover:bg-white transition-colors"
+            className="bg-white border border-gray-200 text-gray-600 p-2 rounded-md flex items-center hover:bg-white transition-colors"
           >
             <Download className="w-5 h-5 mr-2" />
             Template
@@ -317,7 +317,7 @@ export default function Customers() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
-            className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            className="bg-emerald-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-emerald-700 transition-colors disabled:opacity-50"
           >
             <Upload className="w-5 h-5 mr-2" />
             {isImporting ? 'Importing...' : 'Import'}
@@ -343,7 +343,7 @@ export default function Customers() {
               }); 
               setIsModalOpen(true); 
             }}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
           >
             <Plus className="w-5 h-5 mr-2" />
             New Customer
@@ -351,7 +351,7 @@ export default function Customers() {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
+      <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -359,10 +359,10 @@ export default function Customers() {
             placeholder="Search customers by name, email, or phone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-100">
           <span className="font-bold uppercase tracking-widest">Show:</span>
           <select 
             value={rowsPerPage} 
@@ -376,7 +376,7 @@ export default function Customers() {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -398,7 +398,7 @@ export default function Customers() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black tracking-widest uppercase border border-indigo-100">
+                    <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-black tracking-widest uppercase border border-indigo-100">
                       {customer.code || '-'}
                     </span>
                   </td>
@@ -443,7 +443,7 @@ export default function Customers() {
                           setSelectedCustomerForDetail(customer);
                           setIsDetailModalOpen(true);
                         }}
-                        className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-white rounded-lg transition-all shadow-sm hover:shadow border border-transparent hover:border-emerald-100"
+                        className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-white rounded-md transition-all shadow-sm hover:shadow border border-transparent hover:border-emerald-100"
                         title="Detail Pelanggan"
                       >
                         <Eye className="w-4 h-4" />
@@ -465,14 +465,14 @@ export default function Customers() {
                           }); 
                           setIsModalOpen(true); 
                         }} 
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm hover:shadow border border-transparent hover:border-indigo-100"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm hover:shadow border border-transparent hover:border-indigo-100"
                         title="Edit Customer"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(customer.id)} 
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm hover:shadow border border-transparent hover:border-red-100"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-md transition-all shadow-sm hover:shadow border border-transparent hover:border-red-100"
                         title="Delete Customer"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -501,7 +501,7 @@ export default function Customers() {
 
       {/* Pagination */}
       {filteredCustomers.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-lg border border-gray-100 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-md border border-gray-100 gap-4">
           <p className="text-xs text-gray-500">
             Showing <span className="font-bold text-gray-900">{Math.min(filteredCustomers.length, (currentPage - 1) * rowsPerPage + 1)}</span> to <span className="font-bold text-gray-900">{Math.min(filteredCustomers.length, currentPage * rowsPerPage)}</span> of <span className="font-bold text-gray-900">{filteredCustomers.length}</span> customers
           </p>
@@ -509,7 +509,7 @@ export default function Customers() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -521,7 +521,7 @@ export default function Customers() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      className={`w-8 h-8 rounded-md text-xs font-bold transition-all ${
                         currentPage === page 
                           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
                           : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-200'
@@ -539,7 +539,7 @@ export default function Customers() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-white disabled:opacity-50 transition-colors"
+              className="p-2 border border-gray-200 rounded-md bg-white hover:bg-white disabled:opacity-50 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -554,11 +554,11 @@ export default function Customers() {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"
             >
               <div className="relative p-6 sm:p-8 border-b border-gray-50 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-2xl ${editingCustomer ? 'bg-orange-50 text-orange-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                  <div className={`p-3 rounded-md ${editingCustomer ? 'bg-orange-50 text-orange-600' : 'bg-indigo-50 text-indigo-600'}`}>
                     {editingCustomer ? <Edit2 className="w-6 h-6" /> : <UserRound className="w-6 h-6" />}
                   </div>
                   <div>
@@ -572,7 +572,7 @@ export default function Customers() {
                 </div>
                 <button 
                   onClick={() => setIsModalOpen(false)} 
-                  className="p-2 hover:bg-gray-200/50 rounded-xl transition-colors text-gray-400 hover:text-gray-900"
+                  className="p-2 hover:bg-gray-200/50 rounded-md transition-colors text-gray-400 hover:text-gray-900"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -597,7 +597,7 @@ export default function Customers() {
                           placeholder="Contoh: Budi Santoso"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
                         />
                       </div>
                     </div>
@@ -611,10 +611,10 @@ export default function Customers() {
                             type="text"
                             value={formData.code}
                             readOnly
-                            className="w-full outline-none text-gray-500 cursor-not-allowed p-2 bg-white border border-gray-200 rounded-lg text-sm font-medium pl-10"
+                            className="w-full outline-none text-gray-500 cursor-not-allowed p-2 bg-white border border-gray-200 rounded-md text-sm font-medium pl-10"
                           />
                         </div>
-                        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center font-medium text-xs border border-indigo-100">
+                        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center font-medium text-xs border border-indigo-100">
                           AUTO
                         </div>
                       </div>
@@ -640,7 +640,7 @@ export default function Customers() {
                           placeholder="email@perusahaan.com"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
                         />
                       </div>
                     </div>
@@ -655,7 +655,7 @@ export default function Customers() {
                           placeholder="+62 812..."
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+                          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
                         />
                       </div>
                     </div>
@@ -670,7 +670,7 @@ export default function Customers() {
                         placeholder="Jl. Nama Jalan No. 123, Kota, Provinsi..."
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all h-24 text-sm font-medium resize-none"
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all h-24 text-sm font-medium resize-none"
                       />
                     </div>
                   </div>
@@ -691,7 +691,7 @@ export default function Customers() {
                         <select
                           value={formData.categoryId}
                           onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                          className="w-full pl-11 pr-8 py-3 bg-white border border-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none text-sm font-medium text-gray-700"
+                          className="w-full pl-11 pr-8 py-3 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none text-sm font-medium text-gray-700"
                         >
                           <option value="">-- Umum / Tanpa Tipe --</option>
                           {categories.map(c => (
@@ -704,14 +704,14 @@ export default function Customers() {
 
                     <div className="space-y-1.5">
                       <label className="ml-1 text-xs font-semibold text-gray-600">Otoritas Pembayaran Tempo</label>
-                      <div className="flex items-center h-[48px] bg-white border border-gray-100 rounded-lg px-4 gap-4">
-                        <div className="p-2 rounded-lg bg-white border border-gray-100 shadow-sm">
+                      <div className="flex items-center h-[48px] bg-white border border-gray-100 rounded-md px-4 gap-4">
+                        <div className="p-2 rounded-md bg-white border border-gray-100 shadow-sm">
                           <CreditCard className="w-4 h-4 text-gray-400" />
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer flex-1 text-xs font-semibold text-gray-600">
                           <input 
                             type="checkbox" 
-                            className="sr-only peer p-2 rounded-lg border border-gray-200 text-sm"
+                            className="sr-only peer p-2 rounded-md border border-gray-200 text-sm"
                             checked={formData.allowTempo}
                             onChange={(e) => setFormData({ ...formData, allowTempo: e.target.checked })}
                           />
@@ -734,7 +734,7 @@ export default function Customers() {
                           placeholder="0"
                           value={formData.discount || ''}
                           onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                          className="w-full pl-11 pr-12 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                          className="w-full pl-11 pr-12 py-3 bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-gray-900"
                         />
                         <span className="absolute right-4 top-1/2 -translate-y-[45%] text-gray-500 font-bold">%</span>
                       </div>
@@ -750,8 +750,8 @@ export default function Customers() {
                         exit={{ opacity: 0, height: 0, y: -10 }}
                         className="overflow-hidden"
                       >
-                        <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-3xl border border-orange-200/50 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                          <div className="p-4 bg-white rounded-2xl text-orange-600 shadow-sm self-start">
+                        <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-md border border-orange-200/50 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                          <div className="p-4 bg-white rounded-md text-orange-600 shadow-sm self-start">
                             <Calendar className="w-6 h-6" />
                           </div>
                           <div className="flex-1 space-y-3">
@@ -766,7 +766,7 @@ export default function Customers() {
                                   min="1"
                                   value={formData.tempoLimitDays}
                                   onChange={(e) => setFormData({ ...formData, tempoLimitDays: parseInt(e.target.value) || 0 })}
-                                  className="w-full px-5 py-3 bg-white border border-orange-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 shadow-sm font-medium text-orange-900 text-lg"
+                                  className="w-full px-5 py-3 bg-white border border-orange-200 rounded-md outline-none focus:ring-2 focus:ring-orange-500 shadow-sm font-medium text-orange-900 text-lg"
                                 />
                               </div>
                               <div className="space-y-0.5">
@@ -790,14 +790,14 @@ export default function Customers() {
                   <button 
                     type="button" 
                     onClick={() => setIsModalOpen(false)} 
-                    className="flex-1 sm:flex-none px-6 py-3 border border-gray-200 rounded-lg text-gray-600 hover:bg-white hover:text-gray-900 hover:border-gray-300 transition-all text-xs font-medium uppercase tracking-widest"
+                    className="flex-1 sm:flex-none px-6 py-3 border border-gray-200 rounded-md text-gray-600 hover:bg-white hover:text-gray-900 hover:border-gray-300 transition-all text-xs font-medium uppercase tracking-widest"
                   >
                     Batal
                   </button>
                   <button 
                     type="button"
                     onClick={handleSubmit}
-                    className="flex-1 sm:flex-none px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 text-xs font-black uppercase tracking-widest"
+                    className="flex-1 sm:flex-none px-8 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 text-xs font-black uppercase tracking-widest"
                   >
                     {editingCustomer ? 'Update Data' : 'Simpan Akun'}
                   </button>
@@ -815,11 +815,11 @@ export default function Customers() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
             >
               <div className="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-md bg-white/20 flex items-center justify-center">
                     <UserRound className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -850,7 +850,7 @@ export default function Customers() {
                     </div>
                     <div>
                       <label className="block mb-2 text-xs font-semibold text-gray-600">Alamat Pengiriman</label>
-                      <div className="flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-100">
+                      <div className="flex items-start gap-3 p-4 bg-white rounded-md border border-gray-100">
                         <MapPin className="w-4 h-4 text-indigo-500 mt-1 shrink-0" />
                         <span className="text-sm font-bold text-gray-600 leading-relaxed">{selectedCustomerForDetail.address}</span>
                       </div>
@@ -858,15 +858,15 @@ export default function Customers() {
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-gray-100">
-                    <div className="p-6 bg-red-50 rounded-3xl border border-red-100 flex flex-col justify-center items-center text-center">
-                      <div className="p-3 rounded-2xl bg-white shadow-sm text-red-600 mb-2">
+                    <div className="p-6 bg-red-50 rounded-md border border-red-100 flex flex-col justify-center items-center text-center">
+                      <div className="p-3 rounded-md bg-white shadow-sm text-red-600 mb-2">
                         <CreditCard className="w-6 h-6" />
                       </div>
                       <p className="text-[10px] font-black text-red-700 uppercase tracking-widest mb-1">Total Outstanding</p>
                       <h4 className="text-3xl font-black text-red-600 tabular-nums">Rp.{(receivablesMap[selectedCustomerForDetail.id] || 0).toLocaleString()}</h4>
                     </div>
 
-                    <div className="p-6 bg-orange-50 rounded-3xl border border-orange-100">
+                    <div className="p-6 bg-orange-50 rounded-md border border-orange-100">
                       <div className="flex items-center gap-2 mb-4">
                         <Calendar className="w-4 h-4 text-orange-600" />
                         <span className="text-[10px] font-black text-orange-700 uppercase tracking-widest">Tagihan Terlama</span>
@@ -893,7 +893,7 @@ export default function Customers() {
               <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100 flex justify-end">
                 <button 
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-8 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"
+                  className="px-8 py-3 bg-gray-900 text-white rounded-md font-black text-xs uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"
                 >
                   TUTUP DETAIL
                 </button>

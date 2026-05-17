@@ -186,7 +186,7 @@ export default function SuperAdminInvoices() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h3 className="font-bold text-gray-900 flex items-center">
             <FileText className="w-5 h-5 mr-2 text-indigo-600" />
@@ -202,7 +202,7 @@ export default function SuperAdminInvoices() {
                 onConfirm: handleDeleteSelected
               })}
               disabled={processingId === 'delete-multiple'}
-              className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold flex items-center shadow-lg hover:bg-red-700 transition"
+              className="px-4 py-2 bg-red-600 text-white rounded-md font-bold flex items-center shadow-lg hover:bg-red-700 transition"
             >
               {processingId === 'delete-multiple' ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -288,7 +288,7 @@ export default function SuperAdminInvoices() {
                               onConfirm: () => handleUpdateStatus(inv, 'cancelled')
                             })}
                             disabled={processingId === inv.id}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
                             title="Batalkan Invoice"
                           >
                             <XCircle className="w-5 h-5" />
@@ -302,7 +302,7 @@ export default function SuperAdminInvoices() {
                               onConfirm: () => handleUpdateStatus(inv, 'paid')
                             })}
                             disabled={processingId === inv.id}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors disabled:opacity-50"
                             title="Tandai Sudah Bayar"
                           >
                             {processingId === inv.id ? (

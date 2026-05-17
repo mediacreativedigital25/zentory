@@ -86,7 +86,7 @@ export default function PrintBarcodeModal({ isOpen, onClose, products }: PrintBa
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
               <div className="flex items-center gap-2">
@@ -108,7 +108,7 @@ export default function PrintBarcodeModal({ isOpen, onClose, products }: PrintBa
 
               <div ref={printRef} className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
                 {products.map((product, idx) => (
-                  <div key={idx} className="label border border-gray-100 p-3 rounded-lg flex flex-col items-center w-full max-w-[160px]">
+                  <div key={idx} className="label border border-gray-100 p-3 rounded-md flex flex-col items-center w-full max-w-[160px]">
                     <div className="product-name text-[10px] font-bold mb-1 truncate w-full text-center">
                       {product.name}
                     </div>
@@ -127,13 +127,13 @@ export default function PrintBarcodeModal({ isOpen, onClose, products }: PrintBa
             <div className="p-6 bg-gray-50 flex gap-3 border-t border-gray-100">
               <button
                 onClick={onClose}
-                className="flex-1 px-6 py-3 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all"
+                className="flex-1 px-6 py-3 bg-white border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={handlePrint}
-                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2"
               >
                 <Printer className="w-4 h-4" />
                 Cetak {products.length} Label

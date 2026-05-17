@@ -127,7 +127,9 @@ export default function Dashboard() {
     const paymentStatus: any = { lunas: 0, tempo: 0 };
     const productSales: any = {};
 
-    allOrders.forEach(order => {
+    const validOrders = allOrders.filter(o => o.status !== 'cancelled' && o.status !== 'deleted');
+
+    validOrders.forEach(order => {
       // Payment Method
       const bank = bankAccounts.find(b => b.id === order.paymentMethod);
       const methodName = bank ? bank.name : 'Unknown';
@@ -163,7 +165,7 @@ export default function Dashboard() {
     
     return {
       totalSales: sales,
-      totalOrders: allOrders.length,
+      totalOrders: validOrders.length,
       totalProducts: productCount,
       totalExpenses: expenses,
       paymentMethodData,
@@ -200,9 +202,9 @@ export default function Dashboard() {
   }, [allTransactions]);
 
   const StatCard = ({ title, value, icon: Icon, trend, color }: any) => (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+    <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-lg ${color}`}>
+        <div className={`p-3 rounded-md ${color}`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
         {trend && (
@@ -238,9 +240,9 @@ export default function Dashboard() {
 
       {/* Payment Status Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-100 text-green-600 rounded-xl">
+            <div className="p-3 bg-green-100 text-green-600 rounded-md">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
@@ -249,12 +251,12 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="text-right">
-            <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">PAID</span>
+            <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">PAID</span>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-orange-100 text-orange-600 rounded-xl">
+            <div className="p-3 bg-orange-100 text-orange-600 rounded-md">
               <Wallet className="w-6 h-6" />
             </div>
             <div>
@@ -263,7 +265,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="text-right">
-            <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">CREDIT</span>
+            <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md">CREDIT</span>
           </div>
         </div>
       </div>
@@ -273,13 +275,13 @@ export default function Dashboard() {
         <motion.div 
           whileHover={{ y: -2 }}
           onClick={() => navigate('/approvals')}
-          className="bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-100 flex items-center justify-between cursor-pointer group overflow-hidden relative"
+          className="bg-indigo-600 p-6 rounded-md shadow-lg shadow-indigo-100 flex items-center justify-between cursor-pointer group overflow-hidden relative"
         >
           <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/4 opacity-10 group-hover:scale-110 transition-transform duration-500">
             <CheckCircle2 className="w-48 h-48 text-white" />
           </div>
           <div className="flex items-center gap-6 relative z-10">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-md flex items-center justify-center">
               <CheckCircle2 className="w-8 h-8 text-white" />
             </div>
             <div>
@@ -287,7 +289,7 @@ export default function Dashboard() {
               <p className="text-indigo-100">Cek pengajuan Sales, Finance, dan Purchase yang butuh tindakan Anda.</p>
             </div>
           </div>
-          <div className="bg-white/20 px-4 py-2 rounded-xl text-white font-bold text-sm backdrop-blur-md group-hover:bg-white/30 transition-colors relative z-10">
+          <div className="bg-white/20 px-4 py-2 rounded-md text-white font-bold text-sm backdrop-blur-md group-hover:bg-white/30 transition-colors relative z-10">
             Buka Modul
           </div>
         </motion.div>
@@ -296,7 +298,7 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales vs Expenses */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6">Sales vs Expenses</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -313,7 +315,7 @@ export default function Dashboard() {
         </div>
 
         {/* Payment Methods */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6">Metode Pembayaran</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -346,16 +348,16 @@ export default function Dashboard() {
         </div>
 
         {/* Top Products */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Produk Terlaris</h3>
             <Tag className="w-5 h-5 text-gray-400" />
           </div>
           <div className="space-y-4">
             {stats.topProducts.map((p, i) => (
-              <div key={p.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div key={p.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-md">
                 <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-sm">
+                  <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-md flex items-center justify-center font-bold text-sm">
                     {i + 1}
                   </div>
                   <p className="font-medium text-gray-900">{p.name}</p>
@@ -373,14 +375,14 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Transactions */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Transaksi Terakhir</h3>
             <TrendingUp className="w-5 h-5 text-gray-400" />
           </div>
           <div className="space-y-4">
             {recentTransactions.map((t) => (
-              <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-md">
                 <div className="flex items-center">
                   <div className={`p-2 rounded-full mr-4 ${t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                     {t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}

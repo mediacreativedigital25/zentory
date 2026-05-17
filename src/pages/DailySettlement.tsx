@@ -378,7 +378,7 @@ export default function DailySettlement() {
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Daily Settlement</h2>
           <p className="text-gray-500 mt-1">Proses tutup buku harian untuk merangkum aktivitas keuangan.</p>
         </div>
-        <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-3 bg-white p-2 rounded-md border border-gray-100 shadow-sm">
           <Calendar className="w-5 h-5 text-indigo-600" />
           <span className="font-bold text-gray-700">
             {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -389,7 +389,7 @@ export default function DailySettlement() {
       {isAlreadySettled && (
         <div className="bg-amber-50 border border-amber-100 p-6 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-md flex items-center justify-center">
               <Lock className="w-6 h-6" />
             </div>
             <div>
@@ -399,14 +399,14 @@ export default function DailySettlement() {
           </div>
           
           {pendingRequest ? (
-            <div className="px-6 py-3 bg-white border border-amber-200 rounded-lg flex items-center gap-2 text-amber-600 font-medium text-sm">
+            <div className="px-6 py-3 bg-white border border-amber-200 rounded-md flex items-center gap-2 text-amber-600 font-medium text-sm">
               <Send className="w-4 h-4" />
               Request Open Pending...
             </div>
           ) : (
             <button
               onClick={() => setIsRequestModalOpen(true)}
-              className="px-6 py-3 bg-amber-600 text-white rounded-2xl font-bold text-sm hover:bg-amber-700 transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-amber-600 text-white rounded-md font-bold text-sm hover:bg-amber-700 transition-all flex items-center gap-2"
             >
               <Lock className="w-4 h-4" />
               Request Open Settlement
@@ -421,7 +421,7 @@ export default function DailySettlement() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <motion.div 
               whileHover={{ y: -5 }}
-              className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group"
+              className="bg-white p-8 rounded-md border border-gray-100 shadow-sm relative overflow-hidden group"
             >
               <div className="relative z-10">
                 <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Omzet (Penjualan)</p>
@@ -436,7 +436,7 @@ export default function DailySettlement() {
 
             <motion.div 
               whileHover={{ y: -5 }}
-              className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group"
+              className="bg-white p-8 rounded-md border border-gray-100 shadow-sm relative overflow-hidden group"
             >
               <div className="relative z-10">
                 <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Total Pengeluaran</p>
@@ -460,7 +460,7 @@ export default function DailySettlement() {
                 <h4 className="text-5xl font-black mb-6">Rp.{netProfit.toLocaleString()}</h4>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-white/10 rounded-2xl backdrop-blur-sm">
+                  <div className="flex items-center justify-between p-4 bg-white/10 rounded-md backdrop-blur-sm">
                     <div className="flex items-center">
                       <Calculator className="w-5 h-5 mr-3 text-indigo-200" />
                       <span className="text-sm font-bold">Laba Kotor (Omzet - Modal)</span>
@@ -493,7 +493,7 @@ export default function DailySettlement() {
                         setIsCharityBankModalOpen(true);
                     }}
                     disabled={isProcessingCharity || isClosing}
-                    className="w-full py-4 bg-pink-500 text-white rounded-2xl font-black shadow-lg hover:bg-pink-600 transition-all flex items-center justify-center disabled:opacity-50"
+                    className="w-full py-4 bg-pink-500 text-white rounded-md font-black shadow-lg hover:bg-pink-600 transition-all flex items-center justify-center disabled:opacity-50"
                   >
                     <Heart className="w-5 h-5 mr-2" />
                     {isProcessingCharity ? 'Memproses Amal...' : 'Kumpulkan Amal ke Kas/Bank (2.5%)'}
@@ -509,7 +509,7 @@ export default function DailySettlement() {
                     }
                   }}
                   disabled={isClosing || (transactionCount === 0 && totalExpenses === 0) || isAlreadySettled}
-                  className="w-full py-4 bg-white text-indigo-600 rounded-2xl font-black shadow-lg hover:bg-indigo-50 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-white text-indigo-600 rounded-md font-black shadow-lg hover:bg-indigo-50 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isClosing ? 'Memproses...' : isAlreadySettled ? 'Sudah Settlement' : 'Tutup Buku Sekarang'}
                   <ArrowRight className="ml-2 w-5 h-5" />
@@ -526,7 +526,7 @@ export default function DailySettlement() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
-                  className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden"
+                  className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
                 >
                   <div className="p-8 border-b border-gray-100 flex justify-between items-center">
                     <div>
@@ -536,7 +536,7 @@ export default function DailySettlement() {
                         </h3>
                         <p className="text-sm text-gray-500 mt-1">Pilih kemana uang amal akan ditampung.</p>
                     </div>
-                    <button onClick={() => setIsCharityBankModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                    <button onClick={() => setIsCharityBankModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-md transition-colors">
                         <X className="w-5 h-5 text-gray-500" />
                     </button>
                   </div>
@@ -545,7 +545,7 @@ export default function DailySettlement() {
                     <select
                         value={selectedCharityBankId}
                         onChange={(e) => setSelectedCharityBankId(e.target.value)}
-                        className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-0 outline-none"
+                        className="w-full p-3 border-2 border-gray-200 rounded-md focus:border-pink-500 focus:ring-0 outline-none"
                     >
                         <option value="">-- Pilih --</option>
                         {bankAccounts.map(b => (
@@ -556,14 +556,14 @@ export default function DailySettlement() {
                     <div className="mt-8 flex gap-3">
                       <button
                         onClick={() => setIsCharityBankModalOpen(false)}
-                        className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50"
+                        className="flex-1 py-3 border border-gray-200 rounded-md font-bold text-gray-600 hover:bg-gray-50"
                       >
                         Batal
                       </button>
                       <button
                         onClick={handleProcessCharity}
                         disabled={!selectedCharityBankId || isProcessingCharity}
-                        className="flex-1 py-3 bg-pink-500 text-white rounded-xl font-bold hover:bg-pink-600 disabled:opacity-50"
+                        className="flex-1 py-3 bg-pink-500 text-white rounded-md font-bold hover:bg-pink-600 disabled:opacity-50"
                       >
                         {isProcessingCharity ? 'Memproses...' : 'Kumpulkan'}
                       </button>
@@ -581,7 +581,7 @@ export default function DailySettlement() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden"
+                  className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
                 >
                   <div className="p-8 border-b border-gray-100">
                     <h3 className="text-xl font-black text-gray-900">Konfirmasi Amal</h3>
@@ -591,14 +591,14 @@ export default function DailySettlement() {
                     <button
                       onClick={() => handleDoClosing(false)}
                       disabled={isClosing}
-                      className="flex-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
+                      className="flex-1 px-6 py-4 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white transition-all"
                     >
                       Tidak
                     </button>
                     <button
                       onClick={() => handleDoClosing(true)}
                       disabled={isClosing}
-                      className="flex-1 px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all"
+                      className="flex-1 px-6 py-4 bg-indigo-600 text-white rounded-md font-black hover:bg-indigo-700 transition-all"
                     >
                       Ya, Aktifkan
                     </button>
@@ -612,9 +612,9 @@ export default function DailySettlement() {
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-green-50 border border-green-100 p-6 rounded-3xl flex items-center gap-4"
+              className="bg-green-50 border border-green-100 p-6 rounded-md flex items-center gap-4"
             >
-              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-md flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div>
@@ -627,7 +627,7 @@ export default function DailySettlement() {
 
         {/* History Sidebar */}
         <div className="space-y-6">
-          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-md p-8 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-lg font-black text-gray-900 flex items-center">
                 <History className="w-5 h-5 mr-2 text-indigo-600" />
@@ -663,7 +663,7 @@ export default function DailySettlement() {
             </div>
           </div>
 
-          <div className="bg-indigo-50 rounded-3xl p-6 border border-indigo-100">
+          <div className="bg-indigo-50 rounded-md p-6 border border-indigo-100">
             <div className="flex items-center gap-3 mb-3">
               <Lock className="w-5 h-5 text-indigo-600" />
               <h4 className="font-black text-indigo-900 text-sm">Keamanan Data</h4>
@@ -682,7 +682,7 @@ export default function DailySettlement() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center">
                 <div>
@@ -694,7 +694,7 @@ export default function DailySettlement() {
                 </button>
               </div>
               <div className="p-8 space-y-6">
-                <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-700 leading-relaxed">
+                <div className="p-4 bg-amber-50 border border-amber-100 rounded-md text-xs text-amber-700 leading-relaxed">
                   Membuka kembali settlement akan memungkinkan Anda untuk mengubah data transaksi hari ini. Pastikan Anda memiliki alasan yang valid.
                 </div>
                 <div>
@@ -703,20 +703,20 @@ export default function DailySettlement() {
                     value={requestReason}
                     onChange={(e) => setRequestReason(e.target.value)}
                     placeholder="Contoh: Ada transaksi yang terlewat, salah input nominal..."
-                    className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px] text-sm"
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 min-h-[120px] text-sm"
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => setIsRequestModalOpen(false)}
-                    className="flex-1 px-6 py-4 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
+                    className="flex-1 px-6 py-4 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleRequestOpen}
                     disabled={isClosing || !requestReason.trim()}
-                    className="flex-1 px-6 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center"
+                    className="flex-1 px-6 py-4 bg-indigo-600 text-white rounded-md font-black hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center"
                   >
                     {isClosing ? 'Mengirim...' : 'Kirim Request'}
                   </button>

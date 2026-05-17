@@ -154,12 +154,12 @@ export default function FinancialReport() {
           <p className="text-gray-500 mt-1">Analisis performa finansial bisnis Anda secara mendalam.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="bg-white p-1 rounded-lg border border-gray-100 shadow-sm flex">
+          <div className="bg-white p-1 rounded-md border border-gray-100 shadow-sm flex">
             {(['daily', 'weekly', 'monthly', 'yearly'] as FilterType[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                className={`px-4 py-2 rounded-md text-xs font-black uppercase tracking-widest transition-all ${
                   filter === f ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
@@ -169,7 +169,7 @@ export default function FinancialReport() {
           </div>
           <button
             onClick={handleExport}
-            className="p-3 bg-white border border-gray-100 rounded-lg text-gray-600 hover:bg-white transition-all shadow-sm"
+            className="p-3 bg-white border border-gray-100 rounded-md text-gray-600 hover:bg-white transition-all shadow-sm"
             title="Export Report"
           >
             <Download className="w-5 h-5" />
@@ -181,10 +181,10 @@ export default function FinancialReport() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <motion.div 
           whileHover={{ y: -5 }}
-          className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group"
+          className="bg-white p-8 rounded-md border border-gray-100 shadow-sm relative overflow-hidden group"
         >
           <div className="relative z-10">
-            <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6">
+            <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-md flex items-center justify-center mb-6">
               <Wallet className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Saldo</p>
@@ -195,10 +195,10 @@ export default function FinancialReport() {
 
         <motion.div 
           whileHover={{ y: -5 }}
-          className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group"
+          className="bg-white p-8 rounded-md border border-gray-100 shadow-sm relative overflow-hidden group"
         >
           <div className="relative z-10">
-            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mb-6">
+            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-md flex items-center justify-center mb-6">
               <TrendingUp className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Pendapatan</p>
@@ -209,10 +209,10 @@ export default function FinancialReport() {
 
         <motion.div 
           whileHover={{ y: -5 }}
-          className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group"
+          className="bg-white p-8 rounded-md border border-gray-100 shadow-sm relative overflow-hidden group"
         >
           <div className="relative z-10">
-            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mb-6">
+            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-md flex items-center justify-center mb-6">
               <TrendingDown className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Pengeluaran</p>
@@ -233,11 +233,11 @@ export default function FinancialReport() {
             <motion.div
               key={bank.id}
               whileHover={{ y: -3 }}
-              className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between group"
+              className="bg-white p-6 rounded-md border border-gray-100 shadow-sm flex flex-col justify-between group"
             >
               <div>
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`p-2 rounded-xl ${
+                  <div className={`p-2 rounded-md ${
                     bank.type === 'CASH' ? 'bg-orange-100 text-orange-600' :
                     bank.type === 'QRIS' ? 'bg-purple-100 text-purple-600' :
                     'bg-blue-100 text-blue-600'
@@ -259,7 +259,7 @@ export default function FinancialReport() {
             </motion.div>
           ))}
           {bankAccountBalances.length === 0 && (
-            <div className="col-span-full py-10 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+            <div className="col-span-full py-10 text-center bg-gray-50 rounded-md border border-dashed border-gray-200">
               <p className="text-gray-400 font-bold">Belum ada akun bank yang terdaftar.</p>
             </div>
           )}
@@ -267,14 +267,14 @@ export default function FinancialReport() {
       </div>
 
       {/* Detailed Report Table */}
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
           <div className="flex items-center gap-4">
             <h3 className="text-lg font-black text-gray-900 flex items-center">
               <FileText className="w-5 h-5 mr-2 text-indigo-600" />
               Rincian Transaksi ({filter === 'daily' ? 'Hari Ini' : filter === 'weekly' ? 'Minggu Ini' : filter === 'monthly' ? 'Bulan Ini' : 'Tahun Ini'})
             </h3>
-            <div className="flex items-center gap-2 text-[10px] text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 text-[10px] text-gray-500 bg-white px-3 py-1.5 rounded-md border border-gray-100 shadow-sm">
               <span className="font-black uppercase tracking-widest">Tampilkan:</span>
               <select 
                 value={rowsPerPage} 
@@ -370,7 +370,7 @@ export default function FinancialReport() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="p-3 bg-white border border-gray-100 rounded-lg text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
+              className="p-3 bg-white border border-gray-100 rounded-md text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -386,7 +386,7 @@ export default function FinancialReport() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-10 h-10 rounded-2xl text-[10px] font-black transition-all ${
+                      className={`w-10 h-10 rounded-md text-[10px] font-black transition-all ${
                         currentPage === page 
                           ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
                           : 'bg-white text-gray-400 hover:text-gray-600 border border-gray-100 shadow-sm'
@@ -407,7 +407,7 @@ export default function FinancialReport() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-3 bg-white border border-gray-100 rounded-lg text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
+              className="p-3 bg-white border border-gray-100 rounded-md text-gray-400 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

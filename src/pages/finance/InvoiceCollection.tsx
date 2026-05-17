@@ -289,7 +289,7 @@ export default function InvoiceCollection() {
           <button
             onClick={handleResetOrdersStatus}
             disabled={isResetting}
-            className="px-6 py-3 bg-red-600 text-white rounded-2xl font-black shadow-lg shadow-red-100 hover:bg-red-700 transition-all flex items-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
+            className="px-6 py-3 bg-red-600 text-white rounded-md font-black shadow-lg shadow-red-100 hover:bg-red-700 transition-all flex items-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
           >
             {isResetting ? <Clock className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
             Reset All Collection Flags
@@ -320,7 +320,7 @@ export default function InvoiceCollection() {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
+      <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -328,10 +328,10 @@ export default function InvoiceCollection() {
             placeholder="Cari berdasarkan No. Koleksi atau Nama Pelanggan..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-100">
           <span className="font-bold uppercase tracking-widest">Show:</span>
           <select 
             value={rowsPerPage} 
@@ -345,7 +345,7 @@ export default function InvoiceCollection() {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -380,7 +380,7 @@ export default function InvoiceCollection() {
                      <span className="text-sm font-bold text-gray-900">{item.customerName}</span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="text-sm font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
+                    <span className="text-sm font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-md">
                       {item.orderIds.length}
                     </span>
                   </td>
@@ -411,7 +411,7 @@ export default function InvoiceCollection() {
                     <div className="flex items-center justify-center">
                       <button
                         onClick={() => { setSelectedCollection(item); setIsDetailModalOpen(true); }}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
                       >
                         <Eye className="w-5 h-5" />
                       </button>
@@ -439,7 +439,7 @@ export default function InvoiceCollection() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div>
@@ -477,7 +477,7 @@ export default function InvoiceCollection() {
                   </div>
                 </div>
 
-                <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 flex justify-between items-center">
+                <div className="bg-indigo-50/50 p-6 rounded-md border border-indigo-100 flex justify-between items-center">
                   <div>
                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Akumulasi Tagihan</p>
                     <p className="text-2xl font-black text-indigo-600">Rp.{selectedCollection.totalAmount.toLocaleString()}</p>
@@ -493,7 +493,7 @@ export default function InvoiceCollection() {
                     <TrendingUp className="w-4 h-4 text-indigo-500" />
                     Daftar Order Tercakup
                   </h4>
-                  <div className="border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+                  <div className="border border-gray-100 rounded-md overflow-hidden shadow-sm">
                     <ul className="divide-y divide-gray-50 text-sm">
                       {selectedCollectionOrders.length > 0 ? (
                         selectedCollectionOrders.map((order, idx) => (
@@ -533,7 +533,7 @@ export default function InvoiceCollection() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={generatePDF}
-                    className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-medium border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
+                    className="px-6 py-3 bg-white text-indigo-600 rounded-md font-medium border border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
                   >
                     <Printer className="w-4 h-4" />
                     Cetak
@@ -542,7 +542,7 @@ export default function InvoiceCollection() {
                     <button
                       disabled={isUpdating}
                       onClick={handleCloseCollection}
-                      className="px-6 py-3 bg-red-100 text-red-600 rounded-lg font-medium border border-red-200 hover:bg-red-200 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2 group"
+                      className="px-6 py-3 bg-red-100 text-red-600 rounded-md font-medium border border-red-200 hover:bg-red-200 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2 group"
                     >
                       <XCircle className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                       Close Collection
@@ -552,7 +552,7 @@ export default function InvoiceCollection() {
                     <button
                       disabled={isUpdating}
                       onClick={handleReopenCollection}
-                      className="px-6 py-3 bg-indigo-100 text-indigo-600 rounded-lg font-medium border border-indigo-200 hover:bg-indigo-200 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
+                      className="px-6 py-3 bg-indigo-100 text-indigo-600 rounded-md font-medium border border-indigo-200 hover:bg-indigo-200 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
                     >
                       <History className="w-4 h-4" />
                       Reopen Collection
@@ -562,7 +562,7 @@ export default function InvoiceCollection() {
                     <button
                       disabled={isUpdating}
                       onClick={handleDeleteCollection}
-                      className="px-6 py-3 bg-white text-red-600 rounded-lg font-medium border border-red-200 hover:bg-red-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
+                      className="px-6 py-3 bg-white text-red-600 rounded-md font-medium border border-red-200 hover:bg-red-50 transition-all shadow-sm text-xs uppercase tracking-widest flex items-center gap-2"
                     >
                       <Trash2 className="w-4 h-4" />
                       Hapus
@@ -571,7 +571,7 @@ export default function InvoiceCollection() {
                 </div>
                 <button
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="px-8 py-3 bg-white border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-100 transition-all shadow-sm text-xs uppercase tracking-widest"
+                  className="px-8 py-3 bg-white border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-gray-100 transition-all shadow-sm text-xs uppercase tracking-widest"
                 >
                   Tutup
                 </button>

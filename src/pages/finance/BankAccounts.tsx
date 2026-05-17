@@ -159,7 +159,7 @@ export default function BankAccounts() {
             resetForm();
             setIsModalOpen(true);
           }}
-          className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+          className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah Akun
@@ -176,20 +176,20 @@ export default function BankAccounts() {
               key={account.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all relative overflow-hidden group"
+              className="bg-white rounded-md p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all relative overflow-hidden group"
             >
               <div className="absolute top-0 right-0 p-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 {account.name.toUpperCase() !== 'TUNAI' && (
                   <>
                     <button
                       onClick={() => handleEdit(account)}
-                      className="p-2 bg-white shadow-sm border border-gray-100 rounded-lg text-gray-600 hover:text-indigo-600 transition-colors"
+                      className="p-2 bg-white shadow-sm border border-gray-100 rounded-md text-gray-600 hover:text-indigo-600 transition-colors"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(account.id)}
-                      className="p-2 bg-white shadow-sm border border-gray-100 rounded-lg text-gray-600 hover:text-red-600 transition-colors"
+                      className="p-2 bg-white shadow-sm border border-gray-100 rounded-md text-gray-600 hover:text-red-600 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -198,7 +198,7 @@ export default function BankAccounts() {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className={`p-3 rounded-xl ${account.isActive ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-50 text-gray-400'}`}>
+                <div className={`p-3 rounded-md ${account.isActive ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-50 text-gray-400'}`}>
                   <Icon className="w-6 h-6" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -242,7 +242,7 @@ export default function BankAccounts() {
         })}
 
         {accounts.length === 0 && (
-          <div className="col-span-full bg-white rounded-lg border-2 border-dashed border-gray-200 p-12 text-center">
+          <div className="col-span-full bg-white rounded-md border-2 border-dashed border-gray-200 p-12 text-center">
             <Landmark className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-gray-900">Belum ada akun bank</h3>
             <p className="text-gray-500 max-w-xs mx-auto mt-2">
@@ -259,7 +259,7 @@ export default function BankAccounts() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">
@@ -267,7 +267,7 @@ export default function BankAccounts() {
                 </h3>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-md transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -282,7 +282,7 @@ export default function BankAccounts() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Contoh: BCA, Mandiri, QRIS Toko"
-                    className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                    className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
                   />
                 </div>
 
@@ -292,7 +292,7 @@ export default function BankAccounts() {
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as BankAccount['type'] })}
-                      className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
                     >
                       {ACCOUNT_TYPES.map(type => (
                         <option key={type.id} value={type.id}>{type.label}</option>
@@ -321,7 +321,7 @@ export default function BankAccounts() {
                         value={formData.accountNumber}
                         onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                         placeholder="Masukkan nomor rekening"
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>
                     <div>
@@ -331,7 +331,7 @@ export default function BankAccounts() {
                         value={formData.accountHolder}
                         onChange={(e) => setFormData({ ...formData, accountHolder: e.target.value })}
                         placeholder="Nama sesuai rekening"
-                        className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none"
                       />
                     </div>
                   </>
@@ -341,13 +341,13 @@ export default function BankAccounts() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-3 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-white transition-all"
+                    className="flex-1 px-6 py-3 border border-gray-200 rounded-md text-gray-600 font-medium hover:bg-white transition-all"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
                   >
                     Simpan
                   </button>
