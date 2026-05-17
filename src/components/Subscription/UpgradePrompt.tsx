@@ -11,7 +11,17 @@ interface UpgradePromptProps {
 }
 
 export default function UpgradePrompt({ featureName, requiredPlan = 'lite', onClose }: UpgradePromptProps) {
-  const planInfo = PLANS[requiredPlan];
+  const planInfo = PLANS[requiredPlan] || {
+    name: 'Advanced',
+    description: 'Fitur Lanjutan',
+    price: 'Rp ?',
+    priceDisplay: 'Rp ?',
+    pricing: [],
+    color: 'bg-indigo-100 text-indigo-600',
+    icon: 'Sparkles',
+    limits: { maxProducts: 0, maxTransactionsPerMonth: 0, maxUsers: 0 },
+    features: []
+  };
 
   return (
     <div className="bg-white rounded-md shadow-2xl overflow-hidden max-w-lg w-full border border-indigo-50">

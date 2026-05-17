@@ -538,13 +538,13 @@ export default function App() {
           <Route path="/subscription-expired" element={<SubscriptionExpired />} />
 
           <Route path="/layanan/invoice" element={
-            <ProtectedRoute allowedRoles={['admin']} menuLabel="Layanan">
+            <ProtectedRoute allowedRoles={['admin']}>
               <LayananInvoice />
             </ProtectedRoute>
           } />
 
           <Route path="/layanan/saya" element={
-            <ProtectedRoute allowedRoles={['admin']} menuLabel="Layanan">
+            <ProtectedRoute allowedRoles={['admin']}>
               <LayananSaya />
             </ProtectedRoute>
           } />

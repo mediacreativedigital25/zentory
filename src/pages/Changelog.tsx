@@ -4,6 +4,19 @@ import { History, CheckCircle2, Rocket, Shield, Layout, ShoppingCart, UserCheck,
 
 const changelogData = [
   {
+    date: '17 Mei 2026',
+    version: 'v2.6.0',
+    title: 'Standarisasi UI & Manajemen Visibilitas',
+    icon: Layout,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    changes: [
+      'Standardisasi UI (User Interface): Pembaruan bentuk dan kelengkungan elemen visual pada keseluruhan aplikasi untuk estetika yang lebih seragam dan modern.',
+      'Penambahan Opsi Reset Superadmin: Modul Reset Data kini mencakup lebih banyak opsi kontrol reset, termasuk Transfer Rekening, Kategori, Riwayat Stok, Transaksi Persetujuan, dan Target Penjualan.',
+      'Kontrol Visibilitas Rekening: Pengguna kini dapat memilih rekening bank mana yang akan ditampilkan ke publik sebagai opsi pembayaran pada halaman Katalog.'
+    ]
+  },
+  {
     date: '22 April 2026',
     version: 'v2.5.0',
     title: 'Manajemen Penagihan Kolektif (Invoice Collection)',

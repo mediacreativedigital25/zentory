@@ -32,7 +32,8 @@ export default function BankAccounts() {
     accountNumber: '',
     accountHolder: '',
     type: 'BANK' as BankAccount['type'],
-    isActive: true
+    isActive: true,
+    showInCatalog: true
   });
 
   useEffect(() => {
@@ -105,7 +106,8 @@ export default function BankAccounts() {
       accountNumber: '',
       accountHolder: '',
       type: 'BANK',
-      isActive: true
+      isActive: true,
+      showInCatalog: true
     });
     setEditingAccount(null);
   };
@@ -117,7 +119,8 @@ export default function BankAccounts() {
       accountNumber: account.accountNumber || '',
       accountHolder: account.accountHolder || '',
       type: account.type,
-      isActive: account.isActive
+      isActive: account.isActive,
+      showInCatalog: account.showInCatalog !== false // Default to true if undefined
     });
     setIsModalOpen(true);
   };
@@ -237,6 +240,20 @@ export default function BankAccounts() {
                   </div>
                 )}
               </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tampil di Katalog</span>
+                {account.showInCatalog !== false ? (
+                  <div className="flex items-center text-indigo-600 text-[10px] font-bold uppercase tracking-widest">
+                    <Check className="w-3 h-3 mr-1" />
+                    Ya
+                  </div>
+                ) : (
+                  <div className="flex items-center text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                    <X className="w-3 h-3 mr-1" />
+                    Tidak
+                  </div>
+                )}
+              </div>
             </motion.div>
           );
         })}
@@ -299,7 +316,7 @@ export default function BankAccounts() {
                       ))}
                     </select>
                   </div>
-                  <div className="flex items-end">
+                  <div className="flex items-end gap-2">
                     <label className="flex items-center space-x-2 cursor-pointer pb-2 text-xs font-semibold text-gray-600">
                       <input
                         type="checkbox"
@@ -308,6 +325,15 @@ export default function BankAccounts() {
                         className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                       />
                       <span className="text-sm font-bold text-gray-700">Aktif</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer pb-2 text-xs font-semibold text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={formData.showInCatalog}
+                        onChange={(e) => setFormData({ ...formData, showInCatalog: e.target.checked })}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-bold text-gray-700">Katalog</span>
                     </label>
                   </div>
                 </div>

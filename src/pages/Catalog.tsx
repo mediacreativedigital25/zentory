@@ -115,7 +115,7 @@ export default function Catalog() {
           // 4. Fetch bank accounts for this tenant
           const bankQuery = query(collection(db, 'bank_accounts'), where('tenantId', '==', tenantData.id), where('isActive', '==', true));
           const bankSnap = await getDocs(bankQuery);
-          const banks = bankSnap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount));
+          const banks = bankSnap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount)).filter(b => b.showInCatalog !== false);
           setBankAccounts(banks);
           if (banks.length > 0) {
             setSelectedBankAccountId(banks[0].id);

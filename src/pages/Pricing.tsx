@@ -1,17 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Zap, Star, Shield, Building2, ChevronRight, Sparkles } from 'lucide-react';
-import { PLANS } from '../constants/plans';
 import { usePermissions } from '../hooks/usePermissions';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+
+interface ServicePricing {
+  duration: number;
+  price: number;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  pricingList: ServicePricing[];
+  features: string[];
+  icon: string;
+}
 
 export default function Pricing() {
   const { plan: currentPlan } = usePermissions();
   const navigate = useNavigate();
-  const [selectedDuration, setSelectedDuration] = React.useState(30);
+  const [selectedDuration, setSelectedDuration] = useState(30);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleUpgrade = (planId: string) => {
-    navigate(`/checkout?plan=${planId}&duration=${selectedDuration}`);
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const q = query(collection(db, 'system_services'), orderBy('createdAt', 'asc'));
+        const snap = await getDocs(q);
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Service)).filter(s => (s as any).isEnabled !== false);
+        setServices(list);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchServices();
+  }, []);
+
+  const handleUpgrade = (serviceId: string) => {
+    navigate(`/checkout?serviceId=${serviceId}&duration=${selectedDuration}`);
   };
 
   const durations = [30, 90, 180, 365];
@@ -76,25 +109,33 @@ export default function Pricing() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        {Object.values(PLANS).map((p, index) => {
-          const isCurrent = currentPlan === p.id;
-          const isRecommended = p.id === 'lite';
+        {loading ? (
+          <div className="col-span-full py-20 text-center text-gray-500 font-bold animate-pulse">Memuat pilihan paket layanan...</div>
+        ) : services.length > 0 ? services.map((p, index) => {
+          const isCurrent = currentPlan === p.id || (currentPlan === 'free' && p.pricingList?.[0]?.price === 0);
+          const isRecommended = index === 1 || p.name.toLowerCase().includes('pro');
           
-          const currentPricing = p.pricing.find(pr => pr.duration === selectedDuration) || p.pricing[0];
-          const displayPrice = p.id === 'free' ? p.price : currentPricing.priceDisplay;
+          const pList = p.pricingList?.length ? p.pricingList : [{ duration: 30, price: (p as any).price || 0 }];
+          const sortedPricing = [...pList].sort((a,b) => a.duration - b.duration);
+          const currentPricing = pList.find(pr => pr.duration === selectedDuration) || sortedPricing[0];
+          
+          if (!currentPricing) return null;
 
-          // Calculate Discount Percentage
-          const basePrice30 = p.pricing.find(pr => pr.duration === 30)?.price || 0;
-          let discountPercent = 0;
-          if (p.id !== 'free' && selectedDuration > 30 && basePrice30 > 0) {
-            const normalPriceForDuration = (basePrice30 / 30) * selectedDuration;
-            discountPercent = Math.round(((normalPriceForDuration - currentPricing.price) / normalPriceForDuration) * 100);
-          }
+          const displayPrice = `Rp${currentPricing.price.toLocaleString()}`;
 
           // Calculate End Date Today + Selected Duration
           const expiryDate = new Date();
-          expiryDate.setDate(expiryDate.getDate() + selectedDuration);
+          expiryDate.setDate(expiryDate.getDate() + (currentPricing.duration || selectedDuration));
           const expiryDateStr = expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+          const IconComp = p.icon === 'Zap' ? Zap : p.icon === 'Star' ? Star : p.icon === 'Building2' ? Building2 : p.icon === 'Shield' ? Shield : Sparkles;
+
+          let discountPercent = 0;
+          if (selectedDuration > 30 && sortedPricing[0]?.price > 0 && selectedDuration === currentPricing.duration) {
+            const basePrice30 = sortedPricing[0].price;
+            const normalPriceForDuration = Math.round((basePrice30 / sortedPricing[0].duration) * selectedDuration);
+            discountPercent = Math.round(((normalPriceForDuration - currentPricing.price) / normalPriceForDuration) * 100);
+          }
 
           return (
             <motion.div
@@ -123,27 +164,19 @@ export default function Pricing() {
 
               <div className="mb-8">
                 <div className={`w-12 h-12 rounded-md flex items-center justify-center mb-6 ${
-                  p.id === 'free' ? 'bg-gray-100 text-gray-600' :
-                  p.id === 'starter' ? 'bg-blue-100 text-blue-600' :
-                  p.id === 'lite' ? 'bg-indigo-100 text-indigo-600' :
-                  p.id === 'pro' ? 'bg-purple-100 text-purple-600' :
-                  'bg-amber-100 text-amber-600'
+                  isRecommended ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
                 }`}>
-                  {p.id === 'free' && <Zap className="w-6 h-6" />}
-                  {p.id === 'starter' && <Shield className="w-6 h-6" />}
-                  {p.id === 'lite' && <Star className="w-6 h-6" />}
-                  {p.id === 'pro' && <Building2 className="w-6 h-6" />}
-                  {p.id === 'business' && <Sparkles className="w-6 h-6" />}
+                  <IconComp className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-black text-gray-900 mb-2">{p.name}</h3>
                 <div className="flex flex-col">
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-black text-gray-900">{displayPrice}</span>
                   </div>
-                  {p.id !== 'free' && (
+                  {currentPricing.price > 0 && (
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        / {selectedDuration} Hari
+                        / {currentPricing.duration} Hari
                       </span>
                       <span className="text-[9px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded uppercase">
                         Hingga {expiryDateStr}
@@ -152,51 +185,17 @@ export default function Pricing() {
                   )}
                 </div>
                 <p className="mt-4 text-sm text-gray-500 font-medium leading-relaxed">
-                  {currentPricing.description || p.description}
+                  {p.description}
                 </p>
               </div>
 
               <div className="flex-1 space-y-4 mb-8">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fitur & Limit:</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fitur & Keunggulan:</p>
                 <ul className="space-y-3 font-sans">
-                  {/* Limits first */}
-                  <li className="flex items-start gap-4 p-3 bg-white rounded-md border border-gray-100">
-                    <Zap className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">Kapasitas Produk</p>
-                      <p className="text-xs font-black text-gray-900">
-                        {p.limits.maxProducts >= 1000000 ? 'Unlimited Produk' : `${p.limits.maxProducts.toLocaleString()} Produk`}
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-4 p-3 bg-white rounded-md border border-gray-100">
-                    <Shield className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">Limit Transaksi</p>
-                      <p className="text-xs font-black text-gray-900">
-                        {p.limits.maxTransactionsPerMonth >= 1000000 ? 'Unlimited Transaksi' : `${p.limits.maxTransactionsPerMonth.toLocaleString()} / bln`}
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-4 p-3 bg-white rounded-md border border-gray-100">
-                    <Star className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">Akses Pengguna</p>
-                      <p className="text-xs font-black text-gray-900">
-                        {p.limits.maxUsers >= 100 ? 'Enterprise User' : `${p.limits.maxUsers} User`}
-                      </p>
-                    </div>
-                  </li>
-
-                  {/* Top Features */}
-                  {p.features.slice(0, 4).map((f, i) => (
-                    <li key={i} className="flex items-center gap-3 px-1">
-                      <div className="w-4 h-4 rounded-full bg-green-50 flex items-center justify-center shrink-0">
-                        <Check className="w-2.5 h-2.5 text-green-600 stroke-[4px]" />
-                      </div>
-                      <span className="text-xs font-bold text-gray-600 capitalize">
-                        {f.replace(/_/g, ' ')}
-                      </span>
+                  {p.features?.map((feat, i) => (
+                    <li key={i} className="flex items-start gap-4">
+                      <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5 stroke-[3]" />
+                      <span className="text-sm font-bold text-gray-600">{feat}</span>
                     </li>
                   ))}
                 </ul>
@@ -205,7 +204,7 @@ export default function Pricing() {
               <button
                 onClick={() => handleUpgrade(p.id)}
                 disabled={isCurrent}
-                className={`w-full py-4 rounded-md font-black text-sm transition-all flex items-center justify-center gap-2 ${
+                className={`mt-auto w-full py-4 rounded-md font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                   isCurrent 
                     ? 'bg-gray-100 text-gray-400 cursor-default' 
                     : isRecommended
@@ -218,7 +217,9 @@ export default function Pricing() {
               </button>
             </motion.div>
           );
-        })}
+        }) : (
+           <div className="col-span-full py-20 text-center text-gray-500 font-bold">Harap tambahkan layanan via Superadmin</div>
+        )}
       </div>
 
       <div className="bg-white p-12 rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden relative">

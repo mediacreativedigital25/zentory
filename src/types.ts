@@ -318,6 +318,7 @@ export interface BankAccount {
   accountHolder?: string;
   type: 'BANK' | 'QRIS' | 'CASH' | 'E-WALLET';
   isActive: boolean;
+  showInCatalog?: boolean;
   createdAt: any;
 }
 

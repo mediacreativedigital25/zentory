@@ -29,13 +29,60 @@ export default function Checkout() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { tenant, profile } = useAuth();
-  const planId = searchParams.get('plan') as SubscriptionPlan || 'lite';
-  const durationParam = parseInt(searchParams.get('duration') || '30');
-  const planInfo = PLANS[planId];
   
-  const currentPricing = planInfo?.pricing.find(p => p.duration === durationParam) || planInfo?.pricing[0];
-  const selectedAmount = currentPricing?.price || 0;
-  const selectedPriceDisplay = currentPricing?.priceDisplay || 'Rp 0';
+  const serviceId = searchParams.get('serviceId');
+  const durationParam = parseInt(searchParams.get('duration') || '30');
+
+  const [isLoadingService, setIsLoadingService] = useState(true);
+  const [planInfo, setPlanInfo] = useState<any>(null);
+  const [currentPricing, setCurrentPricing] = useState<any>(null);
+  const [selectedAmount, setSelectedAmount] = useState(0);
+  const [selectedPriceDisplay, setSelectedPriceDisplay] = useState('Rp 0');
+
+  useEffect(() => {
+    const fetchService = async () => {
+      if (!serviceId) {
+        navigate('/pricing');
+        return;
+      }
+      try {
+        const snap = await getDoc(doc(db, 'system_services', serviceId));
+        if (snap.exists()) {
+          const data = { id: snap.id, ...snap.data() };
+          setPlanInfo(data);
+          
+          const pricingList = data.pricingList || [];
+          const pricing = pricingList.find((p: any) => p.duration === durationParam) || pricingList[0] || { duration: 30, price: 0 };
+          
+          setCurrentPricing(pricing);
+          setSelectedAmount(pricing.price);
+          setSelectedPriceDisplay(`Rp ${pricing.price.toLocaleString()}`);
+        } else {
+          try {
+            // maybe it was a hardcoded PLAN like 'starter', etc.
+            if(PLANS[serviceId as SubscriptionPlan]) {
+              const oldPlan = PLANS[serviceId as SubscriptionPlan];
+              setPlanInfo(oldPlan);
+              const pricing = oldPlan.pricing.find(p => p.duration === durationParam) || oldPlan.pricing[0];
+              setCurrentPricing(pricing);
+              setSelectedAmount(pricing.price);
+              setSelectedPriceDisplay(pricing.priceDisplay);
+            } else {
+              navigate('/pricing');
+            }
+          } catch(e) {
+            navigate('/pricing');
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        navigate('/pricing');
+      } finally {
+        setIsLoadingService(false);
+      }
+    };
+    fetchService();
+  }, [serviceId, durationParam, navigate]);
 
   // Calculate Expiry Preview
   const expiryDate = new Date();
@@ -134,10 +181,6 @@ export default function Checkout() {
   };
 
   useEffect(() => {
-    if (!planInfo) {
-      navigate('/pricing');
-    }
-
     const unsub = onSnapshot(doc(db, 'system', 'config'), (snap) => {
       if (snap.exists()) {
         const data = snap.data();
@@ -177,7 +220,7 @@ export default function Checkout() {
         tenantName: tenant.name,
         userId: profile.uid,
         userEmail: profile.email,
-        planId: planId,
+        planId: serviceId || 'unknown',
         planName: planInfo.name,
         duration: usedDuration,
         amount: selectedAmount,
@@ -230,6 +273,14 @@ export default function Checkout() {
       setIsProcessing(false);
     }
   };
+
+  if (isLoadingService || !planInfo) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-4">
+        <div className="text-gray-500 font-bold animate-pulse">Memuat data layanan...</div>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (

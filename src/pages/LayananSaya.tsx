@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { PLANS } from '../constants/plans';
@@ -10,20 +10,70 @@ import { useNavigate } from 'react-router-dom';
 export default function LayananSaya() {
   const { profile } = useAuth();
   const [tenant, setTenant] = useState<any>(null);
+  const [activePlan, setActivePlan] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!profile?.tenantId) return;
-    const unsub = onSnapshot(doc(db, 'tenants', profile.tenantId), (snap) => {
+    const unsub = onSnapshot(doc(db, 'tenants', profile.tenantId), async (snap) => {
       if (snap.exists()) {
-        setTenant(snap.data());
+        const tenantData = snap.data();
+        setTenant(tenantData);
+
+        const planIdOrName = tenantData.plan || tenantData.subscription || 'free';
+        // Check if it matches hardcoded PLANS
+        if (PLANS[planIdOrName as keyof typeof PLANS]) {
+          setActivePlan({ id: planIdOrName, ...PLANS[planIdOrName as keyof typeof PLANS] });
+          setIsLoading(false);
+        } else {
+          // Check if it matches system_services ID or fetch by name (for simplicity, let's assume it's ID, or we fetch if not found)
+          try {
+            const serviceDoc = await getDoc(doc(db, 'system_services', planIdOrName));
+            if (serviceDoc.exists()) {
+              const sData = serviceDoc.data();
+              setActivePlan({
+                id: serviceDoc.id,
+                name: sData.name,
+                features: sData.features || [],
+                limits: { maxProducts: 1000000, maxTransactionsPerMonth: 1000000, maxUsers: 10 }, // default limits for dynamic
+                isDynamic: true,
+                icon: sData.icon
+              });
+            } else {
+              // fallback to unknown dynamic plan
+              setActivePlan({
+                id: planIdOrName,
+                name: planIdOrName,
+                features: [],
+                limits: { maxProducts: 1000000, maxTransactionsPerMonth: 1000000, maxUsers: 10 },
+                isDynamic: true,
+                icon: 'Zap'
+              });
+            }
+          } catch(e) {
+            console.error(e);
+          } finally {
+            setIsLoading(false);
+          }
+        }
+      } else {
+        setIsLoading(false);
       }
     });
     return () => unsub();
   }, [profile]);
 
-  const currentPlanId = tenant?.plan || tenant?.subscription || 'free';
-  const currentPlan = PLANS[currentPlanId];
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="text-gray-500 font-bold animate-pulse">Memuat layanan...</div>
+      </div>
+    );
+  }
+
+  const currentPlanId = activePlan?.id || 'free';
+  const currentPlan = activePlan;
 
   return (
     <div className="space-y-8">
@@ -51,16 +101,21 @@ export default function LayananSaya() {
                 <div className="flex items-center gap-6">
                   <div className={`w-20 h-20 rounded-md flex items-center justify-center shadow-lg ${
                     currentPlanId === 'free' ? 'bg-gray-100 text-gray-600' :
+                    currentPlan?.isDynamic ? 'bg-indigo-100 text-indigo-600' :
                     currentPlanId === 'starter' ? 'bg-blue-100 text-blue-600' :
                     currentPlanId === 'lite' ? 'bg-indigo-100 text-indigo-600' :
                     currentPlanId === 'pro' ? 'bg-purple-100 text-purple-600' :
                     'bg-amber-100 text-amber-600'
                   }`}>
-                    {currentPlanId === 'free' && <Zap className="w-10 h-10" />}
-                    {currentPlanId === 'starter' && <Shield className="w-10 h-10" />}
-                    {currentPlanId === 'lite' && <Star className="w-10 h-10" />}
-                    {currentPlanId === 'pro' && <Building2 className="w-10 h-10" />}
-                    {currentPlanId === 'business' && <Sparkles className="w-10 h-10" />}
+                    {currentPlan?.icon === 'Star' ? <Star className="w-10 h-10" /> :
+                     currentPlan?.icon === 'Shield' ? <Shield className="w-10 h-10" /> :
+                     currentPlan?.icon === 'Building2' ? <Building2 className="w-10 h-10" /> :
+                     currentPlan?.icon === 'Sparkles' ? <Sparkles className="w-10 h-10" /> :
+                     currentPlanId === 'free' ? <Zap className="w-10 h-10" /> :
+                     currentPlanId === 'starter' ? <Shield className="w-10 h-10" /> :
+                     currentPlanId === 'lite' ? <Star className="w-10 h-10" /> :
+                     currentPlanId === 'pro' ? <Building2 className="w-10 h-10" /> :
+                     currentPlanId === 'business' ? <Sparkles className="w-10 h-10" /> : <Zap className="w-10 h-10" />}
                   </div>
                   <div>
                     <h3 className="text-3xl font-black text-gray-900 tracking-tight">{currentPlan?.name}</h3>
@@ -117,7 +172,7 @@ export default function LayananSaya() {
           <div className="bg-white rounded-md shadow-sm border border-gray-100 p-8 md:p-12">
             <h4 className="text-xl font-black text-gray-900 mb-8">Fitur Paket Anda</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-              {currentPlan?.features.map((feature: string, index: number) => (
+              {currentPlan?.features?.map((feature: string, index: number) => (
                 <div key={index} className="flex items-center gap-4 py-2">
                   <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                     <Check className="w-3 h-3 text-green-600 stroke-[4px]" />
@@ -140,33 +195,33 @@ export default function LayananSaya() {
                 <div className="flex justify-between text-xs font-bold mb-2">
                   <span className="text-gray-400 uppercase tracking-widest">Produk</span>
                   <span className="text-gray-900">
-                    {currentPlan?.limits.maxProducts >= 1000000 ? 'Unlimited' : `${currentPlan?.limits.maxProducts.toLocaleString()} Produk`}
+                    {currentPlan?.limits?.maxProducts >= 1000000 ? 'Unlimited' : `${currentPlan?.limits?.maxProducts?.toLocaleString() || 0} Produk`}
                   </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits.maxProducts >= 1000000 ? '100%' : '10%' }}></div>
+                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits?.maxProducts >= 1000000 ? '100%' : '10%' }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs font-bold mb-2">
                   <span className="text-gray-400 uppercase tracking-widest">Transaksi</span>
                   <span className="text-gray-900">
-                    {currentPlan?.limits.maxTransactionsPerMonth >= 1000000 ? 'Unlimited' : `${currentPlan?.limits.maxTransactionsPerMonth.toLocaleString()} / bln`}
+                    {currentPlan?.limits?.maxTransactionsPerMonth >= 1000000 ? 'Unlimited' : `${currentPlan?.limits?.maxTransactionsPerMonth?.toLocaleString() || 0} / bln`}
                   </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits.maxTransactionsPerMonth >= 1000000 ? '100%' : '5%' }}></div>
+                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits?.maxTransactionsPerMonth >= 1000000 ? '100%' : '5%' }}></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs font-bold mb-2">
                   <span className="text-gray-400 uppercase tracking-widest">User Staff</span>
                   <span className="text-gray-900">
-                    {currentPlan?.limits.maxUsers >= 100 ? 'Enterprise' : `${currentPlan?.limits.maxUsers} User`}
+                    {currentPlan?.limits?.maxUsers >= 100 ? 'Enterprise' : `${currentPlan?.limits?.maxUsers || 0} User`}
                   </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits.maxUsers >= 100 ? '100%' : '20%' }}></div>
+                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: currentPlan?.limits?.maxUsers >= 100 ? '100%' : '20%' }}></div>
                 </div>
               </div>
             </div>

@@ -13,6 +13,7 @@ interface Service {
   name: string;
   description: string;
   price: number;
+  pricingList?: { duration: number; price: number; }[];
   features: string[];
   menuPermissions?: string[];
   isEnabled: boolean;
@@ -92,6 +93,7 @@ export default function ServiceTenant() {
     name: '',
     description: '',
     price: 0,
+    pricingList: [{ duration: 30, price: 0 }],
     features: [''],
     menuPermissions: [] as string[],
     isEnabled: true,
@@ -124,6 +126,7 @@ export default function ServiceTenant() {
         name: service.name,
         description: service.description,
         price: service.price,
+        pricingList: service.pricingList?.length ? service.pricingList : [{ duration: 30, price: service.price }],
         features: service.features.length > 0 ? service.features : [''],
         menuPermissions: service.menuPermissions || [],
         isEnabled: service.isEnabled,
@@ -136,6 +139,7 @@ export default function ServiceTenant() {
         name: '',
         description: '',
         price: 0,
+        pricingList: [{ duration: 30, price: 0 }],
         features: [''],
         menuPermissions: [],
         isEnabled: true,
@@ -151,6 +155,7 @@ export default function ServiceTenant() {
     try {
       const data = {
         ...formData,
+        price: formData.pricingList[0]?.price || 0, // Fallback for backward compatibility
         features: formData.features.filter(f => f.trim() !== ''),
         updatedAt: serverTimestamp()
       };
@@ -187,6 +192,14 @@ export default function ServiceTenant() {
     const newFeatures = [...formData.features];
     newFeatures[index] = val;
     setFormData(prev => ({ ...prev, features: newFeatures }));
+  };
+
+  const addPricing = () => setFormData(prev => ({ ...prev, pricingList: [...prev.pricingList, { duration: 30, price: 0 }] }));
+  const removePricing = (index: number) => setFormData(prev => ({ ...prev, pricingList: prev.pricingList.filter((_, i) => i !== index) }));
+  const updatePricing = (index: number, field: 'duration' | 'price', val: number) => {
+    const newList = [...formData.pricingList];
+    newList[index] = { ...newList[index], [field]: val };
+    setFormData(prev => ({ ...prev, pricingList: newList }));
   };
 
   const toggleMenuPermission = (key: string) => {
@@ -297,7 +310,14 @@ export default function ServiceTenant() {
                       </span>
                     </td>
                     <td className="px-6 py-4 font-black text-gray-900">
-                      Rp{service.price.toLocaleString()}
+                      {service.pricingList?.length ? (
+                        <>
+                          <span className="text-[10px] text-gray-500 font-bold uppercase block -mb-1">Mulai Dari</span>
+                          Rp{Math.min(...service.pricingList.map(p => p.price)).toLocaleString()}
+                        </>
+                      ) : (
+                        `Rp${service.price.toLocaleString()}`
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {service.isEnabled ? (
@@ -379,16 +399,6 @@ export default function ServiceTenant() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-gray-600">Harga (Rp)</label>
-                    <input
-                      required
-                      type="number"
-                      value={formData.price}
-                      onChange={(e) => setFormData(prev => ({ ...prev, price: parseInt(e.target.value) }))}
-                      className="w-full p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <label className="text-xs font-semibold text-gray-600">Tipe</label>
                     <select
                       value={formData.type}
@@ -398,6 +408,32 @@ export default function ServiceTenant() {
                       <option value="subscription">Subscription (Paket)</option>
                       <option value="addon">Add-on (Tambahan)</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-semibold text-gray-600">Masa Aktif & Harga</label>
+                    <button type="button" onClick={addPricing} className="text-xs font-bold text-indigo-600 hover:text-indigo-700">
+                      + Tambah Durasi
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.pricingList.map((pricing, index) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <div className="flex-1 flex items-center border border-gray-200 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500">
+                          <input type="number" value={pricing.duration} onChange={e => updatePricing(index, 'duration', parseInt(e.target.value) || 0)} className="w-20 p-2 text-center outline-none bg-gray-50 border-r border-gray-200" placeholder="Hari" />
+                          <span className="px-3 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50">Hari</span>
+                          <span className="px-3 font-bold text-gray-400">Rp</span>
+                          <input type="number" value={pricing.price} onChange={e => updatePricing(index, 'price', parseInt(e.target.value) || 0)} className="flex-1 p-2 outline-none font-bold" placeholder="Harga" />
+                        </div>
+                        {formData.pricingList.length > 1 && (
+                          <button type="button" onClick={() => removePricing(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
