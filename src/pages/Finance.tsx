@@ -224,19 +224,19 @@ export default function Finance() {
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-900">
-                      {t.type === 'sale' ? `Order #${(t.id || '').slice(-6).toUpperCase()}` : (t as any).description || 'Expense'}
+                      {t.type === 'sale' ? `Order #${(t.id || '').slice(-6).toUpperCase()}` : t.description || t.type}
                     </p>
-                    <p className="text-xs text-gray-500">{(t as any).category || (t.type === 'sale' ? 'Sales' : 'Operational')}</p>
+                    <p className="text-xs text-gray-500">{t.category || (t.type === 'sale' ? 'Sales' : 'Operational')}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                      t.type === 'sale' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                      t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
                     }`}>
                       {t.type}
                     </span>
                   </td>
-                  <td className={`px-6 py-4 text-sm font-bold ${t.type === 'sale' ? 'text-green-600' : 'text-red-600'}`}>
-                    {t.type === 'sale' ? '+' : '-'}Rp.{(t.amount || 0).toLocaleString()}
+                  <td className={`px-6 py-4 text-sm font-bold ${t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? 'text-green-600' : 'text-red-600'}`}>
+                    {t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? '+' : '-'}Rp.{(t.amount || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`flex items-center text-xs font-bold uppercase ${

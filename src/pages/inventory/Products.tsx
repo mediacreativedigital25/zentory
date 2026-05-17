@@ -84,6 +84,7 @@ export default function Products() {
     description: '',
     imageUrl: '',
     type: 'manual' as 'manual' | 'service',
+    serviceActiveDays: 0,
     variants: [] as any[],
     wholesalePrices: [] as { minQuantity: number; price: number }[],
   });
@@ -1619,6 +1620,22 @@ export default function Products() {
                           onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                           className="w-full p-2 border border-green-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-green-50/30 font-medium text-green-700"
                         />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block mb-1 text-xs font-semibold text-gray-600">
+                          Masa Aktif Layanan (Hari)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={formData.serviceActiveDays || 0}
+                          onChange={(e) => setFormData({ ...formData, serviceActiveDays: Number(e.target.value) })}
+                          className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                          placeholder="Contoh: 30 untuk 1 bulan (Opsional)"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1 italic">
+                          Kosongkan atau isi 0 jika layanan aktif selamanya (lifetime).
+                        </p>
                       </div>
                     </div>
                   )}

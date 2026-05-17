@@ -113,6 +113,7 @@ export interface Product {
   imageUrl?: string;
   description?: string;
   type: 'manual' | 'service';
+  serviceActiveDays?: number; // active days for service
   createdAt: any;
   variants?: ProductVariant[];
   wholesalePrices?: WholesalePrice[];
@@ -210,7 +211,7 @@ export interface Transaction {
   id: string;
   orderId?: string; // Reference to order id
   tenantId: string;
-  type: 'sale' | 'expense';
+  type: 'sale' | 'expense' | 'charity_reserve' | 'transfer_in' | 'transfer_out';
   amount: number;
   items?: { 
     productId: string; 

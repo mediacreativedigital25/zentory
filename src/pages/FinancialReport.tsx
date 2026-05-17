@@ -36,6 +36,7 @@ type FilterType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 export default function FinancialReport() {
   const { profile, domainTenantId } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTimeTransactions, setAllTimeTransactions] = useState<Transaction[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('monthly');
@@ -96,8 +97,17 @@ export default function FinancialReport() {
       handleFirestoreError(error, OperationType.GET, 'transactions');
     });
 
+    const qAllTime = (profile.role === 'superadmin' && !domainTenantId)
+      ? query(collection(db, 'transactions'))
+      : query(collection(db, 'transactions'), where('tenantId', '==', targetTenantId));
+      
+    const unsubAllTime = onSnapshot(qAllTime, (snap) => {
+      setAllTimeTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
+    });
+
     return () => {
       unsubscribe();
+      unsubAllTime();
       unsubBanks();
     };
   }, [profile, domainTenantId, filter]);
@@ -123,9 +133,9 @@ export default function FinancialReport() {
   );
 
   const bankAccountBalances = bankAccounts.map(bank => {
-    const bankTransactions = transactions.filter(t => t.bankAccountId === bank.id && t.status !== 'cancelled' && t.status !== 'deleted');
-    const income = bankTransactions.filter(t => t.type === 'sale').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
-    const expense = bankTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+    const bankTransactions = allTimeTransactions.filter(t => t.bankAccountId === bank.id && t.status !== 'cancelled' && t.status !== 'deleted');
+    const income = bankTransactions.filter(t => t.type === 'sale' || t.type === 'charity_reserve' || t.type === 'transfer_in').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+    const expense = bankTransactions.filter(t => t.type === 'expense' || t.type === 'transfer_out').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
     return {
       ...bank,
       balance: income - expense

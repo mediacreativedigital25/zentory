@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, onSnapshot, doc, updateDoc, Timestamp, limit } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { DailyClosing, CharityRecord, Transaction, ApprovalRequest } from '../types';
-import { Heart, Calendar, Calculator, History, AlertCircle, Eye, Edit, Trash2, CheckCircle2, X, Send, Lock, TrendingUp, TrendingDown, Package } from 'lucide-react';
+import { DailyClosing, CharityRecord, Transaction, ApprovalRequest, BankAccount } from '../types';
+import { Heart, Calendar, Calculator, History, AlertCircle, Eye, Edit, Trash2, CheckCircle2, X, Send, Lock, TrendingUp, TrendingDown, Package, Wallet } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 enum OperationType {
@@ -41,9 +41,18 @@ export default function Charity() {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestReason, setRequestReason] = useState('');
   const [selectedCharityForRequest, setSelectedCharityForRequest] = useState<CharityRecord | null>(null);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [selectedCharityBankId, setSelectedCharityBankId] = useState('');
 
   useEffect(() => {
     if (!profile?.tenantId) return;
+
+    // Fetch Bank Accounts
+    const bankQ = query(collection(db, 'bank_accounts'), where('tenantId', '==', profile.tenantId));
+    getDocs(bankQ).then(snap => {
+        const banksData = snap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount));
+        setBankAccounts(banksData.filter(b => b.isActive));
+    }).catch(console.error);
 
     // Fetch Daily Closings that don't have charity records yet (or all for history)
     const closingQ = query(
@@ -154,17 +163,18 @@ export default function Charity() {
         createdAt: serverTimestamp()
       });
 
-      // Also create an expense transaction for the charity
+      // Also create a charity reserve transaction for the charity
       const dateObj = new Date(selectedClosing.date.seconds * 1000);
       const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       
       await addDoc(collection(db, 'transactions'), {
         tenantId: profile.tenantId,
-        type: 'expense',
+        type: 'charity_reserve',
         amount: charityAmount,
         category: 'Amal',
         activity: 'Operasional',
-        description: `Amal tgl ${dateStr} (Ref: ${charityNumber})`,
+        description: `Reservasi Dana Amal tgl ${dateStr} (Ref: ${charityNumber})`,
+        bankAccountId: selectedCharityBankId || null,
         date: serverTimestamp(),
         status: 'completed',
         userId: profile.uid,
@@ -172,7 +182,7 @@ export default function Charity() {
         createdAt: serverTimestamp()
       });
 
-      alert('Data amal berhasil disimpan dan dikunci.');
+      alert('Data cadangan dana amal berhasil disimpan dan dikunci.');
       setIsDetailModalOpen(false);
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'charityRecords');
@@ -442,21 +452,36 @@ export default function Charity() {
                 </div>
               </div>
 
-              <div className="p-10 border-t border-gray-100 bg-gray-50 flex gap-4">
-                <button
-                  onClick={() => setIsDetailModalOpen(false)}
-                  className="flex-1 px-8 py-4 border border-gray-200 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-all"
-                >
-                  Tutup
-                </button>
-                <button
-                  onClick={handleSaveCharity}
-                  disabled={isSaving}
-                  className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all flex items-center justify-center shadow-xl shadow-indigo-100"
-                >
-                  {isSaving ? 'Menyimpan...' : 'Save & Lock'}
-                  <Lock className="ml-2 w-5 h-5" />
-                </button>
+              <div className="p-10 border-t border-gray-100 bg-gray-50 flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-widest">Pilih Akun Kas/Bank untuk Amal</label>
+                  <select
+                      value={selectedCharityBankId}
+                      onChange={(e) => setSelectedCharityBankId(e.target.value)}
+                      className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-0 outline-none"
+                  >
+                      <option value="">-- Pilih Akun (Opsional) --</option>
+                      {bankAccounts.map(b => (
+                          <option key={b.id} value={b.id}>{b.name} {b.accountNumber ? `(${b.accountNumber})` : ''}</option>
+                      ))}
+                  </select>
+                </div>
+                <div className="flex gap-4 mt-4">
+                  <button
+                    onClick={() => setIsDetailModalOpen(false)}
+                    className="flex-1 px-8 py-4 border border-gray-200 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-all"
+                  >
+                    Tutup
+                  </button>
+                  <button
+                    onClick={handleSaveCharity}
+                    disabled={isSaving}
+                    className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all flex items-center justify-center shadow-xl shadow-indigo-100"
+                  >
+                    {isSaving ? 'Menyimpan...' : 'Save & Lock'}
+                    <Lock className="ml-2 w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

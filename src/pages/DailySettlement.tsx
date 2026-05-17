@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, Timestamp, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { Transaction, DailyClosing as DailyClosingType, ApprovalRequest, Tenant } from '../types';
+import { Transaction, DailyClosing as DailyClosingType, ApprovalRequest, Tenant, BankAccount } from '../types';
 import { Calculator, Calendar, TrendingUp, Heart, Wallet, CheckCircle2, History, AlertCircle, ArrowRight, TrendingDown, Lock, Send, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -47,6 +47,9 @@ export default function DailySettlement() {
   const [isCharityConfirmOpen, setIsCharityConfirmOpen] = useState(false);
   const [todayCharity, setTodayCharity] = useState<any>(null);
   const [isProcessingCharity, setIsProcessingCharity] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [isCharityBankModalOpen, setIsCharityBankModalOpen] = useState(false);
+  const [selectedCharityBankId, setSelectedCharityBankId] = useState('');
 
   const fetchTodayData = async () => {
     if (!profile) return;
@@ -151,6 +154,13 @@ export default function DailySettlement() {
         );
         const closingSnap = await getDocs(closingQ);
         setClosings(closingSnap.docs.map(d => ({ id: d.id, ...d.data() } as DailyClosingType)));
+
+        // Fetch bank accounts
+        const bankQ = query(collection(db, 'bank_accounts'));
+        const bankSnap = await getDocs(bankQ);
+        const banksData = bankSnap.docs.map(d => ({ id: d.id, ...d.data() } as BankAccount));
+        // Only get active ones
+        setBankAccounts(banksData.filter(b => b.isActive));
       }
 
     } catch (error) {
@@ -234,15 +244,16 @@ export default function DailySettlement() {
         createdAt: serverTimestamp()
       });
 
-      // 2. Create Expense Transaction
+      // 2. Create Charity Reserve Transaction (Income to Bank Account)
       const dateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       await addDoc(collection(db, 'transactions'), {
         tenantId: targetTenantId,
-        type: 'expense',
+        type: 'charity_reserve',
         amount: charityAmount,
         category: 'Amal',
         activity: 'Operasional',
-        description: `Amal 2.5% tgl ${dateStr} (Ref: ${charityNumber})`,
+        description: `Reservasi Dana Amal 2.5% tgl ${dateStr} (Ref: ${charityNumber})`,
+        bankAccountId: selectedCharityBankId || null,
         date: serverTimestamp(),
         status: 'completed',
         userId: profile?.uid,
@@ -250,7 +261,8 @@ export default function DailySettlement() {
         createdAt: serverTimestamp()
       });
 
-      alert('Berhasil mencatat amal hari ini. Anda masih dapat melakukan transaksi sebelum settlement final.');
+      alert('Berhasil mencatat cadangan dana amal hari ini. Anda masih dapat melakukan transaksi sebelum settlement final.');
+      setIsCharityBankModalOpen(false);
       fetchTodayData();
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'charityRecords');
@@ -473,12 +485,18 @@ export default function DailySettlement() {
 
                 {!todayCharity && !isAlreadySettled && status === 'UNTUNG' && (
                   <button
-                    onClick={handleProcessCharity}
+                    onClick={() => {
+                        if (netProfit <= 0) {
+                          alert('Laba bersih harus lebih dari 0 untuk menghitung amal.');
+                          return;
+                        }
+                        setIsCharityBankModalOpen(true);
+                    }}
                     disabled={isProcessingCharity || isClosing}
                     className="w-full py-4 bg-pink-500 text-white rounded-2xl font-black shadow-lg hover:bg-pink-600 transition-all flex items-center justify-center disabled:opacity-50"
                   >
                     <Heart className="w-5 h-5 mr-2" />
-                    {isProcessingCharity ? 'Memproses Amal...' : 'Catat Amal Dulu (2.5%)'}
+                    {isProcessingCharity ? 'Memproses Amal...' : 'Kumpulkan Amal ke Kas/Bank (2.5%)'}
                   </button>
                 )}
 
@@ -500,6 +518,61 @@ export default function DailySettlement() {
             </div>
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
           </div>
+
+          <AnimatePresence>
+            {isCharityBankModalOpen && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden"
+                >
+                  <div className="p-8 border-b border-gray-100 flex justify-between items-center">
+                    <div>
+                        <h3 className="text-xl font-black text-gray-900 flex items-center">
+                            <Wallet className="w-5 h-5 mr-2 text-pink-500" />
+                            Kumpulkan Amal ke Bank
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">Pilih kemana uang amal akan ditampung.</p>
+                    </div>
+                    <button onClick={() => setIsCharityBankModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                  </div>
+                  <div className="p-8">
+                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-widest">Pilih Akun Kas/Bank</label>
+                    <select
+                        value={selectedCharityBankId}
+                        onChange={(e) => setSelectedCharityBankId(e.target.value)}
+                        className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:ring-0 outline-none"
+                    >
+                        <option value="">-- Pilih --</option>
+                        {bankAccounts.map(b => (
+                            <option key={b.id} value={b.id}>{b.name} {b.accountNumber ? `(${b.accountNumber})` : ''}</option>
+                        ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-3">Total Amal Hari Ini: <b>Rp.{(netProfit * 0.025).toLocaleString('id-ID')}</b></p>
+                    <div className="mt-8 flex gap-3">
+                      <button
+                        onClick={() => setIsCharityBankModalOpen(false)}
+                        className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        onClick={handleProcessCharity}
+                        disabled={!selectedCharityBankId || isProcessingCharity}
+                        className="flex-1 py-3 bg-pink-500 text-white rounded-xl font-bold hover:bg-pink-600 disabled:opacity-50"
+                      >
+                        {isProcessingCharity ? 'Memproses...' : 'Kumpulkan'}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
 
           <AnimatePresence>
             {isCharityConfirmOpen && (

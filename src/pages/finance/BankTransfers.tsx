@@ -98,6 +98,41 @@ export default function BankTransfers() {
     if (!window.confirm('Apakah Anda yakin ingin menghapus transfer ini?')) return;
     try {
       await deleteDoc(doc(db, 'bank_transfers', t.id));
+      
+      let qTx = query(
+        collection(db, 'transactions'), 
+        where('tenantId', '==', profile?.tenantId), 
+        where('transactionNumber', '==', t.transferNumber)
+      );
+      let txDocs = await getDocs(qTx);
+
+      // Fallback for older transactions that didn't record transactionNumber
+      if (txDocs.empty) {
+        const fallBackQ = query(
+          collection(db, 'transactions'),
+          where('tenantId', '==', profile?.tenantId),
+          where('amount', '==', t.amount)
+        );
+        const fbDocs = await getDocs(fallBackQ);
+        const relatedDocs = fbDocs.docs.filter(d => 
+          (d.data().type === 'transfer_out' && d.data().bankAccountId === t.fromAccountId) ||
+          (d.data().type === 'transfer_in' && d.data().bankAccountId === t.toAccountId)
+        );
+        // Ensure same day
+        const matchedDocs = relatedDocs.filter(d => {
+          const txDate = d.data().date?.seconds ? new Date(d.data().date.seconds * 1000) : new Date();
+          const tDate = t.date?.seconds ? new Date(t.date.seconds * 1000) : new Date();
+          return txDate.toDateString() === tDate.toDateString();
+        });
+        
+        for (const tDoc of matchedDocs) {
+          await deleteDoc(tDoc.ref);
+        }
+      } else {
+        for (const tDoc of txDocs.docs) {
+           await deleteDoc(tDoc.ref);
+        }
+      }
     } catch (error) {
       console.error('Error deleting transfer:', error);
       alert('Gagal menghapus data transfer.');
@@ -134,6 +169,48 @@ export default function BankTransfers() {
           referenceNumber: formData.referenceNumber,
           description: formData.description
         });
+
+        const qTx = query(collection(db, 'transactions'), where('tenantId', '==', profile.tenantId), where('transactionNumber', '==', editingTransfer.transferNumber));
+        const txDocs = await getDocs(qTx);
+        
+        let docsToUpdate = txDocs.docs;
+
+        if (txDocs.empty) {
+          const fallBackQ = query(
+            collection(db, 'transactions'),
+            where('tenantId', '==', profile.tenantId),
+            where('amount', '==', editingTransfer.amount)
+          );
+          const fbDocs = await getDocs(fallBackQ);
+          const relatedDocs = fbDocs.docs.filter(d => 
+            (d.data().type === 'transfer_out' && d.data().bankAccountId === editingTransfer.fromAccountId) ||
+            (d.data().type === 'transfer_in' && d.data().bankAccountId === editingTransfer.toAccountId)
+          );
+          docsToUpdate = relatedDocs.filter(d => {
+            const txDate = d.data().date?.seconds ? new Date(d.data().date.seconds * 1000) : new Date();
+            const tDate = editingTransfer.date?.seconds ? new Date(editingTransfer.date.seconds * 1000) : new Date();
+            return txDate.toDateString() === tDate.toDateString();
+          });
+        }
+
+        for (const tDoc of docsToUpdate) {
+           const tData = tDoc.data();
+           if (tData.type === 'transfer_out') {
+             await updateDoc(tDoc.ref, {
+               amount: amount,
+               bankAccountId: formData.fromAccountId,
+               date: new Date(formData.date),
+               description: formData.description || `Transfer keluar ke ${toAccount?.name}`
+             });
+           } else if (tData.type === 'transfer_in') {
+             await updateDoc(tDoc.ref, {
+               amount: amount,
+               bankAccountId: formData.toAccountId,
+               date: new Date(formData.date),
+               description: formData.description || `Transfer masuk dari ${fromAccount?.name}`
+             });
+           }
+        }
       } else {
         const dateYm = formData.date.slice(0, 7).replace('-', '');
         const docCountSnap = await getDocs(query(
@@ -155,6 +232,38 @@ export default function BankTransfers() {
           referenceNumber: formData.referenceNumber,
           description: formData.description,
           createdBy: profile.uid,
+          createdAt: serverTimestamp()
+        });
+
+        // OUT
+        await addDoc(collection(db, 'transactions'), {
+          tenantId: profile.tenantId,
+          type: 'transfer_out',
+          amount: amount,
+          bankAccountId: formData.fromAccountId,
+          date: new Date(formData.date),
+          status: 'completed',
+          userId: profile.uid,
+          description: formData.description || `Transfer keluar ke ${toAccount?.name}`,
+          category: 'Transfer',
+          activity: 'Bank Transfer',
+          transactionNumber: transferNumber,
+          createdAt: serverTimestamp()
+        });
+
+        // IN
+        await addDoc(collection(db, 'transactions'), {
+          tenantId: profile.tenantId,
+          type: 'transfer_in',
+          amount: amount,
+          bankAccountId: formData.toAccountId,
+          date: new Date(formData.date),
+          status: 'completed',
+          userId: profile.uid,
+          description: formData.description || `Transfer masuk dari ${fromAccount?.name}`,
+          category: 'Transfer',
+          activity: 'Bank Transfer',
+          transactionNumber: transferNumber,
           createdAt: serverTimestamp()
         });
       }

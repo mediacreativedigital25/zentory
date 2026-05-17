@@ -147,9 +147,9 @@ export default function SalesOrderReceive() {
         } as Order;
       });
       data.sort((a, b) => {
-        const dateA = a.date?.seconds || (a as any).createdAt?.seconds || 0;
-        const dateB = b.date?.seconds || (b as any).createdAt?.seconds || 0;
-        return dateB - dateA;
+        const numA = a.orderNumber || '';
+        const numB = b.orderNumber || '';
+        return numA.localeCompare(numB);
       });
       setOrders(data);
       setLoading(false);

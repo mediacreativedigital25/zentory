@@ -172,7 +172,7 @@ service cloud.firestore {
         (incoming().type == 'sale' && incoming().status == 'pending')
       ));
       allow update: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
-      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(resource.data.tenantId));
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantStaff(resource.data.tenantId));
     }
 
     match /bank_transfers/{transferId} {

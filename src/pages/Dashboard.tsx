@@ -382,8 +382,8 @@ export default function Dashboard() {
             {recentTransactions.map((t) => (
               <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center">
-                  <div className={`p-2 rounded-full mr-4 ${t.type === 'sale' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                    {t.type === 'sale' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                  <div className={`p-2 rounded-full mr-4 ${t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -402,8 +402,8 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
-                <p className={`text-sm font-bold ${t.type === 'sale' ? 'text-green-600' : 'text-red-600'}`}>
-                  {t.type === 'sale' ? '+' : '-'}Rp.{Math.round(t.amount || 0).toLocaleString('id-ID')}
+                <p className={`text-sm font-bold ${t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? 'text-green-600' : 'text-red-600'}`}>
+                  {t.type === 'sale' || t.type === 'transfer_in' || t.type === 'charity_reserve' ? '+' : '-'}Rp.{Math.round(t.amount || 0).toLocaleString('id-ID')}
                 </p>
               </div>
             ))}

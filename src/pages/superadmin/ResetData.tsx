@@ -85,6 +85,20 @@ export default function SuperAdminResetData() {
               }
             }
             if (count > 0) await batch.commit();
+
+            if (collId === 'orders') {
+              try {
+                const counterSnap = await getDocs(collection(db, 'counters'));
+                const countersToDelete = counterSnap.docs.filter(d => d.id.startsWith(`${selectedResetTenant}_orders_`));
+                let cBatch = writeBatch(db);
+                let cCount = 0;
+                countersToDelete.forEach(c => {
+                   cBatch.delete(c.ref);
+                   cCount++;
+                });
+                if (cCount > 0) await cBatch.commit();
+              } catch(e) {}
+            }
           }
           setResetSuccess(true);
           setResetCollections([]);
