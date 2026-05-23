@@ -46,6 +46,7 @@ import Finance from './pages/Finance';
 import ClaimExpense from './pages/ClaimExpense';
 import FinancialReport from './pages/FinancialReport';
 import InvoiceCollection from './pages/finance/InvoiceCollection';
+import CustomerSavings from './pages/finance/CustomerSavings';
 import ExpenseSettings from './pages/ExpenseSettings';
 import BankAccounts from './pages/finance/BankAccounts';
 import BankTransfers from './pages/finance/BankTransfers';
@@ -337,6 +338,12 @@ export default function App() {
           <Route path="/finance/collections" element={
             <ProtectedRoute allowedRoles={['admin']} permission="finance_invoices" menuLabel="Finance">
               <InvoiceCollection />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/finance/customer-savings" element={
+            <ProtectedRoute allowedRoles={['admin']} permission="finance_settings" menuLabel="Finance">
+              <CustomerSavings />
             </ProtectedRoute>
           } />
 

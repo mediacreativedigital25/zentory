@@ -139,8 +139,7 @@ export default function SuperAdminApprovals() {
                  await updateDoc(orderRef, {
                    paidAmount: newPaid,
                    paymentStatus: paymentStatus,
-                   status: statusToSet,
-                   isInCollection: true
+                   status: statusToSet
                  });
               }
             }

@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ChevronLeft, 
+  ChevronLeft,
+  ChevronRight,
   CreditCard, 
   Building2, 
   CheckCircle2, 
+  CheckCircle,
+  AlertCircle,
   ShieldCheck, 
   Zap, 
   Info, 
@@ -51,7 +54,7 @@ export default function Checkout() {
           const data = { id: snap.id, ...snap.data() };
           setPlanInfo(data);
           
-          const pricingList = data.pricingList || [];
+          const pricingList = (data as any).pricingList || [];
           const pricing = pricingList.find((p: any) => p.duration === durationParam) || pricingList[0] || { duration: 30, price: 0 };
           
           setCurrentPricing(pricing);
@@ -321,10 +324,10 @@ export default function Checkout() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20">
+    <div className="max-w-5xl mx-auto space-y-8 pb-20">
       <button 
         onClick={() => navigate(-1)}
-        className="flex items-center text-gray-400 hover:text-gray-600 font-bold transition-colors group"
+        className="flex items-center text-gray-500 hover:text-gray-900 font-bold transition-colors group"
       >
         <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
         Kembali ke Pilihan Paket
@@ -334,109 +337,120 @@ export default function Checkout() {
         {/* Left Column: Payment & Info */}
         <div className="lg:col-span-2 space-y-8">
           {/* Business Info */}
-          <div className="bg-white p-8 rounded-md shadow-sm border border-gray-100 space-y-6">
+          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
+              <div className="p-3 bg-indigo-50 text-indigo-700 rounded-xl">
                 <Building2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">Informasi Bisnis</h3>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Informasi Bisnis</h3>
                 <p className="text-sm text-gray-500 font-medium">Detail akun yang akan di-upgrade</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-white rounded-md border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 p-6 bg-gray-50/70 rounded-xl border border-gray-200/50">
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Nama Bisnis</p>
-                <p className="font-bold text-gray-900">{tenant?.name || '---'}</p>
+                <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Nama Bisnis</p>
+                <p className="font-black text-gray-900 text-lg leading-tight">{tenant?.name || '---'}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Email Terdaftar</p>
-                <p className="font-bold text-gray-900">{profile?.email || '---'}</p>
+                <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Email Terdaftar</p>
+                <p className="font-bold text-gray-900 text-base leading-tight">{profile?.email || '---'}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ID Tenant</p>
-                <p className="font-mono text-xs font-bold text-indigo-600">{tenant?.id || '---'}</p>
+                <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1.5">ID Tenant</p>
+                <p className="font-mono text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded inline-block">{tenant?.id || '---'}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Paket Saat Ini</p>
-                <p className="font-bold text-gray-900 uppercase">{tenant?.plan || tenant?.subscription || 'FREE'}</p>
+                <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Paket Saat Ini</p>
+                <div className="inline-flex items-center px-2.5 py-1 bg-white border border-gray-200 rounded-md shadow-sm">
+                  <p className="font-black text-gray-700 uppercase tracking-widest text-xs">{tenant?.plan || tenant?.subscription || 'FREE'}</p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white p-8 rounded-md shadow-sm border border-gray-100 space-y-8">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-md">
-                <CreditCard className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">Metode Pembayaran</h3>
-                <p className="text-sm text-gray-500 font-medium">Pilih cara pembayaran yang Anda inginkan</p>
+          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-8 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <CreditCard className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">Metode Pembayaran</h3>
+                  <p className="text-sm text-gray-500 font-medium">Pilih cara pembayaran yang Anda inginkan</p>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {globalSettings?.paymentMethods?.manual?.isEnabled !== false && (
                 <>
                   <button 
                     onClick={() => setPaymentMethod('bank')}
-                    className={`flex items-center p-6 rounded-md border-2 transition-all text-left ${
+                    className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden group ${
                       paymentMethod === 'bank' 
-                        ? 'border-indigo-600 bg-indigo-50/30' 
-                        : 'border-gray-100 hover:border-gray-200'
+                        ? 'border-indigo-600 bg-indigo-50/50 shadow-md shadow-indigo-100/50' 
+                        : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
                     }`}
                   >
-                    <div className={`w-12 h-12 rounded-md flex items-center justify-center mr-4 ${
-                      paymentMethod === 'bank' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
+                    {paymentMethod === 'bank' && <div className="absolute top-3 right-3 w-3 h-3 bg-indigo-600 rounded-full"></div>}
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors ${
+                      paymentMethod === 'bank' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'
                     }`}>
-                      <Building2 className="w-6 h-6" />
+                      <Building2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-black text-gray-900">Transfer Bank</p>
-                      <p className="text-xs text-gray-500 font-medium">Manual Verification</p>
+                      <p className="font-black text-gray-900 text-sm leading-tight">Transfer Bank</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Verifikasi Manual</p>
                     </div>
                   </button>
 
-                  <button 
-                    onClick={() => setPaymentMethod('qris')}
-                    className={`flex items-center p-6 rounded-md border-2 transition-all text-left ${
-                      paymentMethod === 'qris' 
-                        ? 'border-indigo-600 bg-indigo-50/30' 
-                        : 'border-gray-100 hover:border-gray-200'
-                    }`}
-                  >
-                    <div className={`w-12 h-12 rounded-md flex items-center justify-center mr-4 ${
-                      paymentMethod === 'qris' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
-                    }`}>
-                      <QrCode className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="font-black text-gray-900">QRIS Manual</p>
-                      <p className="text-xs text-gray-500 font-medium">Upload Bukti</p>
-                    </div>
-                  </button>
+                  {!!globalSettings?.paymentMethods?.manual?.qrisUrl && (
+                    <button 
+                      onClick={() => setPaymentMethod('qris')}
+                      className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden group ${
+                        paymentMethod === 'qris' 
+                          ? 'border-indigo-600 bg-indigo-50/50 shadow-md shadow-indigo-100/50' 
+                          : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {paymentMethod === 'qris' && <div className="absolute top-3 right-3 w-3 h-3 bg-indigo-600 rounded-full"></div>}
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors ${
+                        paymentMethod === 'qris' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'
+                      }`}>
+                        <QrCode className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-black text-gray-900 text-sm leading-tight">QRIS Manual</p>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Upload Bukti</p>
+                      </div>
+                    </button>
+                  )}
                 </>
               )}
 
               {globalSettings?.paymentMethods?.tripay?.isEnabled && (
                 <button 
                   onClick={() => setPaymentMethod('tripay')}
-                  className={`flex items-center p-6 rounded-md border-2 transition-all text-left ${
+                  className={`flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden group ${
                     paymentMethod === 'tripay' 
-                      ? 'border-indigo-600 bg-indigo-50/30' 
-                      : 'border-gray-100 hover:border-gray-200'
+                      ? 'border-emerald-600 bg-emerald-50/50 shadow-md shadow-emerald-100/50' 
+                      : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
                   }`}
                 >
-                  <div className={`w-12 h-12 rounded-md flex items-center justify-center mr-4 ${
-                    paymentMethod === 'tripay' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
+                  {paymentMethod === 'tripay' && <div className="absolute top-3 right-3 w-3 h-3 bg-emerald-600 rounded-full"></div>}
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors ${
+                    paymentMethod === 'tripay' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500 group-hover:bg-emerald-100 group-hover:text-emerald-600'
                   }`}>
-                    <Zap className="w-6 h-6" />
+                    <Zap className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-black text-gray-900">Otomatis (TriPay)</p>
-                    <p className="text-xs text-gray-500 font-medium">Virtual Account, Retail</p>
+                    <p className="font-black text-gray-900 text-sm leading-tight">Otomatis (TriPay)</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">VA & Retail</p>
                   </div>
                 </button>
               )}
@@ -449,33 +463,38 @@ export default function Checkout() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 space-y-6"
+                  className="p-6 md:p-8 bg-gray-50 rounded-2xl border border-gray-200/60 space-y-6"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white rounded-md border border-gray-200 flex items-center justify-center font-medium text-indigo-600 uppercase">
-                        {globalSettings?.paymentMethods?.manual?.bankName || 'BCA'}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-white rounded-xl border border-gray-200 flex items-center justify-center font-black text-xl text-indigo-700 uppercase shadow-sm shrink-0 overflow-hidden">
+                        {globalSettings?.paymentMethods?.manual?.logoUrl ? (
+                          <img src={globalSettings.paymentMethods.manual.logoUrl} alt={globalSettings?.paymentMethods?.manual?.bankName || 'Bank'} className="w-full h-full object-contain p-2" />
+                        ) : (
+                          globalSettings?.paymentMethods?.manual?.bankName || 'BCA'
+                        )}
                       </div>
                       <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Nomor Rekening</p>
-                        <p className="text-lg font-black text-gray-900">{globalSettings?.paymentMethods?.manual?.accountNumber || '1234 5678 90'}</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Nomor Rekening</p>
+                        <p className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight break-all">{globalSettings?.paymentMethods?.manual?.accountNumber || '1234 5678 90'}</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => handleCopy(globalSettings?.paymentMethods?.manual?.accountNumber || '1234567890')}
-                      className="p-3 hover:bg-white rounded-md transition-colors text-indigo-600"
+                      className="p-3 bg-white hover:bg-indigo-50 border border-gray-200 rounded-xl transition-colors text-indigo-600 hover:text-indigo-700 shadow-sm shrink-0 self-start sm:self-center"
+                      title="Salin nomor rekening"
                     >
                       {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                     </button>
                   </div>
-                  <div className="pt-4 border-t border-gray-200">
+                  <div className="pt-6 border-t border-gray-200/80">
                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Atas Nama</p>
-                    <p className="font-bold text-gray-900">{globalSettings?.paymentMethods?.manual?.accountHolder || 'PT ZENTORY DIGITAL INDONESIA'}</p>
+                    <p className="text-lg font-bold text-gray-900">{globalSettings?.paymentMethods?.manual?.accountHolder || 'PT ZENTORY DIGITAL INDONESIA'}</p>
                   </div>
-                  <div className="p-4 bg-amber-50 rounded-md border border-amber-100 flex items-start gap-3">
-                    <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-amber-800 font-medium leading-relaxed">
-                      Mohon sertakan <span className="font-black">ID Tenant</span> Anda pada berita transfer untuk mempercepat proses verifikasi.
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-3">
+                    <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-800 font-medium leading-relaxed">
+                      Mohon sertakan <span className="font-black bg-amber-200/50 px-1 rounded">ID Tenant</span> Anda pada berita transfer untuk mempercepat proses verifikasi.
                     </p>
                   </div>
                 </motion.div>
@@ -485,18 +504,20 @@ export default function Checkout() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-8 bg-gray-50 rounded-[2rem] border border-gray-100 flex flex-col items-center text-center space-y-6"
+                  className="p-6 md:p-8 bg-gray-50 rounded-2xl border border-gray-200/60 flex flex-col items-center text-center space-y-6"
                 >
-                  <div className="bg-white p-6 rounded-md shadow-sm border border-gray-100">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200/80">
                     {globalSettings?.paymentMethods?.manual?.qrisUrl ? (
-                      <img src={globalSettings.paymentMethods.manual.qrisUrl} alt="QRIS" className="w-48 h-48 object-contain" referrerPolicy="no-referrer" />
+                      <img src={globalSettings.paymentMethods.manual.qrisUrl} alt="QRIS" className="w-56 h-56 object-contain" referrerPolicy="no-referrer" />
                     ) : (
-                      <QrCode className="w-48 h-48 text-gray-900" />
+                      <div className="w-56 h-56 flex items-center justify-center bg-gray-50 border border-dashed border-gray-300 rounded-xl">
+                        <QrCode className="w-24 h-24 text-gray-400" />
+                      </div>
                     )}
                   </div>
                   <div>
-                    <p className="font-black text-gray-900">Scan QRIS Zentory</p>
-                    <p className="text-xs text-gray-500 font-medium">Mendukung semua aplikasi pembayaran digital</p>
+                    <h4 className="text-xl font-black text-gray-900 tracking-tight mb-2">Scan QRIS Zentory</h4>
+                    <p className="text-sm text-gray-500 font-medium max-w-sm mx-auto">Mendukung semua aplikasi pembayaran digital yang memiliki fitur scan QRIS</p>
                   </div>
                 </motion.div>
               ) : (
@@ -505,23 +526,27 @@ export default function Checkout() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-8 bg-indigo-600 rounded-[2rem] text-white space-y-6"
+                  className="p-6 md:p-8 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl text-white space-y-6 relative overflow-hidden shadow-lg shadow-emerald-900/20"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/20 rounded-md">
-                      <Zap className="w-6 h-6" />
+                  <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+                    <ShieldCheck className="w-48 h-48" />
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-6 relative z-10">
+                    <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm self-start">
+                      <Zap className="w-8 h-8 text-emerald-50" />
                     </div>
                     <div>
-                      <p className="font-black text-xl">Pembayaran Otomatis</p>
-                      <p className="text-sm text-indigo-100 font-medium">Virtual Account & Retail</p>
+                      <h4 className="font-black text-2xl mb-1 text-white">Pembayaran Otomatis</h4>
+                      <p className="text-sm text-emerald-100 font-medium">Virtual Account & Retail Terintegrasi</p>
                     </div>
                   </div>
-                  <p className="text-sm text-indigo-50 leading-relaxed">
-                    Anda akan diarahkan ke gerbang pembayaran aman TriPay. Pembayaran akan terverifikasi secara otomatis dalam hitungan detik setelah transaksi berhasil.
+                  <p className="text-sm text-emerald-50 leading-relaxed max-w-xl relative z-10 font-medium">
+                    Anda akan diarahkan ke gerbang pembayaran aman TriPay. Pembayaran akan terverifikasi secara otomatis dalam hitungan detik setelah transaksi berhasil tanpa perlu konfirmasi manual.
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {['BCA', 'MANDIRI', 'BNI', 'BRI', 'ALFAMART', 'INDOMARET'].map(bank => (
-                      <span key={bank} className="px-2 py-1 bg-white/10 rounded text-[10px] font-black">{bank}</span>
+                  <div className="flex flex-wrap gap-2 relative z-10 pt-4 border-t border-emerald-500/50">
+                    {['BCA VA', 'MANDIRI VA', 'BNI VA', 'BRI VA', 'PERMATA', 'ALFAMART', 'INDOMARET'].map(bank => (
+                      <span key={bank} className="px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg text-xs font-black text-emerald-50 border border-white/20">{bank}</span>
                     ))}
                   </div>
                 </motion.div>
@@ -532,103 +557,117 @@ export default function Checkout() {
 
         {/* Right Column: Order Summary */}
         <div className="space-y-6 lg:sticky lg:top-8">
-          <div className="bg-white p-8 rounded-md shadow-xl border border-gray-100 space-y-8">
-            <h3 className="text-xl font-black text-gray-900 tracking-tight">Ringkasan Pesanan</h3>
+          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-8 relative overflow-hidden">
+            <div className="absolute h-1 w-full top-0 left-0 bg-gray-900" />
+            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Ringkasan Pesanan</h3>
             
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-white rounded-md border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-md ${planInfo.color}`}>
-                    <Zap className="w-4 h-4" />
+            <div className="space-y-6">
+              <div className="flex items-start justify-between p-5 bg-gray-50 rounded-xl border border-gray-200/60">
+                <div className="flex items-start gap-4">
+                  <div className={`p-2.5 rounded-xl ${planInfo.color} shadow-sm mt-0.5`}>
+                    <Zap className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-gray-900">{planInfo.name}</p>
-                    <div className="flex flex-col">
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Langganan {durationParam} Hari</p>
-                      <p className="text-[9px] text-indigo-600 font-black uppercase">Hingga {expiryDateStr}</p>
+                    <h4 className="text-lg font-black text-gray-900 mb-1 leading-none">{planInfo.name}</h4>
+                    <div className="flex flex-col gap-1 mt-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 w-fit">
+                        {durationParam} HARI
+                      </span>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Berlaku Sampai: <span className="text-gray-900">{expiryDateStr}</span></p>
                     </div>
                   </div>
                 </div>
-                <p className="font-black text-gray-900">{selectedPriceDisplay}</p>
               </div>
 
               {/* Coupon Section */}
-              <div className="space-y-2 pt-2">
-                <label className="text-xs font-semibold text-gray-600">Kupon Diskon (Gunakan jika ada)</label>
+              <div className="space-y-3 pt-2">
+                <label className="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center justify-between">
+                  <span>Kupon Diskon</span>
+                  <span className="text-gray-400 font-medium normal-case text-[10px]">(Opsional)</span>
+                </label>
                 <div className="flex gap-2">
                   <input 
                     type="text" 
-                    placeholder="KODE KUPON"
+                    placeholder="MABARBARENG"
                     value={couponCodeInput}
                     onChange={e => setCouponCodeInput(e.target.value)}
                     disabled={!!appliedCoupon || isLoadingCoupon}
-                    className="flex-1 p-2 bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 uppercase font-mono font-medium text-sm"
+                    className="flex-1 min-w-0 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 uppercase font-mono font-bold text-sm transition-all focus:bg-white"
                   />
                   {!appliedCoupon ? (
                     <button 
                       onClick={handleApplyCoupon}
                       disabled={isLoadingCoupon || !couponCodeInput}
-                      className="px-4 py-2 bg-gray-900 text-white rounded-md font-bold w-24 flex items-center justify-center disabled:opacity-50"
+                      className="px-4 py-3 bg-gray-900 text-white rounded-xl font-bold border border-gray-900 hover:bg-gray-800 focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 transition-all disabled:opacity-50 flex items-center justify-center shrink-0"
                     >
-                      {isLoadingCoupon ? 'Cek...' : 'Terapkan'}
+                      {isLoadingCoupon ? (
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                      ) : 'Terapkan'}
                     </button>
                   ) : (
                     <button 
                       onClick={() => setAppliedCoupon(null)}
-                      className="px-4 py-2 bg-red-100 text-red-600 rounded-md font-bold hover:bg-red-200"
+                      className="px-4 py-3 bg-red-50 text-red-600 rounded-xl font-bold border border-red-200 hover:bg-red-100 transition-all shrink-0"
                     >
                       Hapus
                     </button>
                   )}
                 </div>
-                {couponError && <p className="text-xs text-red-600 font-bold">{couponError}</p>}
-                {couponSuccess && <p className="text-xs text-green-600 font-bold">{couponSuccess}</p>}
+                {couponError && <p className="text-xs text-red-600 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {couponError}</p>}
+                {couponSuccess && <p className="text-xs text-emerald-600 font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> {couponSuccess}</p>}
               </div>
 
-              <div className="space-y-3 px-2">
-                <div className="flex justify-between text-sm">
+              <div className="space-y-4 pt-4 border-t border-dashed border-gray-200">
+                <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500 font-medium">Subtotal</span>
                   <span className="text-gray-900 font-bold">{selectedPriceDisplay}</span>
                 </div>
                 
                 {calculateDiscount() > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-600 font-bold flex items-center gap-1">Diskon Kupon</span>
-                    <span className="text-green-600 font-bold">-Rp {calculateDiscount().toLocaleString('id-ID')}</span>
+                  <div className="flex justify-between items-center text-sm bg-emerald-50 p-2 rounded-lg -mx-2 px-2">
+                    <span className="text-emerald-700 font-bold flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Diskon Kupon
+                    </span>
+                    <span className="text-emerald-700 font-black">- Rp {calculateDiscount().toLocaleString('id-ID')}</span>
                   </div>
                 )}
                 {appliedCoupon?.type === 'free_days' && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-indigo-600 font-bold">Gratis Langganan</span>
-                    <span className="text-indigo-600 font-bold">+{appliedCoupon.value} Hari</span>
+                  <div className="flex justify-between items-center text-sm bg-indigo-50 p-2 rounded-lg -mx-2 px-2">
+                    <span className="text-indigo-700 font-bold flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                      Bonus Free Days
+                    </span>
+                    <span className="text-indigo-700 font-black">+{appliedCoupon.value} Hari</span>
                   </div>
                 )}
                 
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500 font-medium">Biaya Layanan</span>
-                  <span className="text-gray-900 font-bold">Rp0</span>
+                  <span className="text-gray-900 font-bold">Rp 0</span>
                 </div>
-                <div className="pt-4 border-t border-gray-100 flex justify-between items-end">
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Bayar</p>
-                    <p className="text-2xl font-black text-indigo-600">Rp {calculateFinalTotal().toLocaleString('id-ID')}</p>
+                
+                <div className="pt-4 mt-2 border-t border-gray-200 flex justify-between items-end">
+                  <p className="text-xs font-black text-gray-500 uppercase tracking-widest pb-1">Total Pembayaran</p>
+                  <div className="text-right">
+                    <p className="text-3xl font-black text-gray-900 tracking-tighter">Rp {calculateFinalTotal().toLocaleString('id-ID')}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 bg-indigo-50 rounded-md border border-indigo-100">
-                <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-indigo-700 font-medium leading-relaxed">
-                  Pembayaran Anda aman dan terenkripsi. Dengan melanjutkan, Anda menyetujui <span className="font-black underline">Syarat & Ketentuan</span> Zentory.
+            <div className="space-y-5 pt-4">
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <ShieldCheck className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-gray-600 font-medium leading-relaxed">
+                  Pembayaran aman dan terenkripsi. Dengan melanjutkan, Anda menyetujui <span className="font-bold text-gray-900 underline underline-offset-2">Syarat & Ketentuan</span> Zentory.
                 </p>
               </div>
 
               <button 
                 onClick={handleConfirm}
                 disabled={isProcessing}
-                className="w-full py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gray-900 text-white rounded-xl font-black text-lg hover:bg-gray-800 focus:ring-4 focus:ring-gray-200 transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-3 shadow-lg shadow-gray-300/50"
               >
                 {isProcessing ? (
                   <>
@@ -637,12 +676,12 @@ export default function Checkout() {
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                       className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                     />
-                    MEMPROSES...
+                    <span>MEMPROSES...</span>
                   </>
                 ) : (
                   <>
-                    KONFIRMASI PEMBAYARAN
-                    <ArrowRight className="w-5 h-5" />
+                    <span>KONFIRMASI BAYAR</span>
+                    <ChevronRight className="w-5 h-5" />
                   </>
                 )}
               </button>

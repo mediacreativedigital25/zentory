@@ -46,6 +46,8 @@ export default function ReceivePayment() {
   const [paymentMethod, setPaymentMethod] = useState<'Tunai' | 'Bank Transfer'>('Tunai');
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
+  const [useSavings, setUseSavings] = useState(false);
+  const [useSavingsAmount, setUseSavingsAmount] = useState(0);
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -201,6 +203,8 @@ export default function ReceivePayment() {
     setSelectedCollections([]);
     setPaymentMethod('Tunai');
     setSelectedBankAccountId('');
+    setUseSavings(false);
+    setUseSavingsAmount(0);
     setNote('');
     setIsSubmitting(false);
   };
@@ -292,6 +296,17 @@ export default function ReceivePayment() {
               
               await updateDoc(orderRef, updateData);
 
+              if (isFullyPaid) {
+                 import('../../lib/savings').then(({ processCustomerSavings }) => {
+                    processCustomerSavings({
+                       orderId: orderId,
+                       orderTotal: orderTotal,
+                       customerId: orderData.customerId || selectedCustomerId,
+                       tenantId: targetTenantId || ''
+                    }).catch(err => console.error("Error processing savings", err));
+                 });
+              }
+
               orderAllocations.push({
                 orderId: orderId,
                 orderNumber: orderData.orderNumber,
@@ -309,6 +324,8 @@ export default function ReceivePayment() {
 
       // 2. Create Receipt
       const totalPaid = selectedCollections.reduce((sum, i) => sum + i.amountToPay, 0);
+      const actualSavingsUsed = useSavings ? useSavingsAmount : 0;
+      const cashAmount = Math.max(0, totalPaid - actualSavingsUsed);
       const customer = customers.find(c => c.id === selectedCustomerId);
       const bank = bankAccounts.find(b => b.id === selectedBankAccountId);
 
@@ -321,7 +338,8 @@ export default function ReceivePayment() {
         paymentMethod,
         bankAccountId: paymentMethod === 'Bank Transfer' ? selectedBankAccountId : null,
         bankAccountName: paymentMethod === 'Bank Transfer' ? bank?.name : null,
-        amount: totalPaid,
+        amount: cashAmount,
+        savingsAmount: actualSavingsUsed,
         note,
         collections: collectionDataList,
         invoices: orderAllocations,
@@ -330,6 +348,12 @@ export default function ReceivePayment() {
       };
 
       await addDoc(collection(db, 'payment_receipts'), receiptData);
+
+      if (actualSavingsUsed > 0 && customer) {
+        await updateDoc(doc(db, 'customers', customer.id), {
+          savingsBalance: increment(-actualSavingsUsed)
+        });
+      }
 
       // 3. Create Transaction Records (One per Order so it links properly on Sales Order view)
       if (orderAllocations.length > 0) {
@@ -387,6 +411,7 @@ export default function ReceivePayment() {
         type: 'payment_correction',
         receiptId: requestKoreksiReceipt.id,
         orderNumber: requestKoreksiReceipt.receiptNumber, // Maps to reference
+        customerId: requestKoreksiReceipt.customerId,
         customerName: requestKoreksiReceipt.customerName,
         amount: requestKoreksiReceipt.amount,
         reason: finalReason,
@@ -564,8 +589,13 @@ export default function ReceivePayment() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <span className="text-sm font-black text-gray-900">
-                      Rp.{r.amount.toLocaleString()}
+                      Rp.{Math.round(r.amount + (r.savingsAmount || 0)).toLocaleString('id-ID')}
                     </span>
+                    {(r.savingsAmount || 0) > 0 && (
+                      <p className="text-[10px] text-gray-500 font-bold mt-0.5">
+                        (Termasuk Tabungan: Rp {Math.round(r.savingsAmount || 0).toLocaleString('id-ID')})
+                      </p>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex justify-center items-center gap-2">
@@ -714,6 +744,63 @@ export default function ReceivePayment() {
                       </div>
                     </div>
 
+                    {(() => {
+                      const selCust = customers.find(c => c.id === selectedCustomerId);
+                      const totalAllocated = selectedCollections.reduce((sum, item) => sum + item.amountToPay, 0);
+                      if (selCust && selCust.hasSavingsProgram && (selCust.savingsBalance || 0) > 0) {
+                        return (
+                          <div className="bg-emerald-50/50 p-6 rounded-[2rem] border border-emerald-100">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                                Tabungan / Berkah (Tersedia: Rp {Math.round(selCust.savingsBalance || 0).toLocaleString('id-ID')})
+                              </h4>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  className="sr-only peer"
+                                  checked={useSavings}
+                                  onChange={(e) => {
+                                      setUseSavings(e.target.checked);
+                                      if (e.target.checked) {
+                                          const defaultSavingsUse = Math.min(totalAllocated, selCust.savingsBalance || 0);
+                                          setUseSavingsAmount(defaultSavingsUse);
+                                      } else {
+                                          setUseSavingsAmount(0);
+                                      }
+                                  }}
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                              </label>
+                            </div>
+                            
+                            {useSavings && (
+                              <div className="relative w-full">
+                                <span className="absolute left-3 top-1/2 -translate-y-[60%] text-xs font-black text-gray-400">Rp</span>
+                                <input 
+                                  type="text"
+                                  value={useSavingsAmount > 0 ? useSavingsAmount.toLocaleString('id-ID') : ''}
+                                  onChange={(e) => {
+                                    let val = e.target.value.replace(/\./g, '');
+                                    val = val.replace(/\D/g, '');
+                                    const numVal = Number(val);
+                                    if (numVal <= (selCust.savingsBalance || 0) && numVal <= totalAllocated) {
+                                       setUseSavingsAmount(numVal);
+                                    }
+                                  }}
+                                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-emerald-200 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-emerald-600"
+                                  placeholder="0"
+                                />
+                                <p className="text-[10px] text-emerald-600 font-bold mt-2">
+                                  Tagihan Sisa (Tunai/Bank): Rp {Math.max(0, totalAllocated - useSavingsAmount).toLocaleString()}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <label className="block text-xs font-semibold text-gray-600">Metode Pembayaran</label>
@@ -788,7 +875,7 @@ export default function ReceivePayment() {
                       KEMBALI
                     </button>
                     <button
-                      disabled={isSubmitting || (paymentMethod === 'Bank Transfer' && !selectedBankAccountId)}
+                      disabled={isSubmitting || (paymentMethod === 'Bank Transfer' && !selectedBankAccountId && (selectedCollections.reduce((s,i) => s + i.amountToPay, 0) - (useSavings ? useSavingsAmount : 0) > 0))}
                       onClick={handleSaveReceipt}
                       className="flex-1 px-8 py-4 bg-emerald-600 text-white rounded-md font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm uppercase tracking-widest active:scale-95"
                     >
@@ -852,15 +939,28 @@ export default function ReceivePayment() {
                 {/* Amount Card */}
                 <div className="relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-[2rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-                  <div className="relative p-8 bg-gradient-to-br from-emerald-50 to-white rounded-[2rem] border border-emerald-100/50 flex justify-between items-center shadow-sm">
-                    <div>
-                      <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-2">Nominal Diterima</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl font-black text-emerald-400">Rp</span>
-                        <p className="text-4xl font-black text-emerald-600 tracking-tighter">
-                          {viewReceipt.amount.toLocaleString()}
-                        </p>
+                  <div className="relative p-8 bg-gradient-to-br from-emerald-50 to-white rounded-[2rem] border border-emerald-100/50 flex flex-col md:flex-row justify-between items-center shadow-sm gap-6">
+                    <div className="flex gap-8">
+                      <div>
+                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-2">Nominal Cash/Bank</p>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl font-black text-emerald-400">Rp</span>
+                          <p className="text-4xl font-black text-emerald-600 tracking-tighter">
+                            {Math.round(viewReceipt.amount).toLocaleString('id-ID')}
+                          </p>
+                        </div>
                       </div>
+                      {(viewReceipt.savingsAmount || 0) > 0 && (
+                        <div>
+                          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-2">Potong Tabungan</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-black text-indigo-400">Rp</span>
+                            <p className="text-4xl font-black text-indigo-600 tracking-tighter">
+                              {Math.round(viewReceipt.savingsAmount || 0).toLocaleString('id-ID')}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="bg-white/60 backdrop-blur-md p-2 rounded-md border border-emerald-100 inline-block">

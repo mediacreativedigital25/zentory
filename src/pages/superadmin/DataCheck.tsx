@@ -8,11 +8,19 @@ export default function DataCheck() {
   const [loading, setLoading] = useState(false);
   const [anomalies, setAnomalies] = useState<any[]>([]);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [tenants, setTenants] = useState<Record<string, string>>({});
 
   const fetchAnomalies = async () => {
     setLoading(true);
     setAnomalies([]);
     try {
+      const tenantsSnap = await getDocs(collection(db, 'tenants'));
+      const tenantMap: Record<string, string> = {};
+      tenantsSnap.docs.forEach(doc => {
+        tenantMap[doc.id] = doc.data().name || doc.id;
+      });
+      setTenants(tenantMap);
+
       const foundAnomalies: any[] = [];
       
       const ordersSnap = await getDocs(collection(db, 'orders'));
@@ -117,6 +125,34 @@ export default function DataCheck() {
         }
       }
 
+      // Check for stuck invoice_collections
+      const icSnap = await getDocs(query(collection(db, 'invoice_collections'), where('status', '==', 'open')));
+      const activeOrderIds = new Set<string>();
+      icSnap.docs.forEach((icDoc: any) => {
+        const data = icDoc.data();
+        if (data.orderIds && Array.isArray(data.orderIds)) {
+           data.orderIds.forEach((id: string) => activeOrderIds.add(id));
+        }
+      });
+      
+      const ordersInCollection = orders.filter((o: any) => o.isInCollection);
+      const stuckOrders = ordersInCollection.filter(o => !activeOrderIds.has(o.id));
+      
+      if (stuckOrders.length > 0) {
+        stuckOrders.forEach((o: any) => {
+           foundAnomalies.push({
+              id: `stuck_invoice_collection_${o.id}`,
+              entity: 'Order',
+              entityId: o.id,
+              title: `Order Nyangkut di "In Collection"`,
+              description: `Order ${o.orderNumber} terkunci (isInCollection: true), padahal sudah tidak ada dokumen Collection yang terbuka.`,
+              actionLabel: 'Reset Terkunci',
+              actionParams: { type: 'resetStuckCollectionFlags', stuckOrderIds: [o.id] },
+              data: o
+           });
+        });
+      }
+
       setAnomalies(foundAnomalies);
     } catch (err) {
       console.error(err);
@@ -215,6 +251,13 @@ export default function DataCheck() {
         await updateDoc(doc(db, 'products', anomaly.actionParams.productId), {
            variants: mut
         });
+      } else if (type === 'resetStuckCollectionFlags') {
+        const { stuckOrderIds } = anomaly.actionParams;
+        const batch = writeBatch(db);
+        stuckOrderIds.forEach((id: string) => {
+           batch.update(doc(db, 'orders', id), { isInCollection: false });
+        });
+        await batch.commit();
       }
 
       alert('Berhasil dibenarkan');
@@ -245,59 +288,99 @@ export default function DataCheck() {
         </button>
       </div>
 
-      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">Memeriksa data...</div>
-        ) : anomalies.length === 0 ? (
-           <div className="p-12 text-center">
-             <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-               <CheckCircle2 className="w-8 h-8 text-green-500" />
-             </div>
-             <h3 className="text-lg font-bold text-gray-900">Data Sehat</h3>
-             <p className="text-gray-500">Tidak ada bug atau anomali yang terdeteksi.</p>
-           </div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {anomalies.map((anom) => (
-              <div key={anom.id} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start">
-                    <div className="p-2 bg-red-50 rounded-md mr-4 mt-1">
-                      <AlertCircle className="w-5 h-5 text-red-500" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-gray-900">{anom.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1 max-w-2xl">{anom.description}</p>
-                      
-                      {expandedRow === anom.id && (
-                        <div className="mt-4 p-4 bg-gray-900 rounded-md overflow-x-auto">
-                          <pre className="text-xs text-green-400 font-mono">
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tenant</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Bug / Anomali</th>
+              <th scope="col" className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Memeriksa data...</td>
+              </tr>
+            ) : anomalies.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-12 text-center">
+                  <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 className="w-8 h-8 text-green-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">Data Sehat</h3>
+                  <p className="text-gray-500">Tidak ada bug atau anomali yang terdeteksi.</p>
+                </td>
+              </tr>
+            ) : (
+              anomalies.map((anom) => {
+                const tenantId = anom.data?.tenantId;
+                const tenantName = tenantId ? (tenants[tenantId] || tenantId) : 'N/A';
+                
+                let dateStr = '-';
+                const ts = anom.data?.createdAt || anom.data?.date || anom.data?.updatedAt;
+                if (ts && ts.seconds) {
+                  dateStr = new Date(ts.seconds * 1000).toLocaleDateString('id-ID', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                  });
+                } else if (typeof ts === 'string' || typeof ts === 'number') {
+                  dateStr = new Date(ts).toLocaleDateString('id-ID', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                  });
+                }
+
+                return (
+                  <React.Fragment key={anom.id}>
+                    <tr className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                        {tenantName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {dateStr}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex items-start">
+                          <AlertCircle className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-bold text-gray-900 mb-1">{anom.title}</p>
+                            <p className="text-gray-600 max-w-xl">{anom.description}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex flex-col items-end gap-2">
+                          <button
+                            onClick={() => handleFix(anom)}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-md shadow-sm"
+                          >
+                            <Wrench className="w-3 h-3 mr-1" />
+                            {anom.actionLabel}
+                          </button>
+                          <button
+                            onClick={() => setExpandedRow(expandedRow === anom.id ? null : anom.id)}
+                            className="text-xs text-indigo-600 hover:text-indigo-900 underline"
+                          >
+                            {expandedRow === anom.id ? 'Tutup Raw Data' : 'Lihat Raw Data'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedRow === anom.id && (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-4 bg-gray-900">
+                          <pre className="text-xs text-green-400 font-mono overflow-auto max-h-64">
                             {JSON.stringify(anom.data, null, 2)}
                           </pre>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setExpandedRow(expandedRow === anom.id ? null : anom.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-md border border-gray-200"
-                    >
-                      {expandedRow === anom.id ? 'Tutup Data' : 'Lihat Raw Data'}
-                    </button>
-                    <button
-                      onClick={() => handleFix(anom)}
-                      className="flex items-center px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-md"
-                    >
-                      <Wrench className="w-3 h-3 mr-1" />
-                      {anom.actionLabel}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -44,6 +44,7 @@ export default function Customers() {
     allowTempo: false,
     tempoLimitDays: 30,
     discount: 0,
+    hasSavingsProgram: false,
   });
 
   const [search, setSearch] = useState('');
@@ -89,6 +90,10 @@ export default function Customers() {
 
       snap.docs.forEach(d => {
         const order = { id: d.id, ...d.data() } as any;
+        
+        // Skip cancelled or deleted orders
+        if (order.status === 'cancelled' || order.status === 'deleted') return;
+
         if (order.customerId) {
           const sisa = order.totalAmount - (order.paidAmount || 0);
           recMap[order.customerId] = (recMap[order.customerId] || 0) + sisa;
@@ -169,12 +174,13 @@ export default function Customers() {
             await addDoc(collection(db, 'customers'), {
               ...data,
               tenantId: targetTenantId,
+              savingsBalance: 0,
               createdAt: serverTimestamp(),
             });
           }
           setIsModalOpen(false);
           setEditingCustomer(null);
-          setFormData({ name: '', code: '', email: '', phone: '', address: '', type: 'umum', categoryId: '', allowTempo: false, tempoLimitDays: 30, discount: 0 });
+          setFormData({ name: '', code: '', email: '', phone: '', address: '', type: 'umum', categoryId: '', allowTempo: false, tempoLimitDays: 30, discount: 0, hasSavingsProgram: false });
         } catch (err) {
           console.error(err);
         }
@@ -252,6 +258,8 @@ export default function Customers() {
           allowTempo: false,
           tempoLimitDays: 30,
           discount: 0,
+          hasSavingsProgram: false,
+          savingsBalance: 0,
           createdAt: serverTimestamp(),
         };
 
@@ -339,7 +347,8 @@ export default function Customers() {
                 categoryId: '',
                 allowTempo: false, 
                 tempoLimitDays: 30,
-                discount: 0
+                discount: 0,
+                hasSavingsProgram: false
               }); 
               setIsModalOpen(true); 
             }}
@@ -461,7 +470,8 @@ export default function Customers() {
                             categoryId: customer.categoryId || '',
                             allowTempo: customer.allowTempo || false,
                             tempoLimitDays: customer.tempoLimitDays || 30,
-                            discount: customer.discount || 0
+                            discount: customer.discount || 0,
+                            hasSavingsProgram: customer.hasSavingsProgram || false
                           }); 
                           setIsModalOpen(true); 
                         }} 
@@ -740,6 +750,24 @@ export default function Customers() {
                       </div>
                       <p className="text-[10px] text-gray-400 font-bold px-1 mt-1">Diskon akan diterapkan otomatis pada setiap transaksi customer ini tanpa kode kupon.</p>
                     </div>
+                    <div className="space-y-1.5 pt-4">
+                      <div className="flex items-center justify-between p-4 bg-emerald-50/50 border border-emerald-100 rounded-md">
+                        <div>
+                          <label className="text-sm font-bold text-gray-900 cursor-pointer" htmlFor="toggle-savings">Ikut Program Tabungan</label>
+                          <p className="text-xs text-gray-500 mt-0.5">Pelanggan ini akan mengikuti program tabungan/berkah dari transaksi.</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            id="toggle-savings"
+                            type="checkbox"
+                            checked={formData.hasSavingsProgram}
+                            onChange={(e) => setFormData({ ...formData, hasSavingsProgram: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <AnimatePresence>
@@ -858,6 +886,24 @@ export default function Customers() {
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-gray-100">
+                    {selectedCustomerForDetail.hasSavingsProgram && (
+                      <div className="p-6 bg-emerald-50 rounded-md border border-emerald-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 bg-white rounded-md text-emerald-600 shadow-sm">
+                            <Tag className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest leading-none">Saldo Tabungan/Berkah</p>
+                            <p className="text-xl font-black text-emerald-600 mt-1">
+                              Rp {Math.round(selectedCustomerForDetail.savingsBalance || 0).toLocaleString('id-ID')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="px-3 py-1 bg-emerald-600 text-white rounded-full text-[10px] items-center font-bold uppercase tracking-widest">
+                          Program Aktif
+                        </div>
+                      </div>
+                    )}
                     <div className="p-6 bg-red-50 rounded-md border border-red-100 flex flex-col justify-center items-center text-center">
                       <div className="p-3 rounded-md bg-white shadow-sm text-red-600 mb-2">
                         <CreditCard className="w-6 h-6" />

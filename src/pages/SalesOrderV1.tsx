@@ -419,6 +419,17 @@ export default function SalesOrderV1() {
         });
       });
 
+      if (finalPaymentStatus === 'paid') {
+         import('../lib/savings').then(({ processCustomerSavings }) => {
+            processCustomerSavings({
+               orderId: orderRef.id,
+               orderTotal: totalAmount,
+               customerId: selectedCustomerId,
+               tenantId: targetTenantId || ''
+            }).catch(err => console.error("Error processing savings", err));
+         });
+      }
+
       // 4. AFTER TRANSACTION: SLOGGING
       for (const log of stockLogsToProcess) {
         logStockChange(

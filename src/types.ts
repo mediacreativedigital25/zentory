@@ -52,6 +52,11 @@ export interface Tenant {
   menuSettings?: {
     [key: string]: boolean;
   };
+  customerSavingsSettings?: {
+    enabled: boolean;
+    savingsType: 'nominal' | 'percent';
+    savingsValue: number;
+  };
   
   // Cooperation & Business Details
   ownerName?: string;
@@ -175,6 +180,8 @@ export interface Customer {
   allowTempo: boolean;
   tempoLimitDays?: number;
   discount?: number;
+  hasSavingsProgram?: boolean;
+  savingsBalance?: number;
   createdAt: any;
 }
 
@@ -489,6 +496,7 @@ export interface PaymentReceipt {
   bankAccountId?: string; // If Bank Transfer
   bankAccountName?: string;
   amount: number;
+  savingsAmount?: number;
   note?: string;
   collections?: {
     collectionId: string;

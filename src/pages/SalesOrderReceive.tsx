@@ -428,6 +428,17 @@ export default function SalesOrderReceive() {
         });
       });
 
+      if (newPaymentStatus === 'paid') {
+         import('../lib/savings').then(({ processCustomerSavings }) => {
+            processCustomerSavings({
+               orderId: selectedOrder.id,
+               orderTotal: totalAmount,
+               customerId: selectedOrder.customerId || null,
+               tenantId: profile.tenantId || ''
+            }).catch(err => console.error("Error processing savings", err));
+         });
+      }
+
       setSelectedOrder({
         ...selectedOrder,
         paidAmount: newPaid,

@@ -34,6 +34,7 @@ export default function SuperAdminGlobalSettings() {
             accountNumber: globalSettings.paymentMethods?.manual?.accountNumber || '',
             accountHolder: globalSettings.paymentMethods?.manual?.accountHolder || '',
             qrisUrl: globalSettings.paymentMethods?.manual?.qrisUrl || '',
+            logoUrl: globalSettings.paymentMethods?.manual?.logoUrl || '',
             isEnabled: globalSettings.paymentMethods?.manual?.isEnabled ?? true
           },
           tripay: {
@@ -112,6 +113,32 @@ export default function SuperAdminGlobalSettings() {
           </div>
 
           <div className="space-y-4">
+            <div>
+              <label className="block mb-1 text-xs font-semibold text-gray-600">Logo Bank (URL Gambar) - Opsional</label>
+              <input
+                type="text"
+                value={globalSettings.paymentMethods?.manual?.logoUrl || ''}
+                onChange={(e) => setGlobalSettings({
+                  ...globalSettings,
+                  paymentMethods: {
+                    ...globalSettings.paymentMethods,
+                    manual: { ...globalSettings.paymentMethods?.manual, logoUrl: e.target.value }
+                  }
+                })}
+                placeholder="Contoh: https://example.com/logo-bca.png"
+                className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {globalSettings.paymentMethods?.manual?.logoUrl && (
+                <div className="mt-2 p-4 bg-gray-50 rounded-md border border-gray-200 flex items-center justify-center">
+                  <img 
+                    src={globalSettings.paymentMethods.manual.logoUrl} 
+                    alt="Logo Preview" 
+                    className="max-h-12 object-contain" 
+                  />
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Bank</label>
               <input

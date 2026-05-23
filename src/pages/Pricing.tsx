@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Zap, Star, Shield, Building2, ChevronRight, Sparkles } from 'lucide-react';
+import { Check, Zap, Star, Shield, Building2, ChevronRight, Sparkles, X, Info } from 'lucide-react';
 import { usePermissions } from '../hooks/usePermissions';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { MENU_GROUPS } from '../constants/plans';
 
 interface ServicePricing {
   duration: number;
@@ -17,6 +18,7 @@ interface Service {
   description: string;
   pricingList: ServicePricing[];
   features: string[];
+  menuPermissions?: string[];
   icon: string;
 }
 
@@ -26,6 +28,8 @@ export default function Pricing() {
   const [selectedDuration, setSelectedDuration] = useState(30);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [detailService, setDetailService] = useState<Service | null>(null);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -79,148 +83,191 @@ export default function Pricing() {
             Zentory hadir dengan berbagai pilihan paket yang fleksibel sesuai dengan skala usaha Anda. Mulai dari gratis hingga skala enterprise.
           </motion.p>
         </div>
-
-        {/* Duration Selector */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex flex-col items-center gap-4 pt-4"
-        >
-          <div className="flex p-1 bg-gray-100 rounded-md w-fit">
-            {durations.map((d) => (
-              <button
-                key={d}
-                onClick={() => setSelectedDuration(d)}
-                className={`px-6 py-2.5 rounded-md text-xs font-black transition-all ${
-                  selectedDuration === d 
-                    ? 'bg-white text-indigo-600 shadow-md' 
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
-              >
-                {d} HARI
-              </button>
-            ))}
-          </div>
-          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest animate-pulse">
-            🔥 Pilih durasi lebih lama untuk diskon hingga 20%
-          </p>
-        </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        {loading ? (
-          <div className="col-span-full py-20 text-center text-gray-500 font-bold animate-pulse">Memuat pilihan paket layanan...</div>
-        ) : services.length > 0 ? services.map((p, index) => {
-          const isCurrent = currentPlan === p.id || (currentPlan === 'free' && p.pricingList?.[0]?.price === 0);
-          const isRecommended = index === 1 || p.name.toLowerCase().includes('pro');
-          
-          const pList = p.pricingList?.length ? p.pricingList : [{ duration: 30, price: (p as any).price || 0 }];
-          const sortedPricing = [...pList].sort((a,b) => a.duration - b.duration);
-          const currentPricing = pList.find(pr => pr.duration === selectedDuration) || sortedPricing[0];
-          
-          if (!currentPricing) return null;
+      <div className="bg-white border text-left border-gray-100 rounded-xl shadow-sm overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="py-5 px-6 text-xs font-black text-gray-500 uppercase tracking-widest min-w-[200px]">Nama Paket</th>
+              <th className="py-5 px-6 text-xs font-black text-gray-500 uppercase tracking-widest hidden md:table-cell w-1/3">Keterangan</th>
+              <th className="py-5 px-6 text-xs font-black text-gray-500 uppercase tracking-widest text-right whitespace-nowrap">Harga</th>
+              <th className="py-5 px-6 text-xs font-black text-gray-500 uppercase tracking-widest text-center whitespace-nowrap">Durasi</th>
+              <th className="py-5 px-6 text-xs font-black text-gray-500 uppercase tracking-widest text-center min-w-[200px]">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="py-20 text-center text-gray-500 font-bold animate-pulse">
+                  Memuat pilihan paket layanan...
+                </td>
+              </tr>
+            ) : services.length > 0 ? services.map((p, index) => {
+              const isCurrent = currentPlan === p.id || (currentPlan === 'free' && p.pricingList?.[0]?.price === 0);
+              const isRecommended = index === 1 || p.name.toLowerCase().includes('pro');
+              
+              const pList = p.pricingList?.length ? p.pricingList : [{ duration: 30, price: (p as any).price || 0 }];
+              const sortedPricing = [...pList].sort((a,b) => a.duration - b.duration);
+              const currentPricing = pList.find(pr => pr.duration === selectedDuration) || sortedPricing[0];
+              
+              if (!currentPricing) return null;
 
-          const displayPrice = `Rp${currentPricing.price.toLocaleString()}`;
+              const displayPrice = currentPricing.price > 0 ? `Rp ${currentPricing.price.toLocaleString('id-ID')}` : 'Gratis';
+              const IconComp = p.icon === 'Zap' ? Zap : p.icon === 'Star' ? Star : p.icon === 'Building2' ? Building2 : p.icon === 'Shield' ? Shield : Sparkles;
 
-          // Calculate End Date Today + Selected Duration
-          const expiryDate = new Date();
-          expiryDate.setDate(expiryDate.getDate() + (currentPricing.duration || selectedDuration));
-          const expiryDateStr = expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-
-          const IconComp = p.icon === 'Zap' ? Zap : p.icon === 'Star' ? Star : p.icon === 'Building2' ? Building2 : p.icon === 'Shield' ? Shield : Sparkles;
-
-          let discountPercent = 0;
-          if (selectedDuration > 30 && sortedPricing[0]?.price > 0 && selectedDuration === currentPricing.duration) {
-            const basePrice30 = sortedPricing[0].price;
-            const normalPriceForDuration = Math.round((basePrice30 / sortedPricing[0].duration) * selectedDuration);
-            discountPercent = Math.round(((normalPriceForDuration - currentPricing.price) / normalPriceForDuration) * 100);
-          }
-
-          return (
-            <motion.div
-              key={p.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`relative flex flex-col p-8 rounded-md border-2 transition-all duration-500 ${
-                isRecommended 
-                  ? 'border-indigo-600 bg-white shadow-2xl shadow-indigo-100 scale-105 z-10' 
-                  : 'border-gray-100 bg-white hover:border-indigo-200 hover:shadow-xl'
-              }`}
-            >
-              {isRecommended && (
-                <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2">
-                  <Star className="w-3 h-3 fill-white" />
-                  Paling Populer
-                </div>
-              )}
-
-              {discountPercent > 0 && (
-                <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-sm animate-pulse">
-                  Hemat {discountPercent}%
-                </div>
-              )}
-
-              <div className="mb-8">
-                <div className={`w-12 h-12 rounded-md flex items-center justify-center mb-6 ${
-                  isRecommended ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
-                }`}>
-                  <IconComp className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-black text-gray-900 mb-2">{p.name}</h3>
-                <div className="flex flex-col">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-gray-900">{displayPrice}</span>
-                  </div>
-                  {currentPricing.price > 0 && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        / {currentPricing.duration} Hari
-                      </span>
-                      <span className="text-[9px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded uppercase">
-                        Hingga {expiryDateStr}
-                      </span>
+              return (
+                <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="py-6 px-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
+                        isRecommended ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        <IconComp className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900">{p.name}</h3>
+                        {isRecommended && (
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold uppercase tracking-widest">
+                            <Star className="w-3 h-3" /> Paling Populer
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-                <p className="mt-4 text-sm text-gray-500 font-medium leading-relaxed">
-                  {p.description}
-                </p>
-              </div>
-
-              <div className="flex-1 space-y-4 mb-8">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fitur & Keunggulan:</p>
-                <ul className="space-y-3 font-sans">
-                  {p.features?.map((feat, i) => (
-                    <li key={i} className="flex items-start gap-4">
-                      <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5 stroke-[3]" />
-                      <span className="text-sm font-bold text-gray-600">{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <button
-                onClick={() => handleUpgrade(p.id)}
-                disabled={isCurrent}
-                className={`mt-auto w-full py-4 rounded-md font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                  isCurrent 
-                    ? 'bg-gray-100 text-gray-400 cursor-default' 
-                    : isRecommended
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 active:scale-95'
-                      : 'bg-gray-900 text-white hover:bg-black active:scale-95'
-                }`}
-              >
-                {isCurrent ? 'PAKET SAAT INI' : 'PILIH PAKET'}
-                {!isCurrent && <ChevronRight className="w-4 h-4" />}
-              </button>
-            </motion.div>
-          );
-        }) : (
-           <div className="col-span-full py-20 text-center text-gray-500 font-bold">Harap tambahkan layanan via Superadmin</div>
-        )}
+                  </td>
+                  <td className="py-6 px-6 hidden md:table-cell">
+                    <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                      {p.description}
+                    </p>
+                  </td>
+                  <td className="py-6 px-6 text-right">
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-xl font-black text-gray-900">{displayPrice}</span>
+                    </div>
+                  </td>
+                  <td className="py-6 px-6 text-center font-bold text-gray-700">
+                    {currentPricing.duration} Hari
+                  </td>
+                  <td className="py-6 px-6">
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={() => setDetailService(p)}
+                        className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2"
+                      >
+                        <Info className="w-4 h-4" />
+                        Detail
+                      </button>
+                      <button
+                        onClick={() => handleUpgrade(p.id)}
+                        disabled={isCurrent}
+                        className={`px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-all shadow-sm ${
+                          isCurrent 
+                            ? 'bg-gray-100 text-gray-400 cursor-default shadow-none' 
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-200 hover:shadow-md active:scale-95'
+                        }`}
+                      >
+                        {isCurrent ? 'Saat Ini' : 'Pilih'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            }) : (
+              <tr>
+                <td colSpan={5} className="py-20 text-center text-gray-500 font-bold">
+                  Harap tambahkan layanan via Superadmin
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* Detail Modal */}
+      {detailService && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="w-full max-w-lg bg-white rounded-[2rem] p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+          >
+            <button
+              onClick={() => setDetailService(null)}
+              className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="mb-6 pr-10">
+              <h3 className="text-2xl font-black text-gray-900">{detailService.name}</h3>
+              <p className="mt-2 text-sm text-gray-500 font-medium leading-relaxed">
+                {detailService.description}
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Fitur & Keunggulan:</p>
+              <ul className="space-y-4 font-sans max-h-64 overflow-y-auto pr-2">
+                {detailService.features?.map((feat, i) => (
+                  <li key={`feat-${i}`} className="flex items-start gap-4">
+                    <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                    </div>
+                    <span className="text-sm font-bold text-gray-700">{feat}</span>
+                  </li>
+                ))}
+                
+                {/* Dynamically grouped module access based on menuPermissions */}
+                {MENU_GROUPS.map((group, gIdx) => {
+                  const allowedItems = group.items.filter(item => 
+                    detailService.menuPermissions?.includes(item.key)
+                  );
+                  if (allowedItems.length === 0) return null;
+                  return (
+                    <li key={`group-${gIdx}`} className="pt-2">
+                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-9 mb-2">
+                        {group.name}
+                      </div>
+                      <ul className="space-y-3">
+                        {allowedItems.map(item => (
+                          <li key={item.key} className="flex items-start gap-4">
+                            <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                            <span className="text-sm font-bold text-gray-700">{item.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  )
+                })}
+
+                {!detailService.features?.length && (!detailService.menuPermissions || detailService.menuPermissions.length === 0) && (
+                  <li className="text-sm text-gray-500 italic">Tidak ada detail fitur.</li>
+                )}
+              </ul>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end gap-3">
+               <button
+                onClick={() => setDetailService(null)}
+                className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-bold text-xs uppercase tracking-widest transition-colors"
+               >
+                 Tutup
+               </button>
+               <button
+                onClick={() => {
+                  setDetailService(null);
+                  handleUpgrade(detailService.id);
+                }}
+                disabled={currentPlan === detailService.id || (currentPlan === 'free' && detailService.pricingList?.[0]?.price === 0)}
+                className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-xs uppercase tracking-widest transition-colors shadow-lg shadow-indigo-100 active:scale-95 disabled:opacity-50 disabled:grayscale"
+               >
+                 Pilih Paket Ini
+               </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       <div className="bg-white p-12 rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden relative">
         <div className="absolute top-0 right-0 p-12 opacity-5">

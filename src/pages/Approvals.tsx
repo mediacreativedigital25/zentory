@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, deleteDoc, getDocs, getDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, deleteDoc, getDocs, getDoc, writeBatch, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
@@ -134,20 +134,21 @@ export default function Approvals() {
 
     // 5. Correction Requests (status 'pending')
     const correctionQuery = query(
-      collection(db, 'payment_corrections'),
+      collection(db, 'approval_requests'),
       where('tenantId', '==', profile.tenantId),
+      where('type', '==', 'payment_correction'),
       where('status', '==', 'pending')
     );
     const unsubCorrection = onSnapshot(correctionQuery, (snap) => {
       const correctionItems: ApprovalItem[] = snap.docs.map(d => ({
         id: d.id,
         type: 'Correction' as ApprovalType,
-        title: `Koreksi: ${d.data().receiptNumber}`,
+        title: `Koreksi: ${d.data().orderNumber}`,
         subtitle: `Pelanggan: ${d.data().customerName} - Oleh: ${d.data().requestedByName}`,
         amount: d.data().amount,
         status: d.data().status,
-        date: d.data().createdAt,
-        rawData: { ...d.data(), collection: 'payment_corrections' }
+        date: d.data().createdAt || d.data().requestedAt,
+        rawData: { ...d.data(), collection: 'approval_requests' }
       }));
       updateItems('Correction', correctionItems);
     });
@@ -188,6 +189,18 @@ export default function Approvals() {
         status = action === 'approve' ? 'approved' : 'rejected';
       } else if (item.type === 'Deletion') {
         if (action === 'approve') {
+          // If we are deleting an order, revert its generated customer tabungan before deletion
+          if (item.rawData.sourceCollection === 'orders') {
+            const orderRef = doc(db, 'orders', item.rawData.sourceId);
+            const orderSnap = await getDoc(orderRef);
+            if (orderSnap.exists()) {
+               const orderData = orderSnap.data();
+               if (orderData.savingsAdded && orderData.savingsAmount > 0 && orderData.customerId) {
+                   const { revertCustomerSavings } = await import('../lib/savings');
+                   await revertCustomerSavings({ orderId: item.rawData.sourceId, customerId: orderData.customerId });
+               }
+            }
+          }
           // Actual deletion of the source document
           await deleteDoc(doc(db, item.rawData.sourceCollection, item.rawData.sourceId));
           status = 'approved';
@@ -223,9 +236,15 @@ export default function Approvals() {
                  batch.update(orderRef, {
                    paidAmount: newPaid,
                    paymentStatus: paymentStatus,
-                   status: statusToSet,
-                   isInCollection: true // Re-add to collection so it can be viewed in collections
+                   status: statusToSet
                  });
+
+                 if (paymentStatus !== 'paid' && item.rawData.customerId) {
+                   import('../lib/savings').then(({ revertCustomerSavings }) => {
+                     revertCustomerSavings({ orderId: inv.orderId, customerId: item.rawData.customerId })
+                       .catch(console.error);
+                   });
+                 }
               }
             }
           }
@@ -254,19 +273,35 @@ export default function Approvals() {
           }
 
           // 3. Delete related transactions
-          const trxQuery = query(
-            collection(db, 'transactions'),
-            where('tenantId', '==', profile?.tenantId),
-            where('transactionNumber', '>=', `TRX-RP-${item.rawData.receiptNumber}`),
-            where('transactionNumber', '<=', `TRX-RP-${item.rawData.receiptNumber}\uf8ff`)
-          );
-          const trxSnap = await getDocs(trxQuery);
-          trxSnap.forEach(tDoc => {
-             batch.delete(tDoc.ref);
-          });
+          const receiptNumberToMatch = item.rawData.orderNumber || item.rawData.receiptNumber || '';
+          if (receiptNumberToMatch) {
+            const trxQuery = query(
+              collection(db, 'transactions'),
+              where('tenantId', '==', profile?.tenantId),
+              where('transactionNumber', '>=', `TRX-RP-${receiptNumberToMatch}`),
+              where('transactionNumber', '<=', `TRX-RP-${receiptNumberToMatch}\uf8ff`)
+            );
+            const trxSnap = await getDocs(trxQuery);
+            trxSnap.forEach(tDoc => {
+               batch.delete(tDoc.ref);
+            });
+          }
           
-          // 4. Delete the actual receipt
-          batch.delete(doc(db, 'payment_receipts', item.rawData.receiptId));
+          // 4. Revert used tabungan (savingsAmount)
+          if (item.rawData.receiptId) {
+             const receiptRef = doc(db, 'payment_receipts', item.rawData.receiptId);
+             const receiptSnap = await getDoc(receiptRef);
+             if (receiptSnap.exists()) {
+                const rData = receiptSnap.data();
+                if (rData.savingsAmount && rData.savingsAmount > 0 && rData.customerId) {
+                   batch.update(doc(db, 'customers', rData.customerId), {
+                      savingsBalance: increment(rData.savingsAmount)
+                   });
+                }
+             }
+             // 5. Delete the actual receipt
+             batch.delete(receiptRef);
+          }
 
           await batch.commit();
           status = 'approved';
@@ -474,7 +509,7 @@ export default function Approvals() {
                     <div className="space-y-4">
                       <div className="bg-amber-50 p-4 rounded-md border border-amber-100">
                         <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Target Koreksi Pembayaran</p>
-                        <p className="font-bold text-amber-900">{selectedItem.rawData.receiptNumber}</p>
+                        <p className="font-bold text-amber-900">{selectedItem.rawData.orderNumber || selectedItem.rawData.receiptNumber}</p>
                         <p className="text-xs text-amber-700 mt-1 opacity-70">Refund / Undo nominal: Rp.{selectedItem.amount?.toLocaleString()}</p>
                       </div>
                       

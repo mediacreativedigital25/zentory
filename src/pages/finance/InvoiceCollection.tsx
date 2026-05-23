@@ -34,7 +34,6 @@ export default function InvoiceCollection() {
   const [selectedCollectionOrders, setSelectedCollectionOrders] = useState<any[]>([]);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (!selectedCollection || !isDetailModalOpen) {
@@ -61,12 +60,18 @@ export default function InvoiceCollection() {
 
     const q = query(
       collection(db, 'invoice_collections'),
-      where('tenantId', '==', profile.tenantId),
-      orderBy('createdAt', 'desc')
+      where('tenantId', '==', profile.tenantId)
     );
 
     const unsubscribe = onSnapshot(q, (snap) => {
-      setCollections(snap.docs.map(d => ({ id: d.id, ...d.data() } as InvoiceCollectionType)));
+      const fetchedCollections = snap.docs.map(d => ({ id: d.id, ...d.data() } as InvoiceCollectionType));
+      // Client-side sort by createdAt (descending)
+      fetchedCollections.sort((a, b) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+      setCollections(fetchedCollections);
       setLoading(false);
     }, (err) => {
       console.error('Error fetching collections:', err);
@@ -242,36 +247,6 @@ export default function InvoiceCollection() {
     }
   };
 
-  const handleResetOrdersStatus = async () => {
-    if (!profile?.tenantId || isResetting) return;
-    
-    if (!confirm('PERINGATAN: Fitur ini akan mereset status "In Collection" pada SEMUA order Anda agar bisa ditagihkan kembali. Gunakan hanya jika ada data yang "nyangkut". Lanjutkan?')) return;
-
-    setIsResetting(true);
-    try {
-      const ordersSnap = await getDocs(query(
-        collection(db, 'orders'),
-        where('tenantId', '==', profile.tenantId),
-        where('isInCollection', '==', true)
-      ));
-
-      if (ordersSnap.empty) {
-        alert('Tidak ada order yang sedang dalam proses koleksi.');
-        return;
-      }
-
-      const promises = ordersSnap.docs.map(d => updateDoc(d.ref, { isInCollection: false }));
-      await Promise.all(promises);
-      
-      alert(`Berhasil mereset ${ordersSnap.size} order.`);
-    } catch (err) {
-      console.error('Error resetting orders:', err);
-      alert('Gagal mereset status order.');
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
   if (loading) return <div className="p-8 text-center text-gray-500 font-bold animate-pulse text-lg">Memuat rincian penagihan...</div>;
 
   return (
@@ -284,17 +259,6 @@ export default function InvoiceCollection() {
           </h2>
           <p className="text-gray-500 font-medium">Lacak riwayat penagihan masal per pelanggan.</p>
         </div>
-
-        {profile?.role === 'superadmin' && (
-          <button
-            onClick={handleResetOrdersStatus}
-            disabled={isResetting}
-            className="px-6 py-3 bg-red-600 text-white rounded-md font-black shadow-lg shadow-red-100 hover:bg-red-700 transition-all flex items-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
-          >
-            {isResetting ? <Clock className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-            Reset All Collection Flags
-          </button>
-        )}
       </div>
 
       {/* Stats Overview */}

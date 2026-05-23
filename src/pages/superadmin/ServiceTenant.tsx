@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
 import ConfirmModal from '../../components/ConfirmModal';
 import { motion, AnimatePresence } from 'motion/react';
-import { FEATURE_KEYS } from '../../constants/plans';
+import { FEATURE_KEYS, MENU_GROUPS } from '../../constants/plans';
 
 interface Service {
   id: string;
@@ -21,63 +21,6 @@ interface Service {
   icon: string;
   createdAt: any;
 }
-
-const MENU_GROUPS = [
-  {
-    name: 'General & Master',
-    items: [
-      { key: FEATURE_KEYS.DASHBOARD, label: 'Dashboard Utama' },
-      { key: FEATURE_KEYS.TENANT_SETTINGS, label: 'Profil Bisnis & Pengaturan' },
-      { key: FEATURE_KEYS.CATALOG_EDITOR, label: 'Catalog Editor' },
-      { key: FEATURE_KEYS.MASTER_USERS, label: 'Master Users' },
-      { key: FEATURE_KEYS.MASTER_ROLES, label: 'Master Roles' },
-      { key: FEATURE_KEYS.APPROVALS, label: 'Persetujuan / Approvals' },
-      { key: FEATURE_KEYS.CUSTOM_DOMAIN, label: 'Custom Domain' },
-    ]
-  },
-  {
-    name: 'Sales & Penjualan',
-    items: [
-      { key: FEATURE_KEYS.SALES_ORDER, label: 'Sales Order & POS' },
-      { key: FEATURE_KEYS.SALES_RECEIVE, label: 'Sales Order Receive' },
-      { key: FEATURE_KEYS.SALES_CUSTOMERS, label: 'Database Customers' },
-    ]
-  },
-  {
-    name: 'Inventory & Gudang',
-    items: [
-      { key: FEATURE_KEYS.INVENTORY_PRODUCTS, label: 'Daftar Produk & Riwayat' },
-      { key: FEATURE_KEYS.INVENTORY_CATEGORIES, label: 'Kategori Produk' },
-      { key: FEATURE_KEYS.INVENTORY_STOCK, label: 'Stock Produk' },
-      { key: FEATURE_KEYS.INVENTORY_WAREHOUSES, label: 'Manajemen Gudang' },
-      { key: FEATURE_KEYS.MULTI_WAREHOUSE, label: 'Multi Warehouse' },
-      { key: FEATURE_KEYS.INVENTORY_REPORT, label: 'Laporan Inventory' },
-      { key: FEATURE_KEYS.INVENTORY_STOCK_OPNAME, label: 'Stock Opname' },
-    ]
-  },
-  {
-    name: 'Purchase & Pembelian',
-    items: [
-      { key: FEATURE_KEYS.PURCHASE_SUPPLIERS, label: 'Database Supplier' },
-      { key: FEATURE_KEYS.PURCHASE_REQUESTS, label: 'Purchase Request (PR)' },
-      { key: FEATURE_KEYS.PURCHASE_ORDERS, label: 'Purchase Order (PO)' },
-      { key: FEATURE_KEYS.PURCHASE_GOODS_RECEIPTS, label: 'Goods Receipt' },
-      { key: FEATURE_KEYS.PURCHASE_INVOICES, label: 'Purchase Invoice' },
-    ]
-  },
-  {
-    name: 'Finance & Keuangan',
-    items: [
-      { key: FEATURE_KEYS.FINANCE_INVOICES, label: 'Invoice Penjualan' },
-      { key: FEATURE_KEYS.FINANCE_REPORT, label: 'Report Keuangan' },
-      { key: FEATURE_KEYS.FINANCE_CLAIM, label: 'Claim Expense' },
-      { key: FEATURE_KEYS.FINANCE_SETTINGS, label: 'Settings Finance' },
-      { key: FEATURE_KEYS.FINANCE_BANK_ACCOUNTS, label: 'Akun Bank' },
-      { key: FEATURE_KEYS.FINANCE_CHARITY, label: 'Modul Amal / Charity' },
-      { key: FEATURE_KEYS.DAILY_SETTLEMENT, label: 'Daily Settlement' },
-    ]
-  }
-];
 
 export default function ServiceTenant() {
   const { profile } = useAuth();
