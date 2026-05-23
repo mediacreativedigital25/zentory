@@ -1,10 +1,8 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import crypto from "crypto";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { db } from "./src/lib/firebase";
 
 async function startServer() {
   const app = express();
@@ -37,6 +35,52 @@ async function startServer() {
       res.status(200).json({ success: true });
     } catch (error) {
       console.error("Webhook error:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  // WordPress User Sync Webhook
+  app.post("/api/webhooks/wordpress/user/:tenantId", express.json(), async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+      const { name, email, phone, role } = req.body;
+
+      if (!name || !email) {
+        return res.status(400).json({ error: "Name and email are required" });
+      }
+
+      // Set type based on role
+      const customerType = (role && role.toLowerCase() === "penulis") ? "langganan" : "umum";
+
+      // Generate customer code
+      const customersRef = collection(db, 'customers');
+      const q = query(customersRef, where('tenantId', '==', tenantId));
+      const snap = await getDocs(q);
+      const sequence = (snap.size + 1).toString().padStart(4, '0');
+      const newCode = `A${sequence}`;
+
+      // Add to firestore
+      await addDoc(collection(db, 'customers'), {
+        tenantId,
+        name,
+        code: newCode,
+        email,
+        phone: phone || '',
+        address: '',
+        type: customerType,
+        categoryId: '',
+        allowTempo: false,
+        tempoLimitDays: 30,
+        discount: 0,
+        hasSavingsProgram: false,
+        savingsBalance: 0,
+        createdAt: new Date(), // using local date since serverTimestamp might have cross-env issues
+      });
+
+      console.log(`Successfully synced WordPress user ${email} to tenant ${tenantId}`);
+      res.status(200).json({ success: true, message: "User synced as customer" });
+    } catch (error) {
+      console.error("WordPress webhook error:", error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });
