@@ -367,7 +367,7 @@ export default function Charity() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-10 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div>
@@ -496,13 +496,13 @@ export default function Charity() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100">
                 <h3 className="text-xl font-black text-gray-900">Request Revisi Amal</h3>
                 <p className="text-sm text-gray-500">Kirim permintaan ke Super Admin untuk mengubah data amal yang sudah dikunci.</p>
               </div>
-              <div className="p-8 space-y-6">
+              <div className="p-8 space-y-6" flex-1 overflow-y-auto auto-rows-max>
                 <div>
                   <label className="block mb-2 text-xs font-semibold text-gray-600">Alasan Revisi</label>
                   <textarea

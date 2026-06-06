@@ -3,7 +3,7 @@ import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, addDoc, 
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Order, ApprovalRequest, Tenant, BankAccount } from '../types';
-import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark, DollarSign, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Search, Filter, Calendar, ShoppingBag, Tag, Briefcase, Globe, Eye, X, CheckCircle2, Clock, Package, MoreVertical, Send, AlertCircle, Printer, FileText, Landmark, DollarSign, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth } from '../lib/firebase';
 import ConfirmModal from '../components/ConfirmModal';
@@ -424,6 +424,7 @@ export default function SalesOrderReceive() {
           userId: profile.uid,
           orderNumber: selectedOrder.orderNumber,
           bankAccountId: selectedBankAccountId || null,
+          items: selectedOrder.items || [],
           createdAt: serverTimestamp()
         });
       });
@@ -498,27 +499,9 @@ export default function SalesOrderReceive() {
   const handlePrint = (type: 'invoice' | 'receipt', order?: Order) => {
     const targetOrder = order || selectedOrder;
     if (!targetOrder) return;
-
-    setSelectedOrder(targetOrder);
-    setPrintType(type);
-    setIsPrintDropdownOpen(false);
     
-    // Give time for the print section to render before printing
-    setTimeout(() => {
-      try {
-        window.print();
-      } catch (err) {
-        console.error('Print failed:', err);
-        setConfirmConfig({
-          isOpen: true,
-          title: 'Print Error',
-          message: 'Gagal membuka jendela cetak. Pastikan browser Anda mengizinkan popup.',
-          onConfirm: () => setConfirmConfig(null),
-          showCancel: false
-        });
-        setPrintType(null);
-      }
-    }, 500);
+    setIsPrintDropdownOpen(false);
+    window.open(`/print/${type}/${targetOrder.id}`, '_blank');
   };
 
   const getStatusColor = (status: string) => {
@@ -551,21 +534,37 @@ export default function SalesOrderReceive() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-md shadow-sm border border-gray-100">
-        <div className="flex-1 flex items-center gap-4 overflow-x-auto pb-2 sm:pb-0">
+        <div className="flex-1 flex flex-wrap items-center gap-2 sm:gap-4 pb-2 sm:pb-0">
           <div className="flex gap-2">
-            {(['all', 'pending', 'manual', 'pos', 'catalog', 'service', 'deleted'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setFilter(t)}
-                className={`px-4 py-2 rounded-md text-sm font-bold whitespace-nowrap transition-all ${filter === t ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
-              >
-                {t === 'pending' ? 'PENDING HARI INI' : t.toUpperCase()}
-              </button>
-            ))}
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-md text-sm font-bold whitespace-nowrap transition-all ${filter === 'all' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+            >
+              ALL
+            </button>
+            <select
+              value={filter === 'all' ? '' : filter}
+              onChange={(e) => {
+                if (e.target.value) setFilter(e.target.value as any);
+              }}
+              className={`px-4 py-2 rounded-md text-sm font-bold transition-all outline-none cursor-pointer flex-shrink-0 ${
+                filter !== 'all'
+                  ? 'bg-indigo-600 text-white border-transparent shadow-md shadow-indigo-200' 
+                  : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+              }`}
+            >
+              <option value="" disabled className="text-gray-500 bg-white">SOURCE...</option>
+              <option value="pending" className="text-gray-900 bg-white">PENDING HARI INI</option>
+              <option value="manual" className="text-gray-900 bg-white">MANUAL</option>
+              <option value="pos" className="text-gray-900 bg-white">POS</option>
+              <option value="catalog" className="text-gray-900 bg-white">CATALOG</option>
+              <option value="service" className="text-gray-900 bg-white">SERVICE</option>
+              <option value="deleted" className="text-red-600 bg-white">DELETED</option>
+            </select>
           </div>
-          <div className="h-8 w-px bg-gray-200 hidden sm:block" />
-          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-100">
-            <span className="font-bold uppercase tracking-widest">Show:</span>
+          <div className="h-8 w-px bg-gray-200 hidden sm:block mx-1" />
+          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-md border border-gray-200">
+            <span className="font-bold uppercase tracking-widest whitespace-nowrap">Show:</span>
             <select 
               value={rowsPerPage} 
               onChange={(e) => setRowsPerPage(Number(e.target.value))}
@@ -754,7 +753,7 @@ export default function SalesOrderReceive() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div>
@@ -883,7 +882,7 @@ export default function SalesOrderReceive() {
                 {/* Action Buttons */}
                 <div className="space-y-4">
                   <h4 className="font-bold text-gray-900 flex items-center">
-                    <CheckCircle className="w-5 h-5 mr-2 text-indigo-600" />
+                    <CheckCircle2 className="w-5 h-5 mr-2 text-indigo-600" />
                     Update Status
                   </h4>
                   
@@ -945,7 +944,7 @@ export default function SalesOrderReceive() {
                         onClick={() => updateStatus(selectedOrder.id, 'completed')}
                         className="flex flex-col items-center justify-center p-3 rounded-md border border-green-100 bg-green-50 text-green-700 hover:bg-green-100 transition-all disabled:opacity-50"
                       >
-                        <CheckCircle className="w-5 h-5 mb-1" />
+                        <CheckCircle2 className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-bold">RECEIVED</span>
                       </button>
                       <button
@@ -1029,166 +1028,6 @@ export default function SalesOrderReceive() {
         )}
       </AnimatePresence>
 
-      {/* Print Templates */}
-      <div className={`${printType ? 'block' : 'hidden'} print:block print-section fixed inset-0 bg-white z-[9999] overflow-auto`}>
-        {selectedOrder && (
-          <>
-            {printType === 'invoice' && (
-              <div className="p-10 text-black font-sans bg-white min-h-screen">
-                <div className="max-w-4xl mx-auto">
-                  <div className="flex justify-between items-start mb-10">
-                    <div>
-                      {tenantInfo?.settings?.logoUrl ? (
-                        <img src={tenantInfo.settings.logoUrl} alt="Logo Business" className="h-16 mb-2 object-contain" />
-                      ) : (
-                        <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
-                      )}
-                      <p className="text-sm text-gray-500 max-w-xs">{tenantInfo?.settings?.description || 'Business Inventory & Sales Solutions'}</p>
-                      <p className="text-sm text-gray-500 mt-1">{tenantInfo?.settings?.address || ''}</p>
-                      <p className="text-sm text-gray-500">{tenantInfo?.settings?.phone || ''}</p>
-                    </div>
-                    <div className="text-right">
-                      <h2 className="text-3xl font-bold text-gray-900 uppercase tracking-tighter">INVOICE</h2>
-                      <p className="text-sm font-mono text-gray-500">#{selectedOrder.orderNumber}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {selectedOrder.date || (selectedOrder as any).createdAt ? new Date((selectedOrder.date?.seconds || (selectedOrder as any).createdAt?.seconds || 0) * 1000).toLocaleDateString() : ''}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-10 mb-10 border-y border-gray-100 py-6">
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Billed To</p>
-                      <p className="text-lg font-bold text-gray-900">{selectedOrder.customerName}</p>
-                      <p className="text-sm text-gray-500 uppercase">{selectedOrder.type} Order</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Order Status</p>
-                      <p className="text-lg font-bold text-indigo-600 uppercase">{getStatusLabel(selectedOrder.status)}</p>
-                    </div>
-                  </div>
-
-                  <table className="w-full mb-10">
-                    <thead>
-                      <tr className="border-b-2 border-gray-900 text-left text-xs font-bold uppercase tracking-wider">
-                        <th className="py-3">Description</th>
-                        <th className="py-3 text-center">Quantity</th>
-                        <th className="py-3 text-right">Unit Price</th>
-                        <th className="py-3 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {selectedOrder.items.map((item, i) => (
-                        <tr key={i} className="text-sm">
-                          <td className="py-4 font-medium">{item.name}</td>
-                          <td className="py-4 text-center">{item.quantity}</td>
-                          <td className="py-4 text-right">Rp.{item.price.toLocaleString()}</td>
-                          <td className="py-4 text-right font-bold">Rp.{(item.price * item.quantity).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t border-gray-100">
-                        <td colSpan={3} className="py-2 text-right font-bold text-gray-500 uppercase tracking-widest text-[10px]">Subtotal :</td>
-                        <td className="py-2 text-right font-bold text-gray-900 text-sm">
-                          Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0) ).toLocaleString()}
-                        </td>
-                      </tr>
-                      {((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0) > 0 && (
-                        <tr>
-                          <td colSpan={3} className="py-2 text-right font-bold text-green-600 uppercase tracking-widest text-[10px]">
-                            Anda Hemat :
-                          </td>
-                          <td className="py-2 text-right font-bold text-green-600 text-sm">
-                            - Rp.{((selectedOrder as any).discountAmount || (selectedOrder as any).discount || 0).toLocaleString()}
-                          </td>
-                        </tr>
-                      )}
-                      <tr className="border-t-2 border-gray-900">
-                        <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Total Amount:</td>
-                        <td className="py-6 text-right text-2xl font-black text-indigo-600">
-                          Rp.{(selectedOrder.totalAmount || (selectedOrder as any).total || 0).toLocaleString()}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-
-                  <div className="mt-20 pt-10 border-t border-gray-100 text-center">
-                    <p className="text-sm font-bold text-gray-900">Thank you for your business!</p>
-                    <p className="text-xs text-gray-400 mt-1">Generated by Zentory POS System</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {printType === 'receipt' && (
-              <div className="p-4 text-black font-mono text-[10px] w-[80mm] mx-auto bg-white min-h-screen">
-                <div className="text-center mb-4 flex flex-col items-center">
-                  {tenantInfo?.settings?.logoUrl && (
-                    <img src={tenantInfo.settings.logoUrl} alt="Logo" className="max-w-[40mm] h-10 mb-2 object-contain grayscale" />
-                  )}
-                  <h1 className="text-base font-bold uppercase">{tenantInfo?.name || 'ZENTORY'}</h1>
-                  <p className="text-[8px]">{tenantInfo?.settings?.description || 'Sales Receipt'}</p>
-                  {tenantInfo?.settings?.address && <p className="text-[8px] mt-1">{tenantInfo?.settings?.address}</p>}
-                  {tenantInfo?.settings?.phone && <p className="text-[8px]">{tenantInfo?.settings?.phone}</p>}
-                </div>
-                
-                <div className="border-t border-dashed border-gray-300 py-2 mb-2">
-                  <div className="flex justify-between">
-                    <span>Order:</span>
-                    <span>#{selectedOrder.orderNumber}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Date:</span>
-                    <span>{selectedOrder.date || (selectedOrder as any).createdAt ? new Date((selectedOrder.date?.seconds || (selectedOrder as any).createdAt?.seconds || 0) * 1000).toLocaleString() : ''}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Cust:</span>
-                    <span>{selectedOrder.customerName}</span>
-                  </div>
-                </div>
-
-                <div className="border-t border-dashed border-gray-300 py-2 mb-2">
-                  {selectedOrder.items.map((item, i) => (
-                    <div key={i} className="mb-1">
-                      <div className="flex justify-between">
-                        <span>{item.name}</span>
-                      </div>
-                      <div className="flex justify-between pl-2">
-                        <span>{item.quantity} x {item.price.toLocaleString()}</span>
-                        <span>{(item.price * item.quantity).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t border-dashed border-gray-300 py-2 font-bold text-xs">
-                  <div className="flex justify-between text-[8px] font-normal">
-                    <span>Subtotal :</span>
-                    <span>Rp.{( (selectedOrder as any).subtotal || (selectedOrder.totalAmount || (selectedOrder as any).total || 0) + ((selectedOrder as any).discount || 0) ).toLocaleString()}</span>
-                  </div>
-                  {(selectedOrder as any).discount > 0 && (
-                    <div className="flex justify-between text-[8px] font-normal text-gray-600">
-                      <span>Anda Hemat :</span>
-                      <span>- Rp.{((selectedOrder as any).discount || 0).toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between mt-1 pt-1 border-t border-dashed border-gray-200">
-                    <span>Total Amount:</span>
-                    <span>Rp.{(selectedOrder.totalAmount || (selectedOrder as any).total || 0).toLocaleString()}</span>
-                  </div>
-                </div>
-
-                <div className="text-center mt-6">
-                  <p>TERIMA KASIH</p>
-                  <p className="text-[8px] mt-1">Zentory POS System</p>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
       <AnimatePresence>
         {isRequestModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -1196,13 +1035,13 @@ export default function SalesOrderReceive() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100">
                 <h3 className="text-xl font-bold">Request Ubah Transaksi</h3>
                 <p className="text-sm text-gray-500">Kirim permintaan ke Super Admin untuk mengubah transaksi yang dibatalkan.</p>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4" flex-1 overflow-y-auto auto-rows-max>
                 <div className="p-3 bg-yellow-50 border border-yellow-100 rounded-md text-xs text-yellow-700">
                   Apakah anda yakin untuk mengubah transaksi cancel ini?
                 </div>
@@ -1266,7 +1105,7 @@ export default function SalesOrderReceive() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">Catat Pembayaran</h3>
@@ -1274,7 +1113,7 @@ export default function SalesOrderReceive() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4" flex-1 overflow-y-auto auto-rows-max>
                 <div>
                   <label className="block mb-1 text-xs font-semibold text-gray-600">Jumlah Pembayaran</label>
                   <div className="relative">

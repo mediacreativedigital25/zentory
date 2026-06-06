@@ -218,7 +218,7 @@ export default function DomainManagement() {
             <p className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md inline-block">TIPS: Jika sudah punya Worker proxy, cukup tambahkan domain baru di tab "Domains & Routes".</p>
             <ol className="text-xs text-gray-600 space-y-2 list-decimal ml-4 font-medium">
               <li>Buat Worker baru di Cloudflare (Start with Hello World).</li>
-              <li>Klik <b>Edit Code</b> dan masukkan script proxy Zentory.</li>
+              <li>Klik <b>Edit Code</b> dan masukkan script proxy Zyvora.</li>
               <li>Di tab <b>Settings &gt; Domains & Routes</b>, klik <b>Add Custom Domain</b>.</li>
               <li>Masukkan domain (misal: shop.zyvora.my.id).</li>
               <li><b>PENTING:</b> Hapus record CNAME lama di menu DNS sebelum add domain di Worker.</li>
@@ -392,7 +392,7 @@ export default function DomainManagement() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">Tambah Custom Domain</h3>
@@ -400,7 +400,7 @@ export default function DomainManagement() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <form onSubmit={handleAddDomain} className="p-6 space-y-4">
+              <form onSubmit={handleAddDomain} className="p-6 space-y-4 flex-1 overflow-y-auto auto-rows-max">
                 <div>
                   <label className="block mb-2 text-xs font-semibold text-gray-600">Domain Name</label>
                   <div className="relative">

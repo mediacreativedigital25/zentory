@@ -304,7 +304,7 @@ export default function ServiceTenant() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100">
                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">

@@ -430,7 +430,7 @@ export default function BankTransfers() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1 overflow-y-auto auto-rows-max">
                 <div>
                   <label className="block mb-1 text-xs font-semibold text-gray-600">Tanggal</label>
                   <input
@@ -570,7 +570,7 @@ export default function BankTransfers() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4" flex-1 overflow-y-auto auto-rows-max>
                 <div className="grid grid-cols-2 gap-4 border-b border-gray-100 pb-4">
                   <div>
                     <label className="block tracking-wider mb-1 text-xs font-semibold text-gray-600">ID Transaksi</label>

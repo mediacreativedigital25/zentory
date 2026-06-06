@@ -351,6 +351,7 @@ export default function Sales() {
           
           return {
             productId: item.product.id,
+            businessLineId: item.product.businessLineId || null,
             variantId: itemVid || null,
             name,
             price: unitPrice,
@@ -447,10 +448,9 @@ export default function Sales() {
   };
 
   const handlePrint = (type: 'invoice' | 'receipt') => {
-    setPrintType(type);
-    setTimeout(() => {
-      window.print();
-    }, 500);
+    if (lastTransaction?.id) {
+      window.open(`/print/${type}/${lastTransaction.id}`, '_blank');
+    }
   };
 
   const [activeTab, setActiveTab] = useState<'products' | 'cart'>('products');
@@ -688,7 +688,7 @@ export default function Sales() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-sm overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-sm flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 bg-indigo-600 text-white flex justify-between items-center">
                 <div>
@@ -699,7 +699,7 @@ export default function Sales() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <div className="p-6 space-y-3">
+              <div className="p-6 space-y-3" flex-1 overflow-y-auto auto-rows-max>
                 {selectedVariantProduct.variants?.map((v: any) => (
                   <button
                     key={v.id}
@@ -746,7 +746,7 @@ export default function Sales() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col"
+              className="bg-white rounded-xl shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col"
             >
               <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600 text-white">
                 <h3 className="text-lg md:text-xl font-bold flex items-center">
@@ -852,7 +852,7 @@ export default function Sales() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3rem] shadow-2xl w-full max-w-md overflow-hidden text-center p-10"
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden text-center p-10 flex flex-col max-h-[90vh]"
             >
               <div className="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-8">
                 <CheckCircle2 className="w-12 h-12" />
@@ -890,140 +890,6 @@ export default function Sales() {
           </div>
         )}
       </AnimatePresence>
-
-      {/* Print Templates */}
-      <div className={`${printType ? 'block' : 'hidden'} print:block print-section fixed inset-0 bg-white z-[9999] overflow-auto`}>
-        {lastTransaction && (
-          <>
-            {printType === 'invoice' && (
-              <div className="p-10 text-black font-sans bg-white min-h-screen">
-                <div className="max-w-4xl mx-auto">
-                  <div className="flex justify-between items-start mb-10">
-                    <div>
-                      {tenantInfo?.settings?.logoUrl ? (
-                        <img src={tenantInfo.settings.logoUrl} alt="Logo Business" className="h-16 mb-2 object-contain" />
-                      ) : (
-                        <h1 className="text-4xl font-black text-indigo-600 mb-1">{tenantInfo?.name || 'ZENTORY'}</h1>
-                      )}
-                      <p className="text-sm text-gray-500 max-w-xs">{tenantInfo?.settings?.description || 'Business Inventory & Sales Solutions'}</p>
-                      <p className="text-sm text-gray-500 mt-1">{tenantInfo?.settings?.address || ''}</p>
-                      <p className="text-sm text-gray-500">{tenantInfo?.settings?.phone || ''}</p>
-                    </div>
-                    <div className="text-right">
-                      <h2 className="text-3xl font-bold text-gray-900 uppercase tracking-tighter">INVOICE</h2>
-                      <p className="text-sm font-mono text-gray-500">#{lastTransaction.orderNumber}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {lastTransaction.date ? new Date(lastTransaction.date.seconds * 1000).toLocaleDateString() : ''}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-10 mb-10 border-y border-gray-100 py-6">
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Billed To</p>
-                      <p className="text-lg font-bold text-gray-900">{lastTransaction.customerName}</p>
-                      <p className="text-sm text-gray-500 uppercase">POS Transaction</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Status</p>
-                      <p className="text-lg font-bold text-indigo-600 uppercase">{lastTransaction.status}</p>
-                    </div>
-                  </div>
-
-                  <table className="w-full mb-10">
-                    <thead>
-                      <tr className="border-b-2 border-gray-900 text-left text-xs font-bold uppercase tracking-wider">
-                        <th className="py-3">Description</th>
-                        <th className="py-3 text-center">Quantity</th>
-                        <th className="py-3 text-right">Unit Price</th>
-                        <th className="py-3 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {lastTransaction.items.map((item: any, i: number) => (
-                        <tr key={i} className="text-sm">
-                          <td className="py-4 font-medium">{item.name}</td>
-                          <td className="py-4 text-center">{item.quantity}</td>
-                          <td className="py-4 text-right">Rp.{Math.round(item.price).toLocaleString('id-ID')}</td>
-                          <td className="py-4 text-right font-bold">Rp.{Math.round(item.price * item.quantity).toLocaleString('id-ID')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t-2 border-gray-900">
-                        <td colSpan={3} className="py-6 text-right font-bold text-gray-500 uppercase tracking-widest">Grand Total</td>
-                        <td className="py-6 text-right text-2xl font-black text-indigo-600">
-                          Rp.{Math.round(lastTransaction.totalAmount).toLocaleString('id-ID')}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-
-                  <div className="mt-20 pt-10 border-t border-gray-100 text-center">
-                    <p className="text-sm font-bold text-gray-900">Thank you for your business!</p>
-                    <p className="text-xs text-gray-400 mt-1">Generated by Zentory POS System</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {printType === 'receipt' && (
-              <div className="p-4 text-black font-mono text-[10px] w-[80mm] mx-auto bg-white min-h-screen">
-                <div className="text-center mb-4 flex flex-col items-center">
-                  {tenantInfo?.settings?.logoUrl && (
-                    <img src={tenantInfo.settings.logoUrl} alt="Logo" className="max-w-[40mm] h-10 mb-2 object-contain grayscale" />
-                  )}
-                  <h1 className="text-base font-bold uppercase">{tenantInfo?.name || 'ZENTORY'}</h1>
-                  <p className="text-[8px]">{tenantInfo?.settings?.description || 'Sales Receipt'}</p>
-                  {tenantInfo?.settings?.address && <p className="text-[8px] mt-1">{tenantInfo?.settings?.address}</p>}
-                  {tenantInfo?.settings?.phone && <p className="text-[8px]">{tenantInfo?.settings?.phone}</p>}
-                </div>
-                
-                <div className="border-t border-dashed border-gray-300 py-2 mb-2">
-                  <div className="flex justify-between">
-                    <span>Order:</span>
-                    <span>#{lastTransaction.orderNumber}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Date:</span>
-                    <span>{lastTransaction.date ? new Date(lastTransaction.date.seconds * 1000).toLocaleString() : ''}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Cust:</span>
-                    <span>{lastTransaction.customerName}</span>
-                  </div>
-                </div>
-
-                <div className="border-t border-dashed border-gray-300 py-2 mb-2">
-                  {lastTransaction.items.map((item: any, i: number) => (
-                    <div key={i} className="mb-1">
-                      <div className="flex justify-between">
-                        <span>{item.name}</span>
-                      </div>
-                      <div className="flex justify-between pl-2">
-                        <span>{item.quantity} x {Math.round(item.price).toLocaleString('id-ID')}</span>
-                        <span>{Math.round(item.price * item.quantity).toLocaleString('id-ID')}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t border-dashed border-gray-300 py-2 font-bold text-xs">
-                  <div className="flex justify-between">
-                    <span>TOTAL</span>
-                    <span>Rp.{Math.round(lastTransaction.totalAmount).toLocaleString('id-ID')}</span>
-                  </div>
-                </div>
-
-                <div className="text-center mt-6">
-                  <p>TERIMA KASIH</p>
-                  <p className="text-[8px] mt-1">Zentory POS System</p>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
     </div>
   );
 }

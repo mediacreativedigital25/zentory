@@ -246,6 +246,18 @@ export default function TenantSettings() {
                 />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-600">Tema Katalog</label>
+              <select
+                value={formData.catalogTheme || 'default'}
+                onChange={(e) => setFormData({ ...formData, catalogTheme: e.target.value })}
+                className="w-full p-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              >
+                <option value="default">Default</option>
+                <option value="v1">Tema V1 (Katalog)</option>
+              </select>
+            </div>
           </div>
         </div>
 

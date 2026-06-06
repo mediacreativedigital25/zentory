@@ -136,7 +136,7 @@ export default function CostRatio() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-green-50 text-green-600 rounded-md">
               <TrendingUp className="w-5 h-5" />
@@ -147,7 +147,7 @@ export default function CostRatio() {
           <p className="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">{periodMonths} Bulan Terakhir</p>
         </div>
 
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-red-50 text-red-600 rounded-md">
               <Wallet className="w-5 h-5" />
@@ -158,7 +158,7 @@ export default function CostRatio() {
           <p className="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">{periodMonths} Bulan Terakhir</p>
         </div>
 
-        <div className={`p-6 rounded-[2rem] shadow-xl text-white transition-all transform hover:scale-[1.02] ${
+        <div className={`p-6 rounded-xl shadow-xl text-white transition-all transform hover:scale-[1.02] ${
           averageRatio < 30 ? 'bg-gradient-to-br from-green-600 to-green-700 shadow-green-100' :
           averageRatio <= 60 ? 'bg-gradient-to-br from-amber-500 to-amber-600 shadow-amber-100' :
           'bg-gradient-to-br from-red-600 to-red-700 shadow-red-100'

@@ -35,7 +35,7 @@ export default function LayananInvoice() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Invoice Layanan</h2>
-          <p className="text-gray-500">Riwayat pembayaran langganan Zentory Anda.</p>
+          <p className="text-gray-500">Riwayat pembayaran langganan Zyvora Anda.</p>
         </div>
       </div>
 

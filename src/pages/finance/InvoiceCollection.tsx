@@ -263,20 +263,20 @@ export default function InvoiceCollection() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Penagihan</p>
           <div className="flex items-end gap-2">
             <span className="text-2xl font-black text-gray-900">{collections.length}</span>
             <span className="text-xs text-gray-400 font-bold mb-1">Dihasilkan</span>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Nominal Tertagih</p>
           <div className="flex items-end gap-2">
             <span className="text-2xl font-black text-indigo-600">Rp.{collections.reduce((sum, c) => sum + c.totalAmount, 0).toLocaleString()}</span>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sisa Piutang (Kolektif)</p>
           <div className="flex items-end gap-2 text-red-600">
             <span className="text-2xl font-black">Rp.{collections.reduce((sum, c) => sum + c.totalSisa, 0).toLocaleString()}</span>
@@ -403,7 +403,7 @@ export default function InvoiceCollection() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div>

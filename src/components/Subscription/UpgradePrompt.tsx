@@ -65,7 +65,7 @@ export default function UpgradePrompt({ featureName, requiredPlan = 'lite', onCl
 
         <div className="flex flex-col gap-3">
           <button 
-            onClick={() => window.open('https://wa.me/6281234567890?text=Halo%20Admin%20Zentory,%20saya%20ingin%20upgrade%20ke%20paket%20' + planInfo.name, '_blank')}
+            onClick={() => window.open('https://wa.me/6281234567890?text=Halo%20Admin%20Zyvora,%20saya%20ingin%20upgrade%20ke%20paket%20' + planInfo.name, '_blank')}
             className="w-full bg-indigo-600 text-white py-4 rounded-md font-black flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
           >
             UPGRADE SEKARANG

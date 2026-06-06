@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, doc, updateDoc, serverTimestamp, writeBatch, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Tenant, SubscriptionPlan } from '../../types';
-import { Building2, Search, RefreshCcw, Eye, X, Save, Phone, Mail, MapPin, Briefcase, Plus, Trash2, ListChecks, CheckCircle, LayoutDashboard, CheckCircle2, ShoppingCart, TrendingUp, Package, Truck, Wallet, Calculator, Settings, Store, ShieldCheck, History, BookOpen, ChevronDown } from 'lucide-react';
+import { Building2, Search, RefreshCcw, Eye, X, Save, Phone, Mail, MapPin, Briefcase, Plus, Trash2, ListChecks, LayoutDashboard, CheckCircle2, ShoppingCart, TrendingUp, Package, Truck, Wallet, Calculator, Settings, Store, ShieldCheck, History, BookOpen, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { auth } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
@@ -573,6 +573,23 @@ export default function SuperAdminTenants() {
                             <p className="text-gray-900 font-medium">{selectedTenantForDetail.lastPaymentMethod || '-'}</p>
                           )}
                         </div>
+                        <div>
+                          <label className="block mb-1 text-xs font-semibold text-gray-600">Tema Katalog</label>
+                          {isEditingTenant ? (
+                            <select
+                              value={tenantFormData.catalogTheme || 'default'}
+                              onChange={(e) => setTenantFormData({ ...tenantFormData, catalogTheme: e.target.value })}
+                              className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                              <option value="default">Default</option>
+                              <option value="v1">Tema V1 (Katalog)</option>
+                            </select>
+                          ) : (
+                            <p className="text-gray-900 font-medium">
+                              {selectedTenantForDetail.catalogTheme === 'v1' ? 'Tema V1 (Katalog)' : 'Default'}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -589,14 +606,14 @@ export default function SuperAdminTenants() {
                         {isEditingTenant ? (
                           <input
                             type="text"
-                            value={tenantFormData.whatsapp || ''}
-                            onChange={(e) => setTenantFormData({ ...tenantFormData, whatsapp: e.target.value })}
+                            value={tenantFormData.phone || ''}
+                            onChange={(e) => setTenantFormData({ ...tenantFormData, phone: e.target.value })}
                             className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         ) : (
                           <p className="text-gray-600 flex items-center">
                             <Phone className="w-4 h-4 mr-2" />
-                            {selectedTenantForDetail.whatsapp || 'Belum diatur'}
+                            {selectedTenantForDetail.phone || selectedTenantForDetail.whatsapp || 'Belum diatur'}
                           </p>
                         )}
                       </div>
@@ -748,7 +765,7 @@ export default function SuperAdminTenants() {
                                   >
                                     <span className="text-[11px] font-bold text-left">{child.label}</span>
                                     {isChildEnabled ? (
-                                      <CheckCircle className="w-3 h-3 fill-indigo-600 text-white shrink-0 ml-2" />
+                                      <CheckCircle2 className="w-3 h-3 fill-indigo-600 text-white shrink-0 ml-2" />
                                     ) : (
                                       <div className="w-3 h-3 rounded-full border border-gray-300 shrink-0 ml-2" />
                                     )}
@@ -797,7 +814,7 @@ export default function SuperAdminTenants() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-md shadow-xl w-full max-w-lg overflow-hidden flex flex-col"
+              className="bg-white rounded-md shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div className="flex items-center">
@@ -812,7 +829,7 @@ export default function SuperAdminTenants() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4" flex-1 overflow-y-auto auto-rows-max>
                 <div>
                   <label className="block mb-1 text-xs font-semibold text-gray-600">Business Name</label>
                   <input

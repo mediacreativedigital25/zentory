@@ -373,7 +373,7 @@ export default function Approvals() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className={`p-6 text-white flex justify-between items-center ${
                 selectedItem.type === 'Sales' ? 'bg-indigo-600' :

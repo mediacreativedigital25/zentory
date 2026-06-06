@@ -184,7 +184,7 @@ export default function Guide() {
       <header className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-black text-gray-900">Panduan Penggunaan</h2>
-          <p className="text-gray-500 mt-1">Pelajari cara mengoperasikan sistem Zentory secara efektif.</p>
+          <p className="text-gray-500 mt-1">Pelajari cara mengoperasikan sistem Zyvora secara efektif.</p>
         </div>
         <div className="p-3 bg-indigo-100 text-indigo-600 rounded-md">
           <BookOpen className="w-8 h-8" />
@@ -231,7 +231,7 @@ export default function Guide() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm scroll-mt-24"
+              className="bg-white rounded-xl p-8 border border-gray-100 shadow-sm scroll-mt-24"
             >
               <div className="flex items-center gap-4 mb-8">
                 <div className="p-4 bg-gray-50 text-indigo-600 rounded-md">
@@ -271,7 +271,7 @@ export default function Guide() {
           ))}
 
           {/* Automatic Update Notice */}
-          <div className="bg-indigo-600 rounded-[2rem] p-8 text-white relative overflow-hidden">
+          <div className="bg-indigo-600 rounded-xl p-8 text-white relative overflow-hidden">
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-4">
                 <Info className="w-5 h-5" />

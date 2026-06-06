@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, updateDoc, doc, getDocs, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, updateDoc, doc, getDocs, getDoc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { db, auth } from '../../lib/firebase';
 import firebaseConfig from '../../../firebase-applet-config.json';
 import { useAuth } from '../../hooks/useAuth';
 import { UserProfile, Role, Tenant } from '../../types';
-import { Users as UsersIcon, Plus, X, Edit2, Trash2, Shield, Mail, Building2, LogOut } from 'lucide-react';
+import { Users as UsersIcon, Plus, X, Edit2, Trash2, Shield, Mail, Building2, LogOut, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
@@ -27,6 +27,9 @@ export default function Users() {
     tenantId: '',
     password: ''
   });
+
+  const [activeTab, setActiveTab] = useState<'app' | 'customer'>('app');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -78,6 +81,42 @@ export default function Users() {
     };
   }, [profile]);
 
+  const generateUniqueSalesCode = (uid: string): string => {
+    // Extract a 4-character chunk from the UID to ensure uniqueness without requiring Firestore permissions
+    return uid.substring(0, 4).toUpperCase();
+  };
+
+  const generateSalesCodesForAll = async () => {
+    if (!profile || profile.role !== 'superadmin') return;
+    
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Generate Sales Codes',
+      message: 'Apakah Anda yakin ingin men-generate sales code untuk semua user yang belum memilikinya? Proses ini tidak dapat dibatalkan.',
+      onConfirm: async () => {
+        setIsGenerating(true);
+        setConfirmConfig(null);
+        try {
+          const usersWithoutCode = users.filter(u => !u.salesCode);
+          let successCount = 0;
+          for (const user of usersWithoutCode) {
+            const newCode = generateUniqueSalesCode(user.uid);
+            await updateDoc(doc(db, 'users', user.uid), {
+              salesCode: newCode
+            });
+            successCount++;
+          }
+          alert(`Berhasil generate ${successCount} sales code baru.`);
+        } catch (err) {
+          console.error(err);
+          alert('Gagal generate sales code.');
+        } finally {
+          setIsGenerating(false);
+        }
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
@@ -111,6 +150,8 @@ export default function Users() {
         // Sign out from secondary app immediately
         await signOut(secondaryAuth);
 
+        const salesCode = generateUniqueSalesCode(newUid);
+
         // Create user profile in Firestore
         await setDoc(doc(db, 'users', newUid), {
           uid: newUid,
@@ -118,6 +159,7 @@ export default function Users() {
           displayName: formData.displayName,
           role: formData.role,
           tenantId: targetTenantId,
+          salesCode,
           createdAt: serverTimestamp()
         });
       }
@@ -169,21 +211,57 @@ export default function Users() {
           <h2 className="text-2xl font-bold text-gray-900">Manajemen User</h2>
           <p className="text-gray-500">Kelola pengguna dan penetapan role mereka.</p>
         </div>
-        <button
-          onClick={() => { setEditingUser(null); setFormData({ email: '', displayName: '', role: '', tenantId: '', password: '' }); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Tambah User
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {profile?.role === 'superadmin' && (
+            <button
+              onClick={generateSalesCodesForAll}
+              disabled={isGenerating}
+              className="bg-green-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-5 h-5 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
+              Generate Codes
+            </button>
+          )}
+          <button
+            onClick={() => { setEditingUser(null); setFormData({ email: '', displayName: '', role: '', tenantId: '', password: '' }); setIsModalOpen(true); }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Tambah User
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
+        <div className="flex border-b border-gray-100">
+          <button
+            onClick={() => setActiveTab('app')}
+            className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'app' 
+                ? 'border-indigo-600 text-indigo-600' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            User Aplikasi
+          </button>
+          <button
+            onClick={() => setActiveTab('customer')}
+            className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'customer' 
+                ? 'border-indigo-600 text-indigo-600' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            User Pelanggan
+          </button>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-4 font-medium">User</th>
+                <th className="px-6 py-4 font-medium">Kode Sales</th>
                 <th className="px-6 py-4 font-medium">Role</th>
                 {profile?.role === 'superadmin' && <th className="px-6 py-4 font-medium">Tenant</th>}
                 <th className="px-6 py-4 font-medium">Status</th>
@@ -191,7 +269,7 @@ export default function Users() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {users.map((user) => (
+              {users.filter(u => activeTab === 'app' ? u.role !== 'customer' : u.role === 'customer').map((user) => (
                 <tr key={user.uid} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
@@ -203,6 +281,11 @@ export default function Users() {
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                      {user.salesCode || '-'}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${
@@ -303,7 +386,7 @@ export default function Users() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">{editingUser ? 'Edit User' : 'Tambah User Baru'}</h3>
@@ -312,7 +395,7 @@ export default function Users() {
                 </button>
               </div>
               
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1 overflow-y-auto auto-rows-max">
                 {!editingUser && (
                   <>
                     <div>

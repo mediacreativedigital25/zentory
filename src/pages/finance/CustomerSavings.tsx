@@ -89,7 +89,7 @@ export default function CustomerSavings() {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6 flex-1 overflow-y-auto auto-rows-max">
               <div className="flex items-center justify-between p-4 rounded-md border border-gray-100 bg-gray-50">
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">Aktifkan Tabungan Pelanggan (Global)</p>
@@ -177,7 +177,7 @@ export default function CustomerSavings() {
                 Simulasi Pemotongan
               </h3>
              </div>
-             <div className="p-6 space-y-4">
+             <div className="p-6 space-y-4" flex-1 overflow-y-auto auto-rows-max>
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Total Tagihan (Contoh)</span>

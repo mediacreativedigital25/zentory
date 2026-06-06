@@ -1,5 +1,5 @@
 {
-  "name": "Zentory",
+  "name": "Zyvora",
   "description": "Multi-tenant SaaS for Sales, Inventory, and Finance management with Invoice tracking.",
   "requestFramePermissions": ["camera"]
 }

@@ -436,7 +436,7 @@ export default function PurchaseInvoices() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-red-600 text-white">
                 <div className="flex items-center gap-2">
@@ -447,7 +447,7 @@ export default function PurchaseInvoices() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <form onSubmit={submitDeleteRequest} className="p-6 space-y-4">
+              <form onSubmit={submitDeleteRequest} className="p-6 space-y-4 flex-1 overflow-y-auto auto-rows-max">
                 <div className="bg-red-50 p-4 rounded-md mb-4 border border-red-100">
                   <p className="text-xs text-red-600 font-bold mb-1 uppercase">MENGHAPUS INVOICE:</p>
                   <p className="text-sm font-black text-red-700">{deleteFormData.piNumber}</p>
@@ -528,7 +528,7 @@ export default function PurchaseInvoices() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">Pembayaran Supplier</h3>
@@ -536,7 +536,7 @@ export default function PurchaseInvoices() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-6" flex-1 overflow-y-auto auto-rows-max>
                 <div className="bg-gray-50 p-4 rounded-md space-y-2">
                   <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-widest">
                     <span>Invoice No</span>
@@ -607,7 +607,7 @@ export default function PurchaseInvoices() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">{editingInvoice ? 'Edit Invoice' : 'Input Invoice Supplier'}</h3>
@@ -615,7 +615,7 @@ export default function PurchaseInvoices() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1 overflow-y-auto auto-rows-max">
                 <div>
                   <label className="block mb-2 text-xs font-semibold text-gray-600">Reference PO</label>
                   <select

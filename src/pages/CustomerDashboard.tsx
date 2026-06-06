@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, updateDoc, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { signOut } from 'firebase/auth';
+import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -9,34 +10,129 @@ import {
   Clock, 
   ChevronRight, 
   Package, 
-  CheckCircle, 
-  XCircle, 
-  Search,
-  ArrowLeft,
-  User,
-  Save,
-  LogOut
+  CheckCircle2, XCircle, Search, ArrowLeft, User, Save, LogOut, Plus, Trash2, Edit2, Star, Eye
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Order } from '../types';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Order, UserAddress } from '../types';
 
-type Tab = 'history' | 'address' | 'status';
+type Tab = 'overview' | 'history' | 'status' | 'downloads' | 'address';
 
 export default function CustomerDashboard() {
   const { tenantSlug } = useParams();
-  const { user, profile, logout, loading: authLoading } = useAuth();
+  const location = useLocation();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>('history');
+
+  const getTabFromPath = (): Tab => {
+    if (location.pathname.endsWith('/status')) return 'status';
+    if (location.pathname.endsWith('/history')) return 'history';
+    if (location.pathname.endsWith('/downloads')) return 'downloads';
+    if (location.pathname.endsWith('/address')) return 'address';
+    return 'overview';
+  };
+
+  const [activeTab, setActiveTab] = useState<Tab>(getTabFromPath());
+
+  useEffect(() => {
+    setActiveTab(getTabFromPath());
+  }, [location.pathname]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [tenant, setTenant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [address, setAddress] = useState(profile?.address || '');
+  
+  // Addresses State
+  const [addresses, setAddresses] = useState<UserAddress[]>([]);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  
+  const [addressDetails, setAddressDetails] = useState({
+    receiverName: '',
+    phone: '',
+    province: '',
+    city: '',
+    district: '',
+    village: '',
+    postalCode: '',
+    detail: '',
+    isMain: false
+  });
+  
+  const [provinces, setProvinces] = useState<{id: string, name: string}[]>([]);
+  const [cities, setCities] = useState<{id: string, name: string}[]>([]);
+  const [districts, setDistricts] = useState<{id: string, name: string}[]>([]);
+  const [villages, setVillages] = useState<{id: string, name: string}[]>([]);
+
+  const [selectedProvinceId, setSelectedProvinceId] = useState('');
+  const [selectedCityId, setSelectedCityId] = useState('');
+  const [selectedDistrictId, setSelectedDistrictId] = useState('');
+  const [selectedVillageId, setSelectedVillageId] = useState('');
+
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    if (profile?.address) {
-      setAddress(profile.address);
+    if (activeTab === 'address' && provinces.length === 0) {
+      fetch('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json')
+        .then(res => res.json())
+        .then(data => setProvinces(data))
+        .catch(console.error);
+    }
+  }, [activeTab, provinces.length]);
+
+  useEffect(() => {
+    if (selectedProvinceId) {
+      fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${selectedProvinceId}.json`)
+        .then(res => res.json())
+        .then(data => setCities(data))
+        .catch(console.error);
+      setAddressDetails(prev => ({...prev, province: provinces.find(p => p.id === selectedProvinceId)?.name || '', city: '', district: '', village: ''}));
+    }
+  }, [selectedProvinceId, provinces]);
+
+  useEffect(() => {
+    if (selectedCityId) {
+      fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${selectedCityId}.json`)
+        .then(res => res.json())
+        .then(data => setDistricts(data))
+        .catch(console.error);
+      setAddressDetails(prev => ({...prev, city: cities.find(c => c.id === selectedCityId)?.name || '', district: '', village: ''}));
+    }
+  }, [selectedCityId, cities]);
+
+  useEffect(() => {
+    if (selectedDistrictId) {
+      fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${selectedDistrictId}.json`)
+        .then(res => res.json())
+        .then(data => setVillages(data))
+        .catch(console.error);
+      setAddressDetails(prev => ({...prev, district: districts.find(d => d.id === selectedDistrictId)?.name || '', village: ''}));
+    }
+  }, [selectedDistrictId, districts]);
+
+  useEffect(() => {
+    if (selectedVillageId) {
+      setAddressDetails(prev => ({...prev, village: villages.find(v => v.id === selectedVillageId)?.name || ''}));
+    }
+  }, [selectedVillageId, villages]);
+
+  useEffect(() => {
+    if (profile?.addresses && profile.addresses.length > 0) {
+      setAddresses(profile.addresses);
+    } else if (profile && (profile?.addressDetails || profile?.address)) {
+      // Migrate old address format if no addresses exist
+      setAddresses([{
+        id: 'default',
+        receiverName: profile.displayName || '',
+        phone: '',
+        province: profile.addressDetails?.province || '',
+        city: profile.addressDetails?.city || '',
+        district: profile.addressDetails?.district || '',
+        village: profile.addressDetails?.village || '',
+        postalCode: profile.addressDetails?.postalCode || '',
+        detail: profile.addressDetails?.detail || profile.address || '',
+        fullAddress: profile.address || '',
+        isMain: true
+      }]);
     }
   }, [profile]);
 
@@ -88,18 +184,63 @@ export default function CustomerDashboard() {
     }
   }, [user, authLoading, tenantSlug]);
 
-  const handleUpdateAddress = async (e: React.FormEvent) => {
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    if (addresses.length >= 5 && !editingAddressId) {
+      alert('Maksimal 5 alamat.');
+      return;
+    }
+
     setIsSavingAddress(true);
     try {
+      const combinedAddress = `${addressDetails.detail}, ${addressDetails.village}, ${addressDetails.district}, ${addressDetails.city}, ${addressDetails.province} ${addressDetails.postalCode}`;
+      let updatedAddresses = [...addresses];
+      
+      const newAddress: UserAddress = {
+        id: editingAddressId || Date.now().toString(),
+        receiverName: addressDetails.receiverName,
+        phone: addressDetails.phone,
+        province: addressDetails.province,
+        city: addressDetails.city,
+        district: addressDetails.district,
+        village: addressDetails.village,
+        postalCode: addressDetails.postalCode,
+        detail: addressDetails.detail,
+        fullAddress: combinedAddress,
+        isMain: addressDetails.isMain || addresses.length === 0
+      };
+
+      if (newAddress.isMain) {
+        updatedAddresses = updatedAddresses.map(a => ({ ...a, isMain: false }));
+      }
+
+      if (editingAddressId) {
+        updatedAddresses = updatedAddresses.map(a => a.id === editingAddressId ? newAddress : a);
+      } else {
+        updatedAddresses.push(newAddress);
+      }
+
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        address: address
+        addresses: updatedAddresses,
+        ...(newAddress.isMain ? {
+          address: newAddress.fullAddress,
+          addressDetails: {
+            province: newAddress.province,
+            city: newAddress.city,
+            district: newAddress.district,
+            village: newAddress.village,
+            postalCode: newAddress.postalCode,
+            detail: newAddress.detail
+          }
+        } : {})
       });
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      
+      setAddresses(updatedAddresses);
+      setIsAddressModalOpen(false);
+      resetAddressForm();
     } catch (error) {
       console.error('Error updating address:', error);
     } finally {
@@ -107,9 +248,95 @@ export default function CustomerDashboard() {
     }
   };
 
+  const handleDeleteAddress = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user || !window.confirm('Yakin ingin menghapus alamat ini?')) return;
+
+    try {
+      const updatedAddresses = addresses.filter(a => a.id !== id);
+      // If deleted was main, make first one main
+      if (addresses.find(a => a.id === id)?.isMain && updatedAddresses.length > 0) {
+        updatedAddresses[0].isMain = true;
+      }
+      
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, { addresses: updatedAddresses });
+      setAddresses(updatedAddresses);
+    } catch (error) {
+      console.error('Error deleting address:', error);
+    }
+  };
+
+  const handleSetMainAddress = async (id: string) => {
+    if (!user) return;
+    try {
+      const updatedAddresses = addresses.map(a => ({ ...a, isMain: a.id === id }));
+      const newMain = updatedAddresses.find(a => a.isMain);
+      if(!newMain) return;
+
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        addresses: updatedAddresses,
+        address: newMain.fullAddress,
+        addressDetails: {
+          province: newMain.province,
+          city: newMain.city,
+          district: newMain.district,
+          village: newMain.village,
+          postalCode: newMain.postalCode,
+          detail: newMain.detail
+        }
+      });
+      setAddresses(updatedAddresses);
+    } catch (error) {
+      console.error('Error setting main address:', error);
+    }
+  };
+
+  const resetAddressForm = () => {
+    setEditingAddressId(null);
+    setAddressDetails({
+      receiverName: '',
+      phone: '',
+      province: '',
+      city: '',
+      district: '',
+      village: '',
+      postalCode: '',
+      detail: '',
+      isMain: false
+    });
+    setSelectedProvinceId('');
+    setSelectedCityId('');
+    setSelectedDistrictId('');
+    setSelectedVillageId('');
+  };
+
+  const openEditAddressModal = (address: UserAddress) => {
+    setEditingAddressId(address.id);
+    setAddressDetails({
+      receiverName: address.receiverName || '',
+      phone: address.phone || '',
+      province: address.province || '',
+      city: address.city || '',
+      district: address.district || '',
+      village: address.village || '',
+      postalCode: address.postalCode || '',
+      detail: address.detail || '',
+      isMain: address.isMain || false
+    });
+    // Trigger effects to load regencies/districts etc will be hard because we need the IDs.
+    // For simplicity, we just set the text values and clear IDs since the dropdowns allow string values if no ID is selected.
+    setSelectedProvinceId('');
+    setSelectedCityId('');
+    setSelectedDistrictId('');
+    setSelectedVillageId('');
+    setIsAddressModalOpen(true);
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'completed': return <CheckCircle2 className="w-4 h-4 text-green-500" />;
       case 'processing': return <Clock className="w-4 h-4 text-blue-500" />;
       case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
       case 'cancelled': return <XCircle className="w-4 h-4 text-red-500" />;
@@ -146,90 +373,60 @@ export default function CustomerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center">
-            <button 
-              onClick={() => navigate(`/catalog/${tenantSlug}`)}
-              className="p-2 -ml-2 hover:bg-gray-50 rounded-full transition-colors flex items-center text-gray-600 mr-2"
-              title="Kembali ke Katalog"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            {tenant && (
-              <div className="flex items-center">
-                {tenant.settings?.logoUrl ? (
-                  <img src={tenant.settings.logoUrl} alt={tenant.name} className="h-8 w-auto mr-2" referrerPolicy="no-referrer" />
-                ) : (
-                  <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center text-white font-bold text-sm mr-2">
-                    {tenant.name.charAt(0)}
-                  </div>
-                )}
-                <span className="font-black text-gray-900 hidden sm:block">{tenant.name}</span>
-              </div>
-            )}
-          </div>
-          
-          <h1 className="text-lg font-black text-gray-900 absolute left-1/2 -translate-x-1/2 hidden md:block">Dashboard Saya</h1>
-          
-          <button 
-            onClick={() => logout()}
-            className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md font-bold text-sm transition-all"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="bg-gray-50 pb-20 min-h-[calc(100vh-80px)]">
+      <div className="w-full mx-auto px-4 py-8">
         {/* Profile Info (Inline) */}
         <div className="mb-8">
           <h2 className="text-2xl font-black text-gray-900">Halo, {profile?.displayName || 'Pelanggan'}!</h2>
           <p className="text-gray-500">Kelola pesanan dan alamat pengiriman Anda di sini.</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex items-center px-6 py-3 rounded-md font-bold text-sm transition-all whitespace-nowrap ${
-              activeTab === 'history' 
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
-            }`}
-          >
-            <ShoppingBag className="w-4 h-4 mr-2" />
-            Riwayat Pembelian
-          </button>
-          <button
-            onClick={() => setActiveTab('status')}
-            className={`flex items-center px-6 py-3 rounded-md font-bold text-sm transition-all whitespace-nowrap ${
-              activeTab === 'status' 
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
-            }`}
-          >
-            <Clock className="w-4 h-4 mr-2" />
-            Status Orderan
-          </button>
-          <button
-            onClick={() => setActiveTab('address')}
-            className={`flex items-center px-6 py-3 rounded-md font-bold text-sm transition-all whitespace-nowrap ${
-              activeTab === 'address' 
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-100'
-            }`}
-          >
-            <MapPin className="w-4 h-4 mr-2" />
-            Alamat
-          </button>
-        </div>
-
         {/* Tab Content */}
         <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
+                  <Package className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Total Pesanan</p>
+                  <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Pesanan Selesai</p>
+                  <p className="text-2xl font-bold text-gray-900">{orders.filter(o => o.status === 'completed').length}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'downloads' && (
+            <motion.div
+              key="downloads"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              <div className="bg-white rounded-md p-12 text-center border border-gray-100">
+                <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Belum ada file yang dapat didownload.</p>
+              </div>
+            </motion.div>
+          )}
+          
           {activeTab === 'history' && (
             <motion.div
               key="history"
@@ -333,54 +530,252 @@ export default function CustomerDashboard() {
               exit={{ opacity: 0, y: -10 }}
             >
               <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-indigo-50 rounded-md flex items-center justify-center text-indigo-600">
-                    <MapPin className="w-5 h-5" />
+                <div className="flex items-center justify-between gap-3 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-50 rounded-md flex items-center justify-center text-indigo-600">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-black text-gray-900">Alamat Pengiriman</h3>
                   </div>
-                  <h3 className="text-lg font-black text-gray-900">Alamat Pengiriman</h3>
+                  {addresses.length < 5 && (
+                    <button
+                      onClick={() => { resetAddressForm(); setIsAddressModalOpen(true); }}
+                      className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md font-semibold text-sm hover:bg-indigo-700 transition"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Tambah Alamat
+                    </button>
+                  )}
                 </div>
 
-                <form onSubmit={handleUpdateAddress} className="space-y-6">
-                  <div>
-                    <label className="block mb-2 text-xs font-semibold text-gray-600">Alamat Lengkap</label>
-                    <textarea
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="Masukkan alamat lengkap Anda..."
-                      rows={4}
-                      className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSavingAddress}
-                    className="w-full py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50"
-                  >
-                    {isSavingAddress ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Save className="w-5 h-5 mr-2" />
-                        Simpan Alamat
-                      </>
-                    )}
-                  </button>
-
-                  {saveSuccess && (
-                    <motion.p 
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-center text-sm font-bold text-green-600"
-                    >
-                      Alamat berhasil diperbarui!
-                    </motion.p>
-                  )}
-                </form>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm whitespace-nowrap md:whitespace-normal">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold">
+                        <th className="p-4 rounded-tl-md">No.</th>
+                        <th className="p-4">Nama Penerima</th>
+                        <th className="p-4">Alamat</th>
+                        <th className="p-4">No Hp</th>
+                        <th className="p-4 rounded-tr-md">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {addresses.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="p-8 text-center text-gray-500">
+                            Belum ada alamat tersimpan
+                          </td>
+                        </tr>
+                      ) : (
+                        addresses.map((address, idx) => (
+                          <tr key={address.id} className="border-b border-gray-50 hover:bg-gray-50 transition">
+                            <td className="p-4 text-gray-500">{idx + 1}</td>
+                            <td className="p-4 font-semibold text-gray-900">
+                              {address.receiverName || profile?.displayName || '-'}
+                              {address.isMain && (
+                                <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] uppercase font-bold tracking-wider">
+                                  <Star className="w-3 h-3" /> Utama
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4 text-gray-600">
+                              <p className="line-clamp-2 max-w-[300px]">{address.fullAddress}</p>
+                            </td>
+                            <td className="p-4 text-gray-600">{address.phone || '-'}</td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                {!address.isMain && (
+                                  <button
+                                    onClick={() => handleSetMainAddress(address.id)}
+                                    className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded transition"
+                                    title="Jadikan Utama"
+                                  >
+                                    <Star className="w-4 h-4" />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => openEditAddressModal(address)}
+                                  className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition"
+                                  title="Edit"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => handleDeleteAddress(address.id, e)}
+                                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {isAddressModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden my-8"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <h3 className="text-xl font-black text-gray-900">
+                  {editingAddressId ? 'Edit Alamat' : 'Tambah Alamat'}
+                </h3>
+                <button
+                  onClick={() => setIsAddressModalOpen(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                <form id="addressForm" onSubmit={handleSaveAddress} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Nama Penerima</label>
+                      <input
+                        type="text"
+                        required
+                        value={addressDetails.receiverName}
+                        onChange={(e) => setAddressDetails(prev => ({...prev, receiverName: e.target.value}))}
+                        placeholder="Contoh: Budi Susanto"
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Nomor HP</label>
+                      <input
+                        type="tel"
+                        required
+                        value={addressDetails.phone}
+                        onChange={(e) => setAddressDetails(prev => ({...prev, phone: e.target.value}))}
+                        placeholder="Contoh: 08123456789"
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Provinsi {addressDetails.province && !selectedProvinceId && `(${addressDetails.province})`}</label>
+                      <select
+                        required={!addressDetails.province}
+                        value={selectedProvinceId}
+                        onChange={(e) => setSelectedProvinceId(e.target.value)}
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
+                      >
+                        <option value="">Pilih Provinsi</option>
+                        {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Kota/Kabupaten {addressDetails.city && !selectedCityId && `(${addressDetails.city})`}</label>
+                      <select
+                        required={!addressDetails.city}
+                        disabled={!selectedProvinceId}
+                        value={selectedCityId}
+                        onChange={(e) => setSelectedCityId(e.target.value)}
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-900 font-medium"
+                      >
+                        <option value="">Pilih Kota/Kabupaten</option>
+                        {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Kecamatan {addressDetails.district && !selectedDistrictId && `(${addressDetails.district})`}</label>
+                      <select
+                        required={!addressDetails.district}
+                        disabled={!selectedCityId}
+                        value={selectedDistrictId}
+                        onChange={(e) => setSelectedDistrictId(e.target.value)}
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-900 font-medium"
+                      >
+                        <option value="">Pilih Kecamatan</option>
+                        {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Desa/Kelurahan {addressDetails.village && !selectedVillageId && `(${addressDetails.village})`}</label>
+                      <select
+                        required={!addressDetails.village}
+                        disabled={!selectedDistrictId}
+                        value={selectedVillageId}
+                        onChange={(e) => setSelectedVillageId(e.target.value)}
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-900 font-medium"
+                      >
+                        <option value="">Pilih Desa/Kelurahan</option>
+                        {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-xs font-semibold text-gray-600">Kode Pos</label>
+                      <input
+                        type="text"
+                        required
+                        value={addressDetails.postalCode}
+                        onChange={(e) => setAddressDetails(prev => ({...prev, postalCode: e.target.value}))}
+                        placeholder="Contoh: 40135"
+                        className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block mb-2 text-xs font-semibold text-gray-600">Alamat Lengkap & Patokan</label>
+                    <textarea
+                      value={addressDetails.detail}
+                      onChange={(e) => setAddressDetails(prev => ({...prev, detail: e.target.value}))}
+                      placeholder="Nama Jalan, Gedung, No. Rumah, RT/RW, Patokan..."
+                      rows={3}
+                      className="w-full p-2 bg-white border border-gray-100 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-gray-900 font-medium"
+                    />
+                  </div>
+                  
+                  {!addressDetails.isMain && (
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={addressDetails.isMain}
+                        onChange={(e) => setAddressDetails(prev => ({...prev, isMain: e.target.checked}))}
+                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-semibold text-gray-700">Jadikan sebagai alamat utama</span>
+                    </label>
+                  )}
+                </form>
+              </div>
+
+              <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsAddressModalOpen(false)}
+                  className="px-6 py-2 bg-white border border-gray-200 text-gray-700 rounded-md font-bold shadow-sm hover:bg-gray-50 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  form="addressForm"
+                  disabled={isSavingAddress}
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-md font-bold shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition flex items-center gap-2"
+                >
+                  {isSavingAddress ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : <Save className="w-4 h-4" />}
+                  Simpan Alamat
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );

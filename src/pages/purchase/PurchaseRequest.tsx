@@ -3,7 +3,7 @@ import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTime
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { PurchaseRequest, Product } from '../../types';
-import { Plus, Search, Edit2, Trash2, FileText, X, Package, Printer, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, FileText, X, Package, Printer, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../../components/ConfirmModal';
 
@@ -358,7 +358,7 @@ export default function PurchaseRequests() {
                       {pr.status === 'pending' && (profile?.role === 'admin' || profile?.role === 'superadmin') && (
                         <>
                           <button onClick={() => handleApprove(pr.id)} className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Approve">
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle2 className="w-4 h-4" />
                           </button>
                           <button onClick={() => handleReject(pr.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Reject">
                             <XCircle className="w-4 h-4" />
@@ -396,7 +396,7 @@ export default function PurchaseRequests() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">{editingRequest ? 'Edit PR' : 'Buat Purchase Request'}</h3>

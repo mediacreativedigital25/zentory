@@ -462,7 +462,7 @@ export default function ReceivePayment() {
 
       {/* Quick Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Penerimaan Hari Ini</p>
           <div className="flex items-end gap-2">
             <span className="text-2xl font-black text-gray-900">
@@ -473,13 +473,13 @@ export default function ReceivePayment() {
             </span>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Tunai</p>
           <span className="text-2xl font-black text-emerald-600">
             Rp.{receipts.filter(r => r.paymentMethod === 'Tunai').reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
           </span>
         </div>
-        <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Bank Transfer</p>
           <span className="text-2xl font-black text-indigo-600">
             Rp.{receipts.filter(r => r.paymentMethod === 'Bank Transfer').reduce((sum, r) => sum + r.amount, 0).toLocaleString()}
@@ -641,7 +641,7 @@ export default function ReceivePayment() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white rounded-md shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               {/* Header */}
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
@@ -715,7 +715,7 @@ export default function ReceivePayment() {
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100">
+                    <div className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
                       <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <Wallet className="w-4 h-4" /> Alokasi Pembayaran
                       </h4>
@@ -749,7 +749,7 @@ export default function ReceivePayment() {
                       const totalAllocated = selectedCollections.reduce((sum, item) => sum + item.amountToPay, 0);
                       if (selCust && selCust.hasSavingsProgram && (selCust.savingsBalance || 0) > 0) {
                         return (
-                          <div className="bg-emerald-50/50 p-6 rounded-[2rem] border border-emerald-100">
+                          <div className="bg-emerald-50/50 p-6 rounded-xl border border-emerald-100">
                             <div className="flex items-center justify-between mb-4">
                               <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
                                 Tabungan / Berkah (Tersedia: Rp {Math.round(selCust.savingsBalance || 0).toLocaleString('id-ID')})
@@ -897,7 +897,7 @@ export default function ReceivePayment() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-md shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] w-full max-w-3xl overflow-hidden ring-1 ring-gray-100"
+              className="bg-white rounded-md shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] w-full max-w-3xl overflow-hidden ring-1 ring-gray-100 flex flex-col max-h-[90vh]"
             >
               {/* Header */}
               <div className="p-8 border-b border-gray-100 flex justify-between items-start bg-gradient-to-r from-gray-50 to-white">
@@ -938,8 +938,8 @@ export default function ReceivePayment() {
 
                 {/* Amount Card */}
                 <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-[2rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-                  <div className="relative p-8 bg-gradient-to-br from-emerald-50 to-white rounded-[2rem] border border-emerald-100/50 flex flex-col md:flex-row justify-between items-center shadow-sm gap-6">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                  <div className="relative p-8 bg-gradient-to-br from-emerald-50 to-white rounded-xl border border-emerald-100/50 flex flex-col md:flex-row justify-between items-center shadow-sm gap-6">
                     <div className="flex gap-8">
                       <div>
                         <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-2">Nominal Cash/Bank</p>
@@ -981,7 +981,7 @@ export default function ReceivePayment() {
                     <p className="text-[10px] font-bold text-gray-400 border-b border-gray-100 italic">Total {viewReceipt.invoices?.length || 0} Invoice</p>
                   </div>
                   
-                  <div className="bg-gray-50/30 rounded-[2rem] border border-gray-100 overflow-hidden shadow-inner">
+                  <div className="bg-gray-50/30 rounded-xl border border-gray-100 overflow-hidden shadow-inner">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-white border-b border-gray-100">
@@ -1063,14 +1063,14 @@ export default function ReceivePayment() {
                 </div>
 
                 {viewReceipt.note && (
-                  <div className="p-6 bg-amber-50/30 rounded-[2rem] border border-amber-100/50 relative overflow-hidden group">
+                  <div className="p-6 bg-amber-50/30 rounded-xl border border-amber-100/50 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                       <Layers className="w-8 h-8 text-amber-900" />
                     </div>
-                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                    <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
                       Narasi / Catatan
-                    </p>
+                    </div>
                     <p className="text-xs font-semibold text-amber-900/70 leading-relaxed italic pr-8">
                       "{viewReceipt.note}"
                     </p>
@@ -1102,7 +1102,7 @@ export default function ReceivePayment() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-amber-50">
                 <div className="flex items-center gap-3">
@@ -1119,7 +1119,7 @@ export default function ReceivePayment() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4" flex-1 overflow-y-auto auto-rows-max>
                 <p className="text-sm text-gray-600">
                   Anda akan mengajukan koreksi untuk pembayaran dari <strong className="text-gray-900">{requestKoreksiReceipt.customerName}</strong> senilai <strong className="text-gray-900">Rp.{requestKoreksiReceipt.amount.toLocaleString()}</strong>.
                 </p>

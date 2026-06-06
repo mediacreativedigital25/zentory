@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot, orderBy } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
-import { Product, Category, Warehouse, StockLog } from '../../types';
+import { Product, Category, Warehouse, StockLog, BusinessLine } from '../../types';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
 import { Plus, Search, Edit2, Trash2, Package, X, Barcode, DollarSign, Image as ImageIcon, RefreshCw, Upload, Camera, Printer, Wand2, History, ChevronLeft, ChevronRight, AlertCircle, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,6 +18,7 @@ export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [businessLines, setBusinessLines] = useState<BusinessLine[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +42,7 @@ export default function Products() {
     stock: 0,
     category: '',
     warehouseId: '',
+    businessLineId: '',
     description: '',
     imageUrl: '',
     type: 'manual' as const
@@ -81,6 +83,7 @@ export default function Products() {
     minStock: 0,
     category: '',
     warehouseId: '',
+    businessLineId: '',
     description: '',
     imageUrl: '',
     type: 'manual' as 'manual' | 'service',
@@ -108,6 +111,10 @@ export default function Products() {
       ? collection(db, 'warehouses')
       : query(collection(db, 'warehouses'), where('tenantId', '==', targetTenantId));
 
+    const businessLinesQuery = (profile.role === 'superadmin' && !domainTenantId)
+      ? collection(db, 'business_lines')
+      : query(collection(db, 'business_lines'), where('tenantId', '==', targetTenantId));
+
     const unsubProducts = onSnapshot(productsQuery, (snap) => {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
       setLoading(false);
@@ -116,6 +123,10 @@ export default function Products() {
     const unsubCategories = onSnapshot(categoriesQuery, (snap) => {
       setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
     }, (error) => handleFirestoreError(error, OperationType.GET, 'categories', auth, profile));
+
+    const unsubBusinessLines = onSnapshot(businessLinesQuery, (snap) => {
+      setBusinessLines(snap.docs.map(d => ({ id: d.id, ...d.data() } as BusinessLine)));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'business_lines', auth, profile));
 
     const unsubWarehouses = onSnapshot(warehousesQuery, (snap) => {
       setWarehouses(snap.docs.map(d => ({ id: d.id, ...d.data() } as Warehouse)));
@@ -156,6 +167,7 @@ export default function Products() {
     return () => {
       unsubProducts();
       unsubCategories();
+      unsubBusinessLines();
       unsubWarehouses();
       unsubLogs();
       unsubGlobalLogs();
@@ -411,6 +423,7 @@ export default function Products() {
       minStock: product.minStock || 0,
       category: product.category,
       warehouseId: product.warehouseId || '',
+      businessLineId: product.businessLineId || '',
       description: product.description || '',
       imageUrl: product.imageUrl || '',
       type: product.type || 'manual',
@@ -1166,7 +1179,7 @@ export default function Products() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-xl font-bold">{editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</h3>
@@ -1281,6 +1294,17 @@ export default function Products() {
                         </button>
                       </div>
                     </div>
+                  </div>
+                  <div className={formDisplayType === 'service' ? 'col-span-2' : ''}>
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Lini Bisnis (Opsional)</label>
+                    <select
+                      value={formData.businessLineId || ''}
+                      onChange={(e) => setFormData({ ...formData, businessLineId: e.target.value })}
+                      className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Pilih Lini Bisnis</option>
+                      {businessLines.map(bl => <option key={bl.id} value={bl.id}>{bl.name}</option>)}
+                    </select>
                   </div>
                   <div className={formDisplayType === 'service' ? 'col-span-2' : ''}>
                     <label className="block mb-1 text-xs font-semibold text-gray-600">Kategori</label>

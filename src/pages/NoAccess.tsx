@@ -8,7 +8,7 @@ export default function NoAccess() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-md shadow-xl max-w-md w-full text-center space-y-6 border border-gray-100">
-        <div className="w-24 h-24 bg-red-50 text-red-600 rounded-[2rem] flex items-center justify-center mx-auto animate-pulse">
+        <div className="w-24 h-24 bg-red-50 text-red-600 rounded-xl flex items-center justify-center mx-auto animate-pulse">
           <ShieldAlert className="w-12 h-12" />
         </div>
         

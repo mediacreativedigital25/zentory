@@ -31,7 +31,7 @@ export default function SubscriptionExpired() {
         className="max-w-md w-full bg-white rounded-md shadow-2xl overflow-hidden border border-gray-100"
       >
         <div className="p-10 text-center">
-          <div className="w-24 h-24 bg-red-50 rounded-[2rem] flex items-center justify-center text-red-600 mx-auto mb-8">
+          <div className="w-24 h-24 bg-red-50 rounded-xl flex items-center justify-center text-red-600 mx-auto mb-8">
             <Calendar className="w-12 h-12" />
           </div>
           

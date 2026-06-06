@@ -217,7 +217,7 @@ const changelogData = [
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-50',
     changes: [
-      'Penghapusan sidebar Zentory pada tampilan Dashboard Customer untuk pengalaman yang lebih bersih.',
+      'Penghapusan sidebar Zyvora pada tampilan Dashboard Customer untuk pengalaman yang lebih bersih.',
       'Integrasi Logo dan Nama Tenant pada Header Dashboard Customer.',
       'Pemindahan tombol Logout ke Header.',
       'Penambahan sapaan personal pada dashboard.'
@@ -254,7 +254,7 @@ const changelogData = [
   {
     date: '6 April 2026',
     version: 'v1.0.0',
-    title: 'Initial Release - Zentory POS',
+    title: 'Initial Release - Zyvora POS',
     icon: UserCheck,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
@@ -277,7 +277,7 @@ export default function Changelog() {
         </div>
         <div>
           <h1 className="text-3xl font-black text-gray-900">Changelog</h1>
-          <p className="text-gray-500 font-medium">Riwayat pembaruan dan pengembangan sistem Zentory.</p>
+          <p className="text-gray-500 font-medium">Riwayat pembaruan dan pengembangan sistem Zyvora.</p>
         </div>
       </div>
 
@@ -327,7 +327,7 @@ export default function Changelog() {
         </div>
       </div>
 
-      <div className="bg-indigo-600 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-100">
+      <div className="bg-indigo-600 rounded-xl p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-100">
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-4">
             <Rocket className="w-5 h-5" />
@@ -335,7 +335,7 @@ export default function Changelog() {
           </div>
           <h3 className="text-2xl font-black mb-2">Changelog Selalu Terkini</h3>
           <p className="text-indigo-100 text-sm leading-relaxed max-w-md">
-            Halaman ini akan diperbarui secara otomatis setiap kali ada perubahan kode, fitur baru, atau perbaikan sistem untuk memastikan transparansi pengembangan Zentory.
+            Halaman ini akan diperbarui secara otomatis setiap kali ada perubahan kode, fitur baru, atau perbaikan sistem untuk memastikan transparansi pengembangan Zyvora.
           </p>
         </div>
         <History className="absolute -right-8 -bottom-8 w-48 h-48 text-white/10 rotate-12" />
@@ -343,7 +343,7 @@ export default function Changelog() {
 
       <div className="bg-white rounded-md p-8 text-center border border-gray-100">
         <p className="text-gray-900 font-bold">Terus berkembang untuk bisnis Anda.</p>
-        <p className="text-gray-400 text-sm mt-1">Zentory Development Team</p>
+        <p className="text-gray-400 text-sm mt-1">Zyvora Development Team</p>
       </div>
     </div>
   );

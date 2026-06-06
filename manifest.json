@@ -1,19 +1,14 @@
 {
-  "name": "Zentory POS",
-  "short_name": "Zentory",
-  "description": "Point of Sale System for Zentory",
+  "name": "Zyvora POS",
+  "short_name": "Zyvora",
+  "description": "Point of Sale System for Zyvora",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/zentory/192/192",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://picsum.photos/seed/zentory/512/512",
+      "src": "https://storage.googleapis.com/aistudio-production-bucket-12/1748962804245-Zyvora_App_Icon_Large.png",
       "sizes": "512x512",
       "type": "image/png"
     }

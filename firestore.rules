@@ -110,6 +110,12 @@ service cloud.firestore {
     // 3. User Profiles
     // -------------------------------------------------------------------------
     
+    match /sales_codes/{codeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn() && (
         request.auth.uid == userId || 
@@ -125,9 +131,9 @@ service cloud.firestore {
       
       allow update: if isSignedIn() && (
         isSuperAdmin() || 
-        // Users can update their own displayName and presence, but NOT role or tenantId
+        // Users can update their own profile, but NOT role or tenantId
         (request.auth.uid == userId && 
-         incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'lastLoginAt', 'isOnline', 'lastLogoutAt', 'forceLogoutAt', 'address', 'lastActive', 'ipAddress'])) ||
+         !incoming().diff(existing()).affectedKeys().hasAny(['role', 'tenantId', 'uid', 'email'])) ||
         // Tenant admins can update roles within their tenant
         (existing().tenantId != null && isTenantAdmin(existing().tenantId) && 
          incoming().diff(existing()).affectedKeys().hasOnly(['role', 'displayName']))
@@ -156,7 +162,30 @@ service cloud.firestore {
       allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(existing().tenantId));
     }
 
+    match /reviews/{reviewId} {
+      allow read, list: if true;
+      allow create: if true;
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.tenantId != null && isTenantAdmin(resource.data.tenantId));
+    }
+
+    match /services/{serviceId} {
+      allow read, list: if true;
+      allow create: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+      allow update: if isSuperAdmin() || (isSignedIn() && existing().tenantId == getTenantId() && isTenantStaff(existing().tenantId));
+      allow delete: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(existing().tenantId));
+    }
+
     match /categories/{categoryId} {
+      allow read, list: if true;
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+    }
+
+    match /service_categories/{categoryId} {
+      allow read, list: if true;
+      allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
+    }
+
+    match /business_lines/{lineId} {
       allow read, list: if true;
       allow write: if isSuperAdmin() || (isSignedIn() && isTenantStaff(incoming().tenantId));
     }
@@ -366,6 +395,10 @@ service cloud.firestore {
       allow write: if isSuperAdmin() || (isSignedIn() && isTenantAdmin(incoming().tenantId));
     }
 
+    match /bookings/{bookingId} {
+      allow read, write: if isSignedIn();
+    }
+
     // System configurations
     match /custom_domains/{domainId} {
       allow read: if true;
@@ -384,7 +417,7 @@ service cloud.firestore {
     }
 
     match /system/{configId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 

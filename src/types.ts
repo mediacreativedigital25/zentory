@@ -9,13 +9,37 @@ export interface Role {
   createdAt: any;
 }
 
+export interface UserAddress {
+  id: string;
+  receiverName: string;
+  phone: string;
+  province: string;
+  city: string;
+  district: string;
+  village: string;
+  postalCode: string;
+  detail: string;
+  fullAddress: string;
+  isMain: boolean;
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   role: string; // Changed from UserRole to string to support custom roles
   tenantId: string | null;
+  salesCode?: string;
   address?: string;
+  addresses?: UserAddress[];
+  addressDetails?: {
+    province: string;
+    city: string;
+    district: string;
+    village: string;
+    postalCode: string;
+    detail: string;
+  };
   createdAt: any;
   forceLogoutAt?: any;
   lastLoginAt?: any;
@@ -47,6 +71,12 @@ export interface Tenant {
     logoUrl?: string;
     themeColor?: string;
     description?: string;
+    address?: string; // Kept for compatibility, but moving towards root level if preferred, or keeping here.
+    phone?: string;
+    heroImageUrl?: string;
+    heroImageUrls?: string[];
+    operationalHours?: string;
+    receiptFooter?: string;
   };
   customDomains?: string[];
   menuSettings?: {
@@ -72,6 +102,37 @@ export interface Tenant {
   notes?: string;
   billingCycle?: string;
   lastPaymentMethod?: string;
+  catalogTheme?: string;
+  storeAddress?: {
+    province: string;
+    city: string;
+    district: string;
+    village: string;
+    detail: string;
+    postalCode: string;
+  };
+  paymentMethods?: {
+    manual?: {
+      isEnabled: boolean;
+      accounts?: {
+        id?: string;
+        bankName: string;
+        customBankName?: string;
+        accountNumber: string;
+        accountHolder: string;
+      }[];
+      bankName?: string;
+      accountNumber?: string;
+      accountHolder?: string;
+    };
+    paymentGateway?: {
+      isEnabled: boolean;
+      mode: string;
+      merchantCode: string;
+      apiKey: string;
+      privateKey: string;
+    };
+  };
 }
 
 export interface CustomDomain {
@@ -115,6 +176,7 @@ export interface Product {
   minStock: number; // Minimum stock for alerts
   category: string;
   warehouseId?: string;
+  businessLineId?: string;
   imageUrl?: string;
   description?: string;
   type: 'manual' | 'service';
@@ -147,6 +209,7 @@ export interface Category {
   tenantId: string;
   name: string;
   description?: string;
+  type?: 'service';
   createdAt: any;
 }
 
@@ -175,6 +238,10 @@ export interface Customer {
   email: string;
   phone: string;
   address: string;
+  province?: string;
+  regency?: string;
+  district?: string;
+  village?: string;
   type: 'umum' | 'langganan';
   categoryId?: string;
   allowTempo: boolean;
@@ -226,7 +293,8 @@ export interface Transaction {
     name: string; 
     quantity: number; 
     price: number; 
-    hpp: number 
+    hpp: number;
+    businessLineId?: string;
   }[];
   date: any;
   dueDate?: any;
@@ -485,6 +553,27 @@ export interface BankTransfer {
   createdAt: any;
 }
 
+export interface Booking {
+  id: string;
+  tenantId: string;
+  invoiceNumber?: string;
+  customerId: string;
+  customerName: string;
+  customerPhone?: string;
+  serviceId: string;
+  serviceName: string;
+  items?: any[];
+  totalAmount?: number;
+  bookingDate: string; // YYYY-MM-DD
+  bookingTime: string; // HH:mm
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  notes?: string;
+  salesOrderId?: string;
+  createdAt: any;
+  updatedAt: any;
+  createdBy?: string;
+}
+
 export interface PaymentReceipt {
   id: string;
   tenantId: string;
@@ -513,4 +602,29 @@ export interface PaymentReceipt {
   }[];
   createdBy: string;
   createdAt: any;
+}
+
+export interface BusinessLine {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  createdAt: any;
+}
+
+export interface ServiceCategory {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+}
+
+export interface Service {
+  id: string;
+  tenantId: string;
+  categoryId: string;
+  name: string;
+  description?: string;
+  price: number;
+  duration?: number;
 }

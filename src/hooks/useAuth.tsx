@@ -239,7 +239,7 @@ export const AuthProvider = ({ children, domainTenantId }: { children: React.Rea
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <div className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
             <div className="p-10 text-center">
-              <div className="w-24 h-24 bg-red-50 rounded-[2rem] flex items-center justify-center text-red-600 mx-auto mb-8 animate-bounce">
+              <div className="w-24 h-24 bg-red-50 rounded-xl flex items-center justify-center text-red-600 mx-auto mb-8 animate-bounce">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>

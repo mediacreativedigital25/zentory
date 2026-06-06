@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { CartProvider } from './context/CartContext';
 import Layout from './components/Layout';
 import { PLANS } from './constants/plans';
 import Home from './pages/Home';
@@ -22,6 +23,8 @@ import SuperAdminUsers from './pages/superadmin/Users';
 import SuperAdminResetData from './pages/superadmin/ResetData';
 import SuperAdminRoadmaps from './pages/superadmin/Roadmaps';
 import SuperAdminGlobalSettings from './pages/superadmin/GlobalSettings';
+import SuperAdminBankLogos from './pages/superadmin/BankLogos';
+import SuperAdminBrandSettings from './pages/superadmin/BrandSettings';
 import SuperAdminServiceTenant from './pages/superadmin/ServiceTenant';
 import DomainManagement from './pages/superadmin/DomainManagement';
 import Catalog from './pages/Catalog';
@@ -29,8 +32,14 @@ import SalesOrder from './pages/SalesOrder';
 import SalesOrderV1 from './pages/SalesOrderV1';
 import SalesOrderReceive from './pages/SalesOrderReceive';
 import Customers from './pages/Customers';
+import BookingList from './pages/sales/BookingList';
+import SalesBooking from './pages/sales/SalesBooking';
+import ProductReviews from './pages/sales/ProductReviews';
 import Products from './pages/inventory/Products';
 import Categories from './pages/inventory/Categories';
+import ServiceList from './pages/services/ServiceList';
+import ServiceCategories from './pages/services/ServiceCategories';
+import BusinessLines from './pages/inventory/BusinessLines';
 import Stock from './pages/inventory/Stock';
 import Warehouses from './pages/inventory/Warehouses';
 import InventoryReport from './pages/inventory/InventoryReport';
@@ -61,6 +70,8 @@ import GoodsReceipt from './pages/purchase/GoodsReceipt';
 import PurchaseInvoice from './pages/purchase/PurchaseInvoice';
 import Roles from './pages/master/Roles';
 import TenantSettings from './pages/TenantSettings';
+import TenantPaymentSettings from './pages/TenantPaymentSettings';
+import TenantStoreAddress from './pages/TenantStoreAddress';
 import Approvals from './pages/Approvals';
 import CustomerDashboard from './pages/CustomerDashboard';
 import CustomerAuth from './pages/CustomerAuth';
@@ -72,7 +83,12 @@ import LayananInvoice from './pages/LayananInvoice';
 import LayananSaya from './pages/LayananSaya';
 import Checkout from './pages/Checkout';
 import NoAccess from './pages/NoAccess';
+import PrintView from './pages/PrintView';
+import Profile from './pages/Profile';
 
+import MarketplaceV1 from './pages/marketplace/MarketplaceV1';
+import ProductDetailV1 from './pages/marketplace/ProductDetailV1';
+import MarketplaceCheckout from './pages/marketplace/MarketplaceCheckout';
 import CustomerCategories from './pages/sales/CustomerCategories';
 
 const ProtectedRoute = ({ children, allowedRoles, permission, menuLabel }: { children: React.ReactNode; allowedRoles?: string[]; permission?: string; menuLabel?: string }) => {
@@ -129,7 +145,7 @@ const ProtectedRoute = ({ children, allowedRoles, permission, menuLabel }: { chi
     if (isSystemRole) {
       // 2. Role-based Gating
       if (allowedRoles && !allowedRoles.includes(profile.role)) {
-        if (profile.role === 'customer') return <Navigate to={`/catalog/${profile.tenantId}/dashboard`} />;
+        if (profile.role === 'customer') return <Navigate to={`/marketplace/${tenant?.slug || profile.tenantId}/dashboard`} />;
         return <Navigate to="/no-access" />;
       }
     } else {
@@ -144,18 +160,16 @@ const ProtectedRoute = ({ children, allowedRoles, permission, menuLabel }: { chi
     }
   }
 
-  // Customers don't get the sidebar layout
-  if (profile?.role === 'customer') {
-    return <>{children}</>;
-  }
-
   return <Layout>{children}</Layout>;
 };
+
+import { useBrand } from './hooks/useBrand';
 
 export default function App() {
   const [isCustomDomain, setIsCustomDomain] = React.useState(false);
   const [domainTenantId, setDomainTenantId] = React.useState<string | null>(null);
   const [checkingDomain, setCheckingDomain] = React.useState(true);
+  useBrand(); // Initialize brand settings globally
 
   React.useEffect(() => {
     const checkDomain = async () => {
@@ -186,23 +200,59 @@ export default function App() {
 
   return (
     <AuthProvider domainTenantId={domainTenantId}>
-      <BrowserRouter>
-        <Routes>
-          {/* If on custom domain, the root is the catalog */}
-          {isCustomDomain && (
-            <Route path="/" element={<Catalog />} />
-          )}
+      <CartProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* If on custom domain, the root is the catalog */}
+            {isCustomDomain && (
+              <Route path="/" element={<Catalog />} />
+            )}
           
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/catalog/:tenantSlug" element={<Catalog />} />
           <Route path="/catalog/:tenantSlug/auth" element={<CustomerAuth />} />
+          <Route path="/marketplace/:tenantSlug/auth" element={<CustomerAuth />} />
+          <Route path="/marketplace/:tenantSlug" element={<MarketplaceV1 />} />
+          <Route path="/marketplace/:tenantSlug/product/:productId" element={<ProductDetailV1 />} />
+          <Route path="/marketplace/:tenantSlug/checkout" element={<MarketplaceCheckout />} />
+          <Route path="/marketplace/:tenantSlug/dashboard" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/marketplace/:tenantSlug/history" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/marketplace/:tenantSlug/status" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/marketplace/:tenantSlug/downloads" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/marketplace/:tenantSlug/address" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
           <Route path="/catalog/:tenantSlug/dashboard" element={
             <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
               <CustomerDashboard />
             </ProtectedRoute>
           } />
           
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
+
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={['admin', 'staff']} permission="dashboard" menuLabel="Dashboard">
               <Dashboard />
@@ -215,6 +265,18 @@ export default function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/services/list" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_products" menuLabel="Service">
+              <ServiceList />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/services/categories" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_categories" menuLabel="Service">
+              <ServiceCategories />
+            </ProtectedRoute>
+          } />
+
           <Route path="/inventory/products" element={
             <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_products" menuLabel="Inventory">
               <Products />
@@ -224,6 +286,12 @@ export default function App() {
           <Route path="/inventory/categories" element={
             <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_categories" menuLabel="Inventory">
               <Categories />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/inventory/business-lines" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_categories" menuLabel="Inventory">
+              <BusinessLines />
             </ProtectedRoute>
           } />
 
@@ -275,6 +343,18 @@ export default function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/sales/bookings" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_customers" menuLabel="Sales">
+              <BookingList />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/sales/sales-booking" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order" menuLabel="Sales">
+              <SalesBooking />
+            </ProtectedRoute>
+          } />
+
           <Route path="/sales/customers" element={
             <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_customers" menuLabel="Sales">
               <Customers />
@@ -284,6 +364,12 @@ export default function App() {
           <Route path="/sales/customer-categories" element={
             <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_customers" menuLabel="Sales">
               <CustomerCategories />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/sales/reviews" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff', 'kasir']} permission="sales_order" menuLabel="Sales">
+              <ProductReviews />
             </ProtectedRoute>
           } />
 
@@ -407,6 +493,18 @@ export default function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/settings/payment-methods" element={
+            <ProtectedRoute allowedRoles={['admin']} permission="tenant_settings" menuLabel="Payment Metode">
+              <TenantPaymentSettings />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/settings/store-address" element={
+            <ProtectedRoute allowedRoles={['admin']} permission="tenant_settings" menuLabel="Alamat Toko">
+              <TenantStoreAddress />
+            </ProtectedRoute>
+          } />
+
           {/* Purchase */}
           <Route path="/purchase/suppliers" element={
             <ProtectedRoute allowedRoles={['admin', 'staff', 'superadmin']} permission="purchase_suppliers" menuLabel="Purchase">
@@ -518,6 +616,18 @@ export default function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/superadmin/bank-logos" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminBankLogos />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/brand" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminBrandSettings />
+            </ProtectedRoute>
+          } />
+
           <Route path="/superadmin/domains" element={
             <ProtectedRoute allowedRoles={['superadmin']}>
               <DomainManagement />
@@ -562,10 +672,13 @@ export default function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/print/:type/:id" element={<PrintView />} />
+
           <Route path="/no-access" element={<NoAccess />} />
           <Route path="/" element={<Home />} />
         </Routes>
       </BrowserRouter>
+      </CartProvider>
     </AuthProvider>
   );
 }

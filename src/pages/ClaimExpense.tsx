@@ -447,7 +447,7 @@ export default function ClaimExpense() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-lg overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>
@@ -469,7 +469,7 @@ export default function ClaimExpense() {
               
               <form onSubmit={handleSubmit} className="p-8 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
                 {/* Bank Account Selection */}
-                <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 space-y-4">
+                <div className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100 space-y-4">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 bg-indigo-100 text-indigo-600 rounded-md">
                       <Landmark className="w-5 h-5" />
@@ -512,7 +512,7 @@ export default function ClaimExpense() {
                   </div>
                   
                   {formData.items.map((item, index) => (
-                    <div key={index} className="relative bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 space-y-4">
+                    <div key={index} className="relative bg-gray-50/50 p-6 rounded-xl border border-gray-100 space-y-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-[10px] font-black text-indigo-600 shadow-sm">
                           {index + 1}
@@ -614,7 +614,7 @@ export default function ClaimExpense() {
                   ))}
                 </div>
 
-                <div className="p-6 bg-indigo-600 rounded-[2rem] flex justify-between items-center shadow-xl shadow-indigo-100">
+                <div className="p-6 bg-indigo-600 rounded-xl flex justify-between items-center shadow-xl shadow-indigo-100">
                   <div className="flex items-center">
                     <div className="p-2 bg-white/20 rounded-md mr-3">
                       <Calculator className="w-5 h-5 text-white" />
@@ -657,7 +657,7 @@ export default function ClaimExpense() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>

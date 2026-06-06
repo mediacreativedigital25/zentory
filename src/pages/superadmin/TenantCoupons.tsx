@@ -215,7 +215,7 @@ export default function TenantCoupons() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-md shadow-xl w-full max-w-lg overflow-hidden"
+              className="bg-white rounded-md shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <h3 className="font-bold text-gray-900 flex items-center">
@@ -230,7 +230,7 @@ export default function TenantCoupons() {
                 </button>
               </div>
 
-              <form onSubmit={handleSave} className="p-6 space-y-4">
+              <form onSubmit={handleSave} className="p-6 space-y-4 flex-1 overflow-y-auto auto-rows-max">
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-gray-600">Kode Kupon</label>
                   <input

@@ -115,8 +115,10 @@ export default function SuperAdminInvoices() {
               end_date: dateStr
             };
 
-            if (currentTenant.phone) {
-              await sendPaymentSuccessNotification(currentTenant.phone, paymentVarData);
+            const tenantPhone = currentTenant.phone || currentTenant.settings?.phone || currentTenant.whatsapp;
+            
+            if (tenantPhone) {
+              await sendPaymentSuccessNotification(tenantPhone, paymentVarData);
             }
             if (currentTenant.email) {
               await sendPaymentSuccessEmail(currentTenant.email, paymentVarData);
@@ -124,8 +126,8 @@ export default function SuperAdminInvoices() {
 
             // Delay a bit before second msg
             setTimeout(async () => {
-              if (currentTenant.phone) {
-                await sendSubscriptionInfoNotification(currentTenant.phone, subscriptionVarData);
+              if (tenantPhone) {
+                await sendSubscriptionInfoNotification(tenantPhone, subscriptionVarData);
               }
               if (currentTenant.email) {
                 await sendSubscriptionInfoEmail(currentTenant.email, subscriptionVarData);

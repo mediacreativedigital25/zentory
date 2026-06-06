@@ -6,7 +6,6 @@ import { RefreshCcw, AlertTriangle, Building2, Search } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { auth } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
-import ConfirmModal from '../../components/ConfirmModal';
 
 export default function SuperAdminResetData() {
   const { profile } = useAuth();
@@ -16,6 +15,9 @@ export default function SuperAdminResetData() {
   const [isResetting, setIsResetting] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; showCancel?: boolean } | null>(null);
+  const [resetProgress, setResetProgress] = useState<string>('');
+  const [confirmText, setConfirmText] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     const fetchTenants = async () => {
@@ -58,24 +60,53 @@ export default function SuperAdminResetData() {
     { id: 'expenseRules', label: 'Expense Rules (Aturan Biaya)' },
     { id: 'roles', label: 'Custom Roles (Jabatan)' },
     { id: 'counters', label: 'Counters (Sequence Numbers / ID)' },
+    { id: 'services', label: 'Layanan / Services (Produk Jasa)' },
+    { id: 'service_categories', label: 'Kategori Layanan' }
   ];
 
-  const handleReset = async () => {
+  const handleResetInitiate = () => {
     if (!selectedResetTenant) return;
     if (resetCollections.length === 0) return;
+    setConfirmText('');
+    setShowConfirmModal(true);
+  };
 
-    const tenantName = tenants.find(t => t.id === selectedResetTenant)?.name;
+  const executeReset = async () => {
+    const tenantName = tenants.find(t => t.id === selectedResetTenant)?.name || selectedResetTenant;
     
-    setConfirmConfig({
-      isOpen: true,
-      title: 'RESET DATA TENANT',
-      message: `PERINGATAN KRITIS! Anda akan menghapus SEMUA data (${resetCollections.join(', ')}) untuk tenant "${tenantName}". Tindakan ini TIDAK DAPAT DIBATALKAN. Apakah Anda yakin?`,
-      onConfirm: async () => {
-        setConfirmConfig(null);
-        setIsResetting(true);
-        setResetSuccess(false);
-        try {
-          for (const collId of resetCollections) {
+    if (confirmText !== tenantName) {
+      alert(`Mohon ketikkan nama tenant dengan benar: ${tenantName}`);
+      return;
+    }
+
+    setShowConfirmModal(false);
+    setIsResetting(true);
+    setResetSuccess(false);
+    
+    try {
+      for (const collId of resetCollections) {
+        setResetProgress(`Menghapus data ${collectionsToReset.find(c => c.id === collId)?.label || collId}...`);
+        
+        if (collId === 'counters') {
+            try {
+              const counterSnap = await getDocs(collection(db, 'counters'));
+              const countersToDelete = counterSnap.docs.filter(d => d.id.startsWith(`${selectedResetTenant}_`));
+              let cBatch = writeBatch(db);
+              let cCount = 0;
+              countersToDelete.forEach(c => {
+                 cBatch.delete(c.ref);
+                 cCount++;
+                 if (cCount === 490) {
+                     cBatch.commit();
+                     cBatch = writeBatch(db);
+                     cCount = 0;
+                 }
+              });
+              if (cCount > 0) await cBatch.commit();
+            } catch(e) {
+                console.error('Error deleting counters', e);
+            }
+        } else {
             const q = query(collection(db, collId), where('tenantId', '==', selectedResetTenant));
             const snap = await getDocs(q);
             
@@ -85,39 +116,27 @@ export default function SuperAdminResetData() {
             for (const d of snap.docs) {
               batch.delete(d.ref);
               count++;
-              if (count === 500) {
+              if (count === 490) {
                 await batch.commit();
                 batch = writeBatch(db);
                 count = 0;
               }
             }
             if (count > 0) await batch.commit();
-
-            if (collId === 'orders') {
-              try {
-                const counterSnap = await getDocs(collection(db, 'counters'));
-                const countersToDelete = counterSnap.docs.filter(d => d.id.startsWith(`${selectedResetTenant}_orders_`));
-                let cBatch = writeBatch(db);
-                let cCount = 0;
-                countersToDelete.forEach(c => {
-                   cBatch.delete(c.ref);
-                   cCount++;
-                });
-                if (cCount > 0) await cBatch.commit();
-              } catch(e) {}
-            }
-          }
-          setResetSuccess(true);
-          setResetCollections([]);
-          setTimeout(() => setResetSuccess(false), 5000);
-        } catch (err) {
-          console.error(err);
-          handleFirestoreError(err, OperationType.DELETE, 'multiple_collections', auth, profile);
-        } finally {
-          setIsResetting(false);
         }
       }
-    });
+      
+      setResetSuccess(true);
+      setResetCollections([]);
+      setResetProgress('');
+      setTimeout(() => setResetSuccess(false), 5000);
+    } catch (err) {
+      console.error(err);
+      handleFirestoreError(err, OperationType.DELETE, 'multiple_collections', auth, profile);
+      setResetProgress('Terjadi kesalahan saat mereset data.');
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -187,7 +206,7 @@ export default function SuperAdminResetData() {
 
           <div className="pt-4">
             <button
-              onClick={handleReset}
+              onClick={handleResetInitiate}
               disabled={!selectedResetTenant || resetCollections.length === 0 || isResetting}
               className="w-full py-4 bg-red-600 text-white rounded-md font-bold hover:bg-red-700 shadow-lg shadow-red-100 transition-all disabled:opacity-50 flex items-center justify-center"
             >
@@ -203,6 +222,11 @@ export default function SuperAdminResetData() {
                 </>
               )}
             </button>
+            {isResetting && resetProgress && (
+              <p className="text-center text-sm font-medium text-gray-500 mt-4 animate-pulse">
+                {resetProgress}
+              </p>
+            )}
             {resetSuccess && (
               <p className="text-center text-green-600 font-bold mt-4 animate-bounce">
                 Data berhasil dihapus!
@@ -212,15 +236,46 @@ export default function SuperAdminResetData() {
         </div>
       </div>
 
-      {confirmConfig && (
-        <ConfirmModal
-          isOpen={confirmConfig.isOpen}
-          title={confirmConfig.title}
-          message={confirmConfig.message}
-          onConfirm={confirmConfig.onConfirm}
-          onCancel={() => setConfirmConfig(null)}
-          showCancel={confirmConfig.showCancel}
-        />
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Penghapusan</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Anda akan menghapus <strong>{resetCollections.length} koleksi data</strong> dari tenant ini.
+                <br /><br />
+                Tindakan ini <strong>tidak dapat dibatalkan</strong>. Untuk melanjutkan, mohon ketik <strong>"{tenants.find(t => t.id === selectedResetTenant)?.name || selectedResetTenant}"</strong> di bawah ini.
+              </p>
+
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="Ketik nama tenant di sini"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 mb-6"
+              />
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={executeReset}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                  disabled={confirmText !== (tenants.find(t => t.id === selectedResetTenant)?.name || selectedResetTenant)}
+                >
+                  Konfirmasi Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

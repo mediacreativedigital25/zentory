@@ -80,7 +80,7 @@ export default function Pricing() {
             transition={{ delay: 0.2 }}
             className="text-lg text-gray-500 font-medium leading-relaxed"
           >
-            Zentory hadir dengan berbagai pilihan paket yang fleksibel sesuai dengan skala usaha Anda. Mulai dari gratis hingga skala enterprise.
+            Zyvora hadir dengan berbagai pilihan paket yang fleksibel sesuai dengan skala usaha Anda. Mulai dari gratis hingga skala enterprise.
           </motion.p>
         </div>
       </div>
@@ -189,7 +189,7 @@ export default function Pricing() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="w-full max-w-lg bg-white rounded-[2rem] p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-lg bg-white rounded-xl p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
           >
             <button
               onClick={() => setDetailService(null)}
@@ -269,7 +269,7 @@ export default function Pricing() {
         </div>
       )}
 
-      <div className="bg-white p-12 rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden relative">
+      <div className="bg-white p-12 rounded-xl border border-gray-100 shadow-sm overflow-hidden relative">
         <div className="absolute top-0 right-0 p-12 opacity-5">
           <Building2 className="w-64 h-64" />
         </div>
@@ -296,7 +296,7 @@ export default function Pricing() {
           </div>
           <div className="flex justify-center lg:justify-end">
             <button 
-              onClick={() => window.open('https://wa.me/6281234567890?text=Halo%20Admin%20Zentory,%20saya%20ingin%20konsultasi%20paket%20Enterprise', '_blank')}
+              onClick={() => window.open('https://wa.me/6281234567890?text=Halo%20Admin%20Zyvora,%20saya%20ingin%20konsultasi%20paket%20Enterprise', '_blank')}
               className="px-10 py-5 bg-gray-900 text-white rounded-[1.5rem] font-black text-lg hover:bg-black transition-all shadow-2xl active:scale-95 flex items-center gap-3"
             >
               KONSULTASI SEKARANG

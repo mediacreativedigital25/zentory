@@ -346,7 +346,7 @@ export default function Stock() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <h3 className="text-xl font-bold">Export Stock Opname</h3>
@@ -354,7 +354,7 @@ export default function Stock() {
                   <Printer className="w-5 h-5" />
                 </button>
               </div>
-              <div className="p-8 space-y-6">
+              <div className="p-8 space-y-6" flex-1 overflow-y-auto auto-rows-max>
                 <div className="text-center">
                   <p className="text-gray-500 mb-6">Pilih format file untuk laporan stock opname Anda. Laporan akan difilter berdasarkan kategori yang sedang dipilih.</p>
                   <div className="grid grid-cols-2 gap-4">

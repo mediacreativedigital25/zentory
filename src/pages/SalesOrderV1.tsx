@@ -812,7 +812,7 @@ export default function SalesOrderV1() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-indigo-600 text-white">
                 <div className="flex items-center gap-3">
@@ -829,7 +829,7 @@ export default function SalesOrderV1() {
                 </button>
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-8 space-y-6" flex-1 overflow-y-auto auto-rows-max>
                 <div className="bg-amber-50 p-2 rounded-md border border-amber-100 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-700 font-medium leading-relaxed">
@@ -900,7 +900,7 @@ export default function SalesOrderV1() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white p-12 rounded-[3.5rem] shadow-2xl text-center space-y-4 border border-gray-100"
+              className="bg-white p-12 rounded-xl shadow-2xl text-center space-y-4 border border-gray-100"
             >
               <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle2 className="w-12 h-12" />

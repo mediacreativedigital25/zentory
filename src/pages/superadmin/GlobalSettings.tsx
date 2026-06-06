@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Image as ImageIcon, Save, Zap, Lock, Unlock, CreditCard } from 'lucide-react';
+import { Image as ImageIcon, Save, Zap, Lock, Unlock, CreditCard, Plus, Trash2, Building2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { auth } from '../../lib/firebase';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
@@ -16,7 +16,25 @@ export default function SuperAdminGlobalSettings() {
   useEffect(() => {
     const unsubSettings = onSnapshot(doc(db, 'system', 'config'), (snap) => {
       if (snap.exists()) {
-        setGlobalSettings(snap.data());
+        const data = snap.data();
+        if (data.paymentMethods && data.paymentMethods.manual) {
+          const manualData = data.paymentMethods.manual;
+          let accounts = manualData.accounts || [];
+          if (accounts.length === 0 && (manualData.bankName || manualData.accountNumber)) {
+            accounts = [{
+              id: Date.now().toString(),
+              bankName: manualData.bankName || '',
+              accountNumber: manualData.accountNumber || '',
+              accountHolder: manualData.accountHolder || ''
+            }];
+          } else if (accounts.length === 0) {
+            accounts = [{ id: Date.now().toString(), bankName: '', accountNumber: '', accountHolder: '' }];
+          }
+          data.paymentMethods.manual.accounts = accounts;
+        } else if (!data.paymentMethods) {
+          data.paymentMethods = { manual: { isEnabled: false, accounts: [{ id: Date.now().toString(), bankName: '', accountNumber: '', accountHolder: '' }] } };
+        }
+        setGlobalSettings(data);
       }
     });
 
@@ -30,9 +48,7 @@ export default function SuperAdminGlobalSettings() {
         ...globalSettings,
         paymentMethods: {
           manual: {
-            bankName: globalSettings.paymentMethods?.manual?.bankName || '',
-            accountNumber: globalSettings.paymentMethods?.manual?.accountNumber || '',
-            accountHolder: globalSettings.paymentMethods?.manual?.accountHolder || '',
+            accounts: globalSettings.paymentMethods?.manual?.accounts || [],
             qrisUrl: globalSettings.paymentMethods?.manual?.qrisUrl || '',
             logoUrl: globalSettings.paymentMethods?.manual?.logoUrl || '',
             isEnabled: globalSettings.paymentMethods?.manual?.isEnabled ?? true
@@ -139,53 +155,140 @@ export default function SuperAdminGlobalSettings() {
               )}
             </div>
 
-            <div>
-              <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Bank</label>
-              <input
-                type="text"
-                value={globalSettings.paymentMethods?.manual?.bankName || ''}
-                onChange={(e) => setGlobalSettings({
-                  ...globalSettings,
-                  paymentMethods: {
-                    ...globalSettings.paymentMethods,
-                    manual: { ...globalSettings.paymentMethods?.manual, bankName: e.target.value }
-                  }
-                })}
-                placeholder="Contoh: Bank BCA"
-                className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block mb-1 text-xs font-semibold text-gray-600">Nomor Rekening</label>
-              <input
-                type="text"
-                value={globalSettings.paymentMethods?.manual?.accountNumber || ''}
-                onChange={(e) => setGlobalSettings({
-                  ...globalSettings,
-                  paymentMethods: {
-                    ...globalSettings.paymentMethods,
-                    manual: { ...globalSettings.paymentMethods?.manual, accountNumber: e.target.value }
-                  }
-                })}
-                placeholder="Contoh: 1234567890"
-                className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Pemilik Rekening</label>
-              <input
-                type="text"
-                value={globalSettings.paymentMethods?.manual?.accountHolder || ''}
-                onChange={(e) => setGlobalSettings({
-                  ...globalSettings,
-                  paymentMethods: {
-                    ...globalSettings.paymentMethods,
-                    manual: { ...globalSettings.paymentMethods?.manual, accountHolder: e.target.value }
-                  }
-                })}
-                placeholder="Contoh: PT Zentory Indonesia"
-                className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+            <div className="space-y-4">
+              {globalSettings.paymentMethods?.manual?.accounts?.map((account: any, index: number) => (
+                <div key={account.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-200 relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-bold text-gray-900">Rekening {index + 1}</h4>
+                    {(globalSettings.paymentMethods?.manual?.accounts?.length || 0) > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newAccounts = globalSettings.paymentMethods.manual.accounts.filter((_: any, i: number) => i !== index);
+                          setGlobalSettings({
+                            ...globalSettings,
+                            paymentMethods: {
+                              ...globalSettings.paymentMethods,
+                              manual: { ...globalSettings.paymentMethods?.manual, accounts: newAccounts }
+                            }
+                          });
+                        }}
+                        className="text-red-500 hover:text-red-700 transition-colors p-1"
+                        title="Hapus Rekening"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Bank / E-Wallet</label>
+                      <select
+                        value={account.bankName || ''}
+                        onChange={(e) => {
+                          const newAccounts = [...(globalSettings.paymentMethods?.manual?.accounts || [])];
+                          newAccounts[index].bankName = e.target.value;
+                          setGlobalSettings({
+                            ...globalSettings,
+                            paymentMethods: {
+                              ...globalSettings.paymentMethods,
+                              manual: { ...globalSettings.paymentMethods?.manual, accounts: newAccounts }
+                            }
+                          });
+                        }}
+                        className="w-full p-2 border border-gray-200 bg-white rounded-md outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
+                      >
+                        <option value="" disabled>Pilih Bank / E-Wallet</option>
+                        {['BCA', 'Mandiri', 'BNI', 'BRI', 'BSI', 'CIMB Niaga', 'Permata Bank', 'Bank Danamon', 'Bank Mega', 'Bank Jago', 'Seabank', 'GoPay', 'OVO', 'DANA', 'ShopeePay', 'LinkAja', 'Lainnya...'].map(bank => (
+                          <option key={bank} value={bank}>{bank}</option>
+                        ))}
+                      </select>
+                      {account.bankName === 'Lainnya...' && (
+                        <input
+                          type="text"
+                          required
+                          value={account.customBankName || ''}
+                          onChange={(e) => {
+                            const newAccounts = [...(globalSettings.paymentMethods?.manual?.accounts || [])];
+                            newAccounts[index].customBankName = e.target.value;
+                            setGlobalSettings({
+                              ...globalSettings,
+                              paymentMethods: {
+                                ...globalSettings.paymentMethods,
+                                manual: { ...globalSettings.paymentMethods?.manual, accounts: newAccounts }
+                              }
+                            });
+                          }}
+                          className="w-full p-2 mt-2 border border-gray-200 bg-white rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
+                          placeholder="Masukkan nama bank/e-wallet"
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block mb-1 text-xs font-semibold text-gray-600">Nomor Rekening</label>
+                      <input
+                        type="text"
+                        value={account.accountNumber || ''}
+                        onChange={(e) => {
+                          const newAccounts = [...(globalSettings.paymentMethods?.manual?.accounts || [])];
+                          newAccounts[index].accountNumber = e.target.value;
+                          setGlobalSettings({
+                            ...globalSettings,
+                            paymentMethods: {
+                              ...globalSettings.paymentMethods,
+                              manual: { ...globalSettings.paymentMethods?.manual, accounts: newAccounts }
+                            }
+                          });
+                        }}
+                        placeholder="Contoh: 1234567890"
+                        className="w-full p-2 border border-gray-200 bg-white rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 space-y-2">
+                      <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Pemilik Rekening</label>
+                      <input
+                        type="text"
+                        value={account.accountHolder || ''}
+                        onChange={(e) => {
+                          const newAccounts = [...(globalSettings.paymentMethods?.manual?.accounts || [])];
+                          newAccounts[index].accountHolder = e.target.value;
+                          setGlobalSettings({
+                            ...globalSettings,
+                            paymentMethods: {
+                              ...globalSettings.paymentMethods,
+                              manual: { ...globalSettings.paymentMethods?.manual, accounts: newAccounts }
+                            }
+                          });
+                        }}
+                        placeholder="Contoh: PT Zyvora Indonesia"
+                        className="w-full p-2 border border-gray-200 bg-white rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(globalSettings.paymentMethods?.manual?.accounts?.length || 0) < 3 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newAccounts = [
+                      ...(globalSettings.paymentMethods?.manual?.accounts || []),
+                      { id: Date.now().toString(), bankName: '', accountNumber: '', accountHolder: '' }
+                    ];
+                    setGlobalSettings({
+                      ...globalSettings,
+                      paymentMethods: {
+                        ...globalSettings.paymentMethods,
+                        manual: { ...globalSettings.paymentMethods?.manual, accounts: newAccounts }
+                      }
+                    });
+                  }}
+                  className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm font-semibold text-gray-600 hover:text-indigo-600 hover:border-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Tambah Rekening Baru
+                </button>
+              )}
             </div>
             <div>
               <label className="block mb-1 text-xs font-semibold text-gray-600">URL QRIS (Opsional)</label>

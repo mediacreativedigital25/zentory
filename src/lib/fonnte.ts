@@ -109,3 +109,42 @@ export const sendSubscriptionInfoNotification = async (
   });
   return sendFonnteMessage(targetPhone, message);
 };
+
+export const sendCatalogOrderNotification = async (
+  targetPhone: string,
+  data: { nama_tenant: string; nama_customer: string; produk: string; qty: string; total: string; tanggal_order: string; nomor_customer: string; link_dashboard: string }
+) => {
+  let message = `🚨 *NOTIFIKASI PESANAN BARU*
+
+Halo *{nama_tenant}* 👋
+
+Anda mendapatkan pesanan baru melalui katalog online.
+
+📋 *Detail Pesanan*
+• Nama Customer : {nama_customer}
+• Produk : {produk}
+• Jumlah : {qty}
+• Total Pesanan : {total}
+• Tanggal : {tanggal_order}
+
+📞 *Kontak Customer*
+{nomor_customer}
+
+⚠️ Mohon segera ditindak lanjuti untuk menghindari keterlambatan respon kepada customer.
+
+🔗 Kelola pesanan:
+{link_dashboard}
+
+Terima kasih.
+
+━━━━━━━━━━━━━━━
+*Zyvora System*
+
+#PesanOtomatis
+Pesan ini dikirim secara otomatis oleh sistem dan tidak perlu dibalas.`;
+
+  Object.entries(data).forEach(([key, value]) => {
+    message = message.replace(new RegExp(`{${key}}`, 'g'), value);
+  });
+  return sendFonnteMessage(targetPhone, message);
+};

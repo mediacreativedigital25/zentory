@@ -7,7 +7,6 @@ import {
   CreditCard, 
   Building2, 
   CheckCircle2, 
-  CheckCircle,
   AlertCircle,
   ShieldCheck, 
   Zap, 
@@ -96,7 +95,7 @@ export default function Checkout() {
   const [globalSettings, setGlobalSettings] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
   const [generatedInvoiceNumber, setGeneratedInvoiceNumber] = useState('');
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
@@ -202,8 +201,8 @@ export default function Checkout() {
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopied(text);
+    setTimeout(() => setCopied(null), 2000);
   };
 
   const handleConfirm = async () => {
@@ -258,8 +257,9 @@ export default function Checkout() {
           invoice_number: invoiceNumber
         };
 
-        if (tenant.phone) {
-          await sendInvoiceCreatedNotification(tenant.phone, emailVarData);
+        const tenantPhone = tenant.phone || tenant.settings?.phone || (tenant as any).whatsapp;
+        if (tenantPhone) {
+          await sendInvoiceCreatedNotification(tenantPhone, emailVarData);
         }
         if (tenant.email) {
           await sendInvoiceCreatedEmail(tenant.email, emailVarData);
@@ -291,9 +291,9 @@ export default function Checkout() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white p-12 rounded-[3rem] shadow-2xl border border-gray-100 max-w-lg w-full text-center space-y-8"
+          className="bg-white p-12 rounded-xl shadow-2xl border border-gray-100 max-w-lg w-full text-center space-y-8"
         >
-          <div className="w-24 h-24 bg-green-100 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto animate-bounce">
+          <div className="w-24 h-24 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto animate-bounce">
             <CheckCircle2 className="w-12 h-12" />
           </div>
           <div className="space-y-4">
@@ -337,7 +337,7 @@ export default function Checkout() {
         {/* Left Column: Payment & Info */}
         <div className="lg:col-span-2 space-y-8">
           {/* Business Info */}
-          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-6 relative overflow-hidden">
+          <div className="bg-white p-6 md:p-8 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
             <div className="flex items-center gap-4">
               <div className="p-3 bg-indigo-50 text-indigo-700 rounded-xl">
@@ -372,7 +372,7 @@ export default function Checkout() {
           </div>
 
           {/* Payment Method */}
-          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-8 relative overflow-hidden">
+          <div className="bg-white p-6 md:p-8 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-8 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -463,34 +463,44 @@ export default function Checkout() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-6 md:p-8 bg-gray-50 rounded-2xl border border-gray-200/60 space-y-6"
+                  className="space-y-4"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-white rounded-xl border border-gray-200 flex items-center justify-center font-black text-xl text-indigo-700 uppercase shadow-sm shrink-0 overflow-hidden">
-                        {globalSettings?.paymentMethods?.manual?.logoUrl ? (
-                          <img src={globalSettings.paymentMethods.manual.logoUrl} alt={globalSettings?.paymentMethods?.manual?.bankName || 'Bank'} className="w-full h-full object-contain p-2" />
-                        ) : (
-                          globalSettings?.paymentMethods?.manual?.bankName || 'BCA'
-                        )}
+                  {(globalSettings?.paymentMethods?.manual?.accounts?.length > 0 ? globalSettings.paymentMethods.manual.accounts : [{
+                    bankName: globalSettings?.paymentMethods?.manual?.bankName || 'BCA',
+                    accountNumber: globalSettings?.paymentMethods?.manual?.accountNumber || '1234 5678 90',
+                    accountHolder: globalSettings?.paymentMethods?.manual?.accountHolder || 'PT ZENTORY DIGITAL INDONESIA'
+                  }]).map((account: any, index: number) => (
+                    <div key={index} className="p-6 md:p-8 bg-gray-50 rounded-xl border border-gray-200/60 space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 bg-white rounded-xl border border-gray-200 flex items-center justify-center font-black text-xl text-indigo-700 uppercase shadow-sm shrink-0 overflow-hidden">
+                            {(globalSettings?.bankLogos?.[account.bankName === 'Lainnya...' ? account.customBankName : account.bankName] || (globalSettings?.paymentMethods?.manual?.logoUrl && index === 0)) ? (
+                              <img src={globalSettings?.bankLogos?.[account.bankName === 'Lainnya...' ? account.customBankName : account.bankName] || globalSettings.paymentMethods.manual.logoUrl} alt={account.bankName === 'Lainnya...' ? account.customBankName : account.bankName} className="w-full h-full object-contain p-2" />
+                            ) : (
+                              <span className="text-center px-1 text-sm font-bold text-gray-800 leading-tight">
+                                {account.bankName === 'Lainnya...' ? account.customBankName : account.bankName}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Nomor Rekening</p>
+                            <p className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight break-all">{account.accountNumber}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handleCopy(account.accountNumber)}
+                          className="p-3 bg-white hover:bg-indigo-50 border border-gray-200 rounded-xl transition-colors text-indigo-600 hover:text-indigo-700 shadow-sm shrink-0 self-start sm:self-center"
+                          title="Salin nomor rekening"
+                        >
+                          {copied === account.accountNumber ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                        </button>
                       </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Nomor Rekening</p>
-                        <p className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight break-all">{globalSettings?.paymentMethods?.manual?.accountNumber || '1234 5678 90'}</p>
+                      <div className="pt-6 border-t border-gray-200/80">
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Atas Nama</p>
+                        <p className="text-lg font-bold text-gray-900">{account.accountHolder}</p>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => handleCopy(globalSettings?.paymentMethods?.manual?.accountNumber || '1234567890')}
-                      className="p-3 bg-white hover:bg-indigo-50 border border-gray-200 rounded-xl transition-colors text-indigo-600 hover:text-indigo-700 shadow-sm shrink-0 self-start sm:self-center"
-                      title="Salin nomor rekening"
-                    >
-                      {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <div className="pt-6 border-t border-gray-200/80">
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Atas Nama</p>
-                    <p className="text-lg font-bold text-gray-900">{globalSettings?.paymentMethods?.manual?.accountHolder || 'PT ZENTORY DIGITAL INDONESIA'}</p>
-                  </div>
+                  ))}
                   <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-3">
                     <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-sm text-amber-800 font-medium leading-relaxed">
@@ -504,9 +514,9 @@ export default function Checkout() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-6 md:p-8 bg-gray-50 rounded-2xl border border-gray-200/60 flex flex-col items-center text-center space-y-6"
+                  className="p-6 md:p-8 bg-gray-50 rounded-xl border border-gray-200/60 flex flex-col items-center text-center space-y-6"
                 >
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200/80">
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200/80">
                     {globalSettings?.paymentMethods?.manual?.qrisUrl ? (
                       <img src={globalSettings.paymentMethods.manual.qrisUrl} alt="QRIS" className="w-56 h-56 object-contain" referrerPolicy="no-referrer" />
                     ) : (
@@ -516,7 +526,7 @@ export default function Checkout() {
                     )}
                   </div>
                   <div>
-                    <h4 className="text-xl font-black text-gray-900 tracking-tight mb-2">Scan QRIS Zentory</h4>
+                    <h4 className="text-xl font-black text-gray-900 tracking-tight mb-2">Scan QRIS Zyvora</h4>
                     <p className="text-sm text-gray-500 font-medium max-w-sm mx-auto">Mendukung semua aplikasi pembayaran digital yang memiliki fitur scan QRIS</p>
                   </div>
                 </motion.div>
@@ -526,14 +536,14 @@ export default function Checkout() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-6 md:p-8 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl text-white space-y-6 relative overflow-hidden shadow-lg shadow-emerald-900/20"
+                  className="p-6 md:p-8 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-xl text-white space-y-6 relative overflow-hidden shadow-lg shadow-emerald-900/20"
                 >
                   <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
                     <ShieldCheck className="w-48 h-48" />
                   </div>
                   
                   <div className="flex flex-col sm:flex-row sm:items-center gap-6 relative z-10">
-                    <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm self-start">
+                    <div className="p-4 bg-white/20 rounded-xl backdrop-blur-sm self-start">
                       <Zap className="w-8 h-8 text-emerald-50" />
                     </div>
                     <div>
@@ -557,7 +567,7 @@ export default function Checkout() {
 
         {/* Right Column: Order Summary */}
         <div className="space-y-6 lg:sticky lg:top-8">
-          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-8 relative overflow-hidden">
+          <div className="bg-white p-6 md:p-8 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-200/80 space-y-8 relative overflow-hidden">
             <div className="absolute h-1 w-full top-0 left-0 bg-gray-900" />
             <h3 className="text-2xl font-black text-gray-900 tracking-tight">Ringkasan Pesanan</h3>
             
@@ -614,7 +624,7 @@ export default function Checkout() {
                   )}
                 </div>
                 {couponError && <p className="text-xs text-red-600 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {couponError}</p>}
-                {couponSuccess && <p className="text-xs text-emerald-600 font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> {couponSuccess}</p>}
+                {couponSuccess && <p className="text-xs text-emerald-600 font-bold flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> {couponSuccess}</p>}
               </div>
 
               <div className="space-y-4 pt-4 border-t border-dashed border-gray-200">
@@ -660,7 +670,7 @@ export default function Checkout() {
               <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
                 <ShieldCheck className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-gray-600 font-medium leading-relaxed">
-                  Pembayaran aman dan terenkripsi. Dengan melanjutkan, Anda menyetujui <span className="font-bold text-gray-900 underline underline-offset-2">Syarat & Ketentuan</span> Zentory.
+                  Pembayaran aman dan terenkripsi. Dengan melanjutkan, Anda menyetujui <span className="font-bold text-gray-900 underline underline-offset-2">Syarat & Ketentuan</span> Zyvora.
                 </p>
               </div>
 

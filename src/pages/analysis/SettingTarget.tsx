@@ -252,7 +252,7 @@ export default function SettingTarget() {
             { label: 'Target Menengah (2)', key: 'target2', color: 'text-indigo-600', bg: 'bg-indigo-50', iconColor: 'text-indigo-400' },
             { label: 'Target Maksimal (3)', key: 'target3', color: 'text-amber-600', bg: 'bg-amber-50', iconColor: 'text-amber-400' },
           ].map((t) => (
-            <div key={t.key} className={`${t.bg} p-8 rounded-[2rem] border border-transparent hover:border-indigo-100 transition-all flex flex-col justify-between`}>
+            <div key={t.key} className={`${t.bg} p-8 rounded-xl border border-transparent hover:border-indigo-100 transition-all flex flex-col justify-between`}>
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t.label}</p>

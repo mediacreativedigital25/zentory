@@ -387,7 +387,7 @@ export default function DailySettlement() {
       </header>
 
       {isAlreadySettled && (
-        <div className="bg-amber-50 border border-amber-100 p-6 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-amber-50 border border-amber-100 p-6 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-md flex items-center justify-center">
               <Lock className="w-6 h-6" />
@@ -448,7 +448,7 @@ export default function DailySettlement() {
           </div>
 
           {/* Profit Breakdown */}
-          <div className={`rounded-[3rem] p-10 text-white relative overflow-hidden shadow-xl ${status === 'UNTUNG' ? 'bg-indigo-600 shadow-indigo-100' : status === 'RUGI' ? 'bg-red-600 shadow-red-100' : 'bg-gray-600 shadow-gray-100'}`}>
+          <div className={`rounded-xl p-10 text-white relative overflow-hidden shadow-xl ${status === 'UNTUNG' ? 'bg-indigo-600 shadow-indigo-100' : status === 'RUGI' ? 'bg-red-600 shadow-red-100' : 'bg-gray-600 shadow-gray-100'}`}>
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12">
               <div>
                 <div className="flex items-center gap-3 mb-4">
@@ -526,7 +526,7 @@ export default function DailySettlement() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
-                  className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+                  className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
                 >
                   <div className="p-8 border-b border-gray-100 flex justify-between items-center">
                     <div>
@@ -581,7 +581,7 @@ export default function DailySettlement() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+                  className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
                 >
                   <div className="p-8 border-b border-gray-100">
                     <h3 className="text-xl font-black text-gray-900">Konfirmasi Amal</h3>
@@ -682,7 +682,7 @@ export default function DailySettlement() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center">
                 <div>
@@ -693,7 +693,7 @@ export default function DailySettlement() {
                   <X className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
-              <div className="p-8 space-y-6">
+              <div className="p-8 space-y-6" flex-1 overflow-y-auto auto-rows-max>
                 <div className="p-4 bg-amber-50 border border-amber-100 rounded-md text-xs text-amber-700 leading-relaxed">
                   Membuka kembali settlement akan memungkinkan Anda untuk mengubah data transaksi hari ini. Pastikan Anda memiliki alasan yang valid.
                 </div>

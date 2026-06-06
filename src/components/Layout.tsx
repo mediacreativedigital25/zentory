@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useBrand } from '../hooks/useBrand';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { LayoutDashboard, Package, ShoppingCart, Wallet, Store, LogOut, Settings, Users, ChevronDown, UserRound, Menu, X, History, BookOpen, Calculator, Truck, CheckCircle2, Globe, Building2, Lock, Zap, ShieldCheck, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Wallet, Store, LogOut, Settings, Users, ChevronDown, UserRound, Menu, X, History, BookOpen, Calculator, Truck, CheckCircle2, Globe, Building2, Lock, Zap, ShieldCheck, TrendingUp, Search, Bell, Sun, LayoutGrid, Circle, CalendarDays, Briefcase } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePermissions } from '../hooks/usePermissions';
 import UpgradePrompt from './Subscription/UpgradePrompt';
@@ -11,17 +12,17 @@ import { PLANS } from '../constants/plans';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { profile, permissions: userPermissions, tenant } = useAuth();
+  const { brand } = useBrand();
   const { hasFeature, plan } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState<{ isOpen: boolean; feature: string } | null>(null);
 
   const toggleMenu = (label: string) => {
-    setOpenMenus(prev => 
-      prev.includes(label) ? prev.filter(i => i !== label) : [...prev, label]
-    );
+    setOpenMenus(prev => prev.includes(label) ? [] : [label]);
   };
 
   const handleLogout = async () => {
@@ -50,6 +51,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       children: [
         { label: 'Dashboard Utama', path: '/superadmin/dashboard' },
         { label: 'Pengaturan Global', path: '/superadmin/settings' },
+        { label: 'Brand & Tampilan', path: '/superadmin/brand' },
+        { label: 'Logo Bank', path: '/superadmin/bank-logos' },
         { label: 'Roadmap Produk', path: '/superadmin/roadmap' },
         { label: 'Reset Database', path: '/superadmin/reset' },
         { label: 'Periksa Data Harian', path: '/superadmin/data-check' },
@@ -78,13 +81,28 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Persetujuan (Approvals)', path: '/superadmin/approvals' },
       ]
     },
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['admin', 'staff', 'superadmin'], permission: 'dashboard' },
+    { label: 'Dashboard', icon: LayoutDashboard, path: profile?.role === 'customer' ? `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}/dashboard` : '/dashboard', roles: ['admin', 'staff', 'superadmin', 'customer'], permission: 'dashboard' },
+    { 
+      label: 'Portal Customer', 
+      icon: UserRound, 
+      roles: ['customer'],
+      children: [
+        { label: 'Riwayat Pembelian', path: `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}/history` },
+        { label: 'Status Orderan', path: `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}/status` },
+        { label: 'Download', path: `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}/downloads` },
+        { label: 'Alamat', path: `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}/address` },
+      ]
+    },
+    { label: 'Katalog Produk', icon: Store, path: `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}`, roles: ['customer'] },
     { label: 'Approval', icon: CheckCircle2, path: '/approvals', roles: ['admin'], permission: 'approvals' },
+    { label: 'Marketplace V1', icon: Store, path: `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}`, roles: ['admin', 'staff', 'superadmin'], permission: 'dashboard' },
     { 
       label: 'Sales', 
       icon: ShoppingCart, 
       roles: ['admin', 'staff', 'superadmin', 'kasir'],
       children: [
+        { label: 'Sales Booking', path: '/sales/sales-booking', permission: 'sales_order' },
+        { label: 'Booking List', path: '/sales/bookings', permission: 'sales_customers' },
         { label: 'Sales Order V1', path: '/sales/order-v1', permission: 'sales_order' },
         { label: 'Sales Order', path: '/sales/order', permission: 'sales_order' },
         { label: 'Sales POS', path: '/sales/pos', permission: 'sales_order' },
@@ -92,6 +110,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Kupon', path: '/sales/coupons', permission: 'sales_order' },
         { label: 'Customers', path: '/sales/customers', permission: 'sales_customers' },
         { label: 'Tipe Pelanggan', path: '/sales/customer-categories', permission: 'sales_customers' },
+        { label: 'Review Produk', path: '/sales/reviews', permission: 'sales_order' },
       ]
     },
     { 
@@ -112,6 +131,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Daftar Produk', path: '/inventory/products', permission: 'inventory_products' },
         { label: 'Riwayat Produk', path: '/inventory/products?tab=history', permission: 'inventory_products' },
         { label: 'Kategori', path: '/inventory/categories', permission: 'inventory_categories' },
+        { label: 'Lini Bisnis', path: '/inventory/business-lines', permission: 'inventory_categories' },
         { label: 'Stock', path: '/inventory/stock', permission: 'inventory_stock' },
         { label: 'Gudang', path: '/inventory/warehouses', permission: 'inventory_warehouses' },
         { label: 'Report Inventory', path: '/inventory/report', permission: 'inventory_report' },
@@ -158,7 +178,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ]
     },
     { label: 'Catalog Editor', icon: Store, path: '/catalog-editor', roles: ['admin', 'superadmin'], permission: 'catalog_editor' },
-    { label: 'Profil Bisnis', icon: Building2, path: '/settings/business', roles: ['admin'], permission: 'tenant_settings' },
+    { 
+      label: 'Setting', 
+      icon: Settings, 
+      roles: ['admin', 'superadmin'],
+      children: [
+        { label: 'Profil Bisnis', path: '/settings/business', permission: 'tenant_settings' },
+        { label: 'Payment Metode', path: '/settings/payment-methods', permission: 'tenant_settings' },
+        { label: 'Alamat Toko', path: '/settings/store-address', permission: 'tenant_settings' },
+      ]
+    },
     { 
       label: 'Paket & Upgrade', 
       icon: Zap, 
@@ -266,6 +295,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         return false;
       }
 
+      // Hide specific menus for customers
+      if (profile?.role === 'customer' && ['Profil Bisnis', 'Paket & Upgrade', 'Changelog', 'Panduan'].includes(item.label)) {
+        return false;
+      }
+
       // Always show these basic items for authenticated users
       if (['Dashboard', 'Changelog', 'Panduan', 'Profil Bisnis'].includes(item.label)) return true;
 
@@ -280,7 +314,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isKasir = profile?.role === 'kasir';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[#f8f8f9] flex font-sans">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && !isKasir && (
@@ -297,35 +331,41 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       {!isKasir && (
         <aside 
-          className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 transform no-print ${
+          className={`fixed inset-y-0 left-0 w-[260px] bg-white flex flex-col z-50 transition-transform duration-300 transform no-print shadow-[0_0.25rem_0.875rem_0_rgba(38,43,67,0.05)] ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0`}
         >
-          <div className="p-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-indigo-600">Zentory</h1>
+          <div className="p-5 flex items-center justify-between mb-2 mt-2">
+            <div className="flex items-center">
+              <img src={brand.headerLogoUrl} alt={brand.appName} className="h-[40px] object-contain ml-2 mt-1" />
+            </div>
             <button 
               onClick={() => setIsSidebarOpen(false)}
-              className="p-2 text-gray-400 hover:text-gray-600 lg:hidden"
+              className="p-2 text-gray-400 hover:text-gray-600 lg:hidden rounded-full hover:bg-gray-100"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
-          <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-            {filteredNav.map((item) => (
+          <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar pb-4">
+            {filteredNav.map((item) => {
+              const hasActiveChild = item.children?.some(c => location.pathname === c.path);
+              const isActive = location.pathname === item.path;
+              
+              return (
               <div key={item.label}>
                 {item.children ? (
                   <div>
                     <button
                       onClick={() => toggleMenu(item.label)}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-md transition-colors ${
-                        item.children.some(c => location.pathname === c.path)
-                          ? 'text-indigo-700 bg-indigo-50'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-[15px] rounded-lg transition-colors ${
+                        hasActiveChild || openMenus.includes(item.label)
+                          ? 'bg-gray-100/50 text-gray-800 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-100/50 hover:text-gray-800 font-medium'
                       }`}
                     >
                       <div className="flex items-center">
-                        <item.icon className="w-5 h-5 mr-3" />
+                        <item.icon className="w-[1.125rem] h-[1.125rem] mr-3" />
                         {item.label}
                       </div>
                       <ChevronDown className={`w-4 h-4 transition-transform ${openMenus.includes(item.label) ? 'rotate-180' : ''}`} />
@@ -336,19 +376,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden pl-12 space-y-1 mt-1"
+                          className="overflow-hidden space-y-1 mt-1"
                         >
                           {item.children.map((child) => (
                             <Link
                               key={child.path}
                               to={child.path}
                               onClick={() => setIsSidebarOpen(false)}
-                              className={`block px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                              className={`flex items-center pl-11 pr-4 py-2.5 text-[15px] rounded-lg transition-all ${
                                 location.pathname === child.path
-                                  ? 'text-indigo-700 bg-indigo-50'
-                                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                                  ? 'bg-gradient-to-r from-[#7367f0] to-[#7367f0]/90 text-white font-medium shadow-md shadow-[#7367f0]/30 translate-x-1'
+                                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50 hover:translate-x-1'
                               }`}
                             >
+                              <Circle className={`w-2 h-2 mr-3 ${location.pathname === child.path ? 'fill-white' : 'border-2 border-gray-400 rounded-full'}`} />
                               {child.label}
                             </Link>
                           ))}
@@ -360,42 +401,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Link
                     to={item.path!}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors ${
-                      location.pathname === item.path
-                        ? 'bg-indigo-50 text-indigo-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    className={`flex items-center px-4 py-2.5 text-[15px] rounded-lg transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-[#7367f0] to-[#7367f0]/90 text-white font-medium shadow-md shadow-[#7367f0]/30'
+                        : 'text-gray-600 hover:bg-gray-100/50 hover:text-gray-800 font-medium'
                     }`}
                   >
-                    <item.icon className="w-5 h-5 mr-3" />
+                    <item.icon className="w-[1.125rem] h-[1.125rem] mr-3" />
                     {item.label}
                   </Link>
                 )}
               </div>
-            ))}
+            )})}
           </nav>
 
-          <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center mb-4 px-4">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
-                {profile?.displayName?.charAt(0) || profile?.email?.charAt(0)}
-              </div>
-              <div className="ml-3 overflow-hidden flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">{profile?.displayName || profile?.email || 'User'}</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-[10px] text-gray-500 capitalize">{roleName || profile?.role || 'Loading...'}</p>
-                  {plan && (
-                    <Link to="/pricing" className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter ${PLANS[plan]?.color || 'bg-gray-100 text-gray-600'}`}>
-                      {PLANS[plan]?.name}
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
+          <div className="p-4 border-t border-gray-100">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
+              className="w-full flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600 rounded-lg transition-colors"
             >
-              <LogOut className="w-5 h-5 mr-3" />
+              <LogOut className="w-[1.125rem] h-[1.125rem] mr-2" />
               Logout
             </button>
           </div>
@@ -403,26 +428,140 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col min-w-0 ${isKasir ? 'pl-0' : 'lg:pl-64'}`}>
-        {/* Mobile Header */}
+      <div className={`flex-1 flex flex-col min-w-0 ${isKasir ? 'pl-0' : 'lg:pl-[260px]'}`}>
+        
+        {/* Vuexy style Top Navbar */}
         {!isKasir && (
-          <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between lg:hidden sticky top-0 z-30 no-print">
-            <button 
-              onClick={() => setIsSidebarOpen(true)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <h1 className="text-xl font-bold text-indigo-600">Zentory</h1>
-            <div className="w-10" /> {/* Spacer for centering */}
-          </header>
+          <nav className="sticky top-4 z-40 mx-4 sm:mx-6 lg:mx-8 mb-6 mt-4 p-3 bg-white/95 backdrop-blur-md rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] flex items-center justify-between border border-gray-100 no-print transition-all">
+            <div className="flex items-center gap-2">
+               {/* Mobile menu toggle */}
+               <button 
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full lg:hidden transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              
+              <div className="hidden sm:flex items-center text-gray-400 bg-gray-50/50 px-3 py-1.5 rounded-lg border border-transparent hover:border-gray-200 transition-colors focus-within:border-[#7367f0] focus-within:bg-white focus-within:text-[#7367f0] focus-within:shadow-sm">
+                <Search className="w-4 h-4 mr-2" />
+                <input type="text" placeholder="Search (Ctrl+K)" className="bg-transparent border-none outline-none text-[15px] text-gray-700 w-48 xl:w-64 placeholder-gray-400" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors hidden md:block">
+                <Globe className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors hidden sm:block">
+                <Sun className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors hidden sm:block">
+                <LayoutGrid className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors relative mr-2">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              </button>
+              
+              {isProfileOpen && (
+                <div 
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsProfileOpen(false)}
+                />
+              )}
+              <div className="relative z-50">
+                <div 
+                  className="flex items-center gap-3 cursor-pointer pl-3 border-l border-gray-200"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                >
+                  <div className="text-right hidden md:block">
+                    <p className="text-sm font-semibold text-gray-700 leading-tight">{profile?.displayName || profile?.email?.split('@')[0] || 'User'}</p>
+                    <p className="text-[11px] font-medium text-gray-500 capitalize">{roleName || profile?.role || 'Admin'}</p>
+                  </div>
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-full bg-[#7367f0]/10 flex flex-col items-center justify-center text-[#7367f0] font-bold text-sm uppercase">
+                      {profile?.displayName?.charAt(0) || profile?.email?.charAt(0) || 'U'}
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {isProfileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-[230px] bg-white rounded-xl shadow-[0_4px_24px_0_rgba(34,41,47,0.1)] border border-gray-100 overflow-hidden"
+                    >
+                      <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#7367f0]/10 flex items-center justify-center text-[#7367f0] font-bold text-sm uppercase shrink-0">
+                          {profile?.displayName?.charAt(0) || profile?.email?.charAt(0) || 'U'}
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="text-sm font-bold text-gray-800 truncate">{profile?.displayName || profile?.email?.split('@')[0] || 'User'}</p>
+                          <p className="text-xs text-gray-500 capitalize">{roleName || profile?.role || 'Admin'}</p>
+                        </div>
+                      </div>
+
+                      <div className="p-2 border-b border-gray-100">
+                        <Link to="/profile" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
+                          <UserRound className="w-4 h-4" />
+                          Profile
+                        </Link>
+                        <Link to="/settings" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
+                          <Settings className="w-4 h-4" />
+                          Settings
+                        </Link>
+                        <Link to="/subscription" className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
+                          <div className="flex items-center gap-3">
+                            <BookOpen className="w-4 h-4" />
+                            Billing Plan
+                          </div>
+                          <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">4</span>
+                        </Link>
+                      </div>
+
+                      <div className="p-2 border-b border-gray-100">
+                        <Link to="/subscription" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
+                          <Wallet className="w-4 h-4" />
+                          Pricing
+                        </Link>
+                        <Link to="#" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
+                          <Circle className="w-4 h-4" />
+                          FAQ
+                        </Link>
+                      </div>
+
+                      <div className="p-3">
+                        <button
+                          onClick={() => {
+                            setIsProfileOpen(false);
+                            handleLogout();
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors"
+                        >
+                          Logout
+                          <LogOut className="w-4 h-4 ml-1" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </nav>
         )}
 
         {/* Kasir Header */}
         {isKasir && (
           <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 no-print shadow-sm">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-black text-indigo-600 tracking-tighter">ZENTORY <span className="text-gray-400 font-medium text-sm ml-2 tracking-normal">POS TERMINAL</span></h1>
+              <div className="flex items-center">
+                <img src={brand.headerLogoUrl} alt={brand.appName} className="h-[40px] object-contain" />
+              </div>
+              <span className="text-gray-400 font-medium text-sm ml-2 tracking-normal border-l border-gray-200 pl-4 h-6 flex items-center">POS TERMINAL</span>
             </div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
@@ -446,12 +585,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main Content */}
-        <main className={`flex-1 bg-gray-50 ${isKasir ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
+        <main className={`flex-1 ${isKasir ? 'p-0 bg-gray-50' : 'px-4 sm:px-6 lg:px-8 pb-8 pt-2'}`}>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className={isKasir ? 'w-full h-full' : 'max-w-7xl mx-auto'}
+            className={isKasir ? 'w-full h-full' : 'w-full mx-auto'}
           >
             {children}
           </motion.div>

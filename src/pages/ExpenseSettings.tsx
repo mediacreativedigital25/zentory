@@ -192,7 +192,7 @@ export default function ExpenseSettings() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>
@@ -204,7 +204,7 @@ export default function ExpenseSettings() {
                 </button>
               </div>
               
-              <form onSubmit={handleSubmit} className="p-8 space-y-6">
+              <form onSubmit={handleSubmit} className="p-8 space-y-6 flex-1 overflow-y-auto auto-rows-max">
                 <div>
                   <label className="block mb-2 text-xs font-semibold text-gray-600">Kategori (Claim Expense)</label>
                   <div className="relative">
