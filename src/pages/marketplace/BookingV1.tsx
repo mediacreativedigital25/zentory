@@ -66,7 +66,7 @@ export default function BookingV1() {
 
         if (tenantData) {
           setTenant(tenantData);
-          document.title = `${tenantData.name} | Bussines Service Management`;
+          document.title = `${tenantData.name} | One Platform for Every Business`;
           
           if (tenantData.catalogTheme === 'v1' || tenantData.catalogTheme === 'default') {
             navigate(tenantData.catalogTheme === 'v1' ? `/marketplace/${tenantData.slug}` : `/catalog/${tenantData.slug}`, { replace: true });

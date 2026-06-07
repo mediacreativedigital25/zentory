@@ -172,7 +172,7 @@ export default function Catalog() {
         
         if (tenantData) {
           setTenant(tenantData);
-          document.title = `${tenantData.name} | Bussines Service Management`;
+          document.title = `${tenantData.name} | One Platform for Every Business`;
 
           if (tenantData.catalogTheme === 'v1') {
             navigate(`/marketplace/${tenantData.slug}`, { replace: true });

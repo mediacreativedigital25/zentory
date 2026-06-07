@@ -49,7 +49,7 @@ export default function MarketplaceV1() {
 
         const tenantData = { id: tenantSnap.docs[0].id, ...tenantSnap.docs[0].data() } as Tenant;
         setTenant(tenantData);
-        document.title = `${tenantData.name} | Bussines Service Management`;
+        document.title = `${tenantData.name} | One Platform for Every Business`;
         
         if ((tenantData as any).createdAt && (tenantData as any).createdAt.toDate) {
             setTenantYear((tenantData as any).createdAt.toDate().getFullYear().toString());

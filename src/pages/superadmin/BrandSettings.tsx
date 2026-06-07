@@ -59,7 +59,7 @@ export default function BrandSettings() {
 
   const updateBrandInDOM = (data: typeof brandData) => {
     // Update Document Title
-    document.title = data.appName + " POS";
+    document.title = data.appName + " | One Platform for Every Business";
     
     // Update Favicon
     let iconLinks = document.querySelectorAll("link[rel~='icon']");

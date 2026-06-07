@@ -28,7 +28,7 @@ export const useBrand = () => {
         
         // Dynamically update document title and favicon
         if (data.appName) {
-          document.title = `${data.appName} POS`;
+          document.title = `${data.appName} | One Platform for Every Business`;
         }
         if (data.faviconUrl) {
           let iconLinks = document.querySelectorAll("link[rel~='icon']");
