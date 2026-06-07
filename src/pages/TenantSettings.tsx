@@ -3,7 +3,7 @@ import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Tenant } from '../types';
-import { Building2, Save, User, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Image as ImageIcon, Zap } from 'lucide-react';
+import { Building2, Save, User, Mail, Phone, MapPin, Briefcase, FileText, CheckCircle2, Loader2, Image as ImageIcon, Zap, Plus, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import ImageUpload from '../components/ImageUpload';
@@ -256,10 +256,284 @@ export default function TenantSettings() {
               >
                 <option value="default">Default</option>
                 <option value="v1">Tema V1 (Katalog)</option>
+                <option value="booking-v1">Tema Booking V1</option>
               </select>
             </div>
           </div>
         </div>
+
+        {formData.catalogTheme === 'booking-v1' && (
+          <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden mt-6">
+            <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                <ImageIcon className="w-5 h-5 mr-2 text-indigo-600" />
+                Visual & Tampilan Katalog Booking
+              </h3>
+            </div>
+            
+            <div className="p-6 grid grid-cols-1 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-600">Tagline / Deskripsi Hero</label>
+                <textarea
+                  value={formData.settings?.tagline || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    settings: { ...(formData.settings || {}), tagline: e.target.value } 
+                  })}
+                  className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
+                  placeholder="Contoh: Jadwalkan waktu Anda dan serahkan sisanya pada layanan profesional kami."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-600">Gambar Hero Banner (Background)</label>
+                <div className="flex gap-4">
+                  <div className="w-48">
+                    <ImageUpload
+                      value={formData.settings?.heroImageUrls?.[0] || ''}
+                      onChange={(url) => {
+                        const urls = [...(formData.settings?.heroImageUrls || [])];
+                        urls[0] = url;
+                        setFormData({ 
+                          ...formData, 
+                          settings: { ...(formData.settings || {}), heroImageUrls: urls.filter(Boolean) } 
+                        });
+                      }}
+                      label="Upload Hero Image"
+                    />
+                  </div>
+                  <div className="flex-1 text-xs text-gray-500">
+                    Ini akan digunakan sebagai banner besar di halaman depan katalog pemesanan.
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-600">Gallery Hasil / Kategori</label>
+                <p className="text-xs text-gray-500 mb-2">Tambahkan foto-foto hasil kerja (portofolio) atau suasana layanan untuk membangun kepercayaan pelanggan.</p>
+                <div className="flex flex-wrap gap-4">
+                  {(formData.settings?.galleryUrls || []).map((url, index) => (
+                    <div key={index} className="w-32">
+                      <ImageUpload
+                        value={url}
+                        onChange={(newUrl) => {
+                          const urls = [...(formData.settings?.galleryUrls || [])];
+                          if (newUrl) {
+                            urls[index] = newUrl;
+                          } else {
+                            urls.splice(index, 1);
+                          }
+                          setFormData({ 
+                            ...formData, 
+                            settings: { ...(formData.settings || {}), galleryUrls: urls } 
+                          });
+                        }}
+                        label={`Foto ${index + 1}`}
+                      />
+                    </div>
+                  ))}
+                  <div className="w-32">
+                    <ImageUpload
+                      value={""}
+                      onChange={(newUrl) => {
+                        if (newUrl) {
+                          const urls = [...(formData.settings?.galleryUrls || []), newUrl];
+                          setFormData({ 
+                            ...formData, 
+                            settings: { ...(formData.settings || {}), galleryUrls: urls } 
+                          });
+                        }
+                      }}
+                      label="Tambah Foto"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t border-gray-100 pt-6 mt-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <label className="text-sm font-bold text-gray-900">Mengapa Memilih Kami?</label>
+                    <p className="text-xs text-gray-500">Maksimal 5 kartu. Digunakan untuk menampilkan keunggulan layanan.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = formData.settings?.whyChooseUs || [];
+                      if (current.length < 5) {
+                        setFormData({
+                          ...formData,
+                          settings: {
+                            ...(formData.settings || {}),
+                            whyChooseUs: [...current, { icon: 'Star', title: '', description: '' }]
+                          }
+                        });
+                      }
+                    }}
+                    disabled={(formData.settings?.whyChooseUs?.length || 0) >= 5}
+                    className="flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-md hover:bg-indigo-100 disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Tambah Card
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {(formData.settings?.whyChooseUs || []).map((item, index) => (
+                    <div key={index} className="flex gap-4 items-start p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="w-1/4">
+                        <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Icon (Key)</label>
+                        <select
+                          value={item.icon}
+                          onChange={(e) => {
+                            const newItems = [...(formData.settings?.whyChooseUs || [])];
+                            newItems[index].icon = e.target.value;
+                            setFormData({ ...formData, settings: { ...(formData.settings || {}), whyChooseUs: newItems } });
+                          }}
+                          className="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        >
+                          <option value="Star">Star</option>
+                          <option value="Shield">Shield</option>
+                          <option value="Clock">Clock</option>
+                          <option value="Heart">Heart</option>
+                          <option value="CheckCircle">CheckCircle</option>
+                          <option value="ThumbsUp">ThumbsUp</option>
+                          <option value="Award">Award</option>
+                          <option value="Zap">Zap</option>
+                        </select>
+                      </div>
+                      <div className="w-1/4">
+                        <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Judul</label>
+                        <input
+                          type="text"
+                          value={item.title}
+                          onChange={(e) => {
+                            const newItems = [...(formData.settings?.whyChooseUs || [])];
+                            newItems[index].title = e.target.value;
+                            setFormData({ ...formData, settings: { ...(formData.settings || {}), whyChooseUs: newItems } });
+                          }}
+                          placeholder="Misi Kami"
+                          className="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Deskripsi</label>
+                        <textarea
+                          value={item.description}
+                          onChange={(e) => {
+                            const newItems = [...(formData.settings?.whyChooseUs || [])];
+                            newItems[index].description = e.target.value;
+                            setFormData({ ...formData, settings: { ...(formData.settings || {}), whyChooseUs: newItems } });
+                          }}
+                          placeholder="Penjelasan detail..."
+                          className="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none h-[38px] min-h-[38px]"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newItems = [...(formData.settings?.whyChooseUs || [])];
+                          newItems.splice(index, 1);
+                          setFormData({ ...formData, settings: { ...(formData.settings || {}), whyChooseUs: newItems } });
+                        }}
+                        className="mt-6 p-2 text-red-500 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {(!formData.settings?.whyChooseUs || formData.settings.whyChooseUs.length === 0) && (
+                    <div className="text-center p-6 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500">
+                      Belum ada keunggulan yang ditambahkan. Data dummy akan ditampilkan di katalog jika kosong.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t border-gray-100 pt-6 mt-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <label className="text-sm font-bold text-gray-900">Pertanyaan yang Sering Diajukan (FAQ)</label>
+                    <p className="text-xs text-gray-500">Maksimal 5 FAQ. Akan ditampilkan di bawah bagian ulasan pada halaman katalog.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = formData.settings?.faqs || [];
+                      if (current.length < 5) {
+                        setFormData({
+                          ...formData,
+                          settings: {
+                            ...(formData.settings || {}),
+                            faqs: [...current, { question: '', answer: '' }]
+                          }
+                        });
+                      }
+                    }}
+                    disabled={(formData.settings?.faqs?.length || 0) >= 5}
+                    className="flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-md hover:bg-indigo-100 disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Tambah FAQ
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {(formData.settings?.faqs || []).map((faq, index) => (
+                    <div key={index} className="flex gap-4 items-start p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Pertanyaan</label>
+                          <input
+                            type="text"
+                            value={faq.question}
+                            onChange={(e) => {
+                              const newFaqs = [...(formData.settings?.faqs || [])];
+                              newFaqs[index].question = e.target.value;
+                              setFormData({ ...formData, settings: { ...(formData.settings || {}), faqs: newFaqs } });
+                            }}
+                            placeholder="Tuliskan pertanyaan di sini..."
+                            className="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Jawaban</label>
+                          <textarea
+                            value={faq.answer}
+                            onChange={(e) => {
+                              const newFaqs = [...(formData.settings?.faqs || [])];
+                              newFaqs[index].answer = e.target.value;
+                              setFormData({ ...formData, settings: { ...(formData.settings || {}), faqs: newFaqs } });
+                            }}
+                            placeholder="Tuliskan jawaban yang informatif..."
+                            className="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none h-20"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newFaqs = [...(formData.settings?.faqs || [])];
+                          newFaqs.splice(index, 1);
+                          setFormData({ ...formData, settings: { ...(formData.settings || {}), faqs: newFaqs } });
+                        }}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded mt-5"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {(!formData.settings?.faqs || formData.settings.faqs.length === 0) && (
+                    <div className="text-center p-6 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500">
+                      Belum ada FAQ yang ditambahkan. Data dummy akan ditampilkan di katalog jika kosong.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">

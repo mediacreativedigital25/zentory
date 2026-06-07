@@ -3,7 +3,7 @@ import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Tenant } from '../types';
-import { Building2, Save, CreditCard, CheckCircle2, Loader2, Link, Copy, ExternalLink, ShieldCheck, Plus, Trash2 } from 'lucide-react';
+import { Building2, Save, CreditCard, CheckCircle2, Loader2, Link, Copy, ExternalLink, ShieldCheck, Plus, Trash2, PiggyBank } from 'lucide-react';
 import { motion } from 'motion/react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
@@ -25,6 +25,11 @@ export default function TenantPaymentSettings() {
         merchantCode: '',
         apiKey: '',
         privateKey: '',
+      },
+      downPayment: {
+        isEnabled: false,
+        type: 'percentage',
+        amount: 50,
       }
     }
   });
@@ -39,6 +44,7 @@ export default function TenantPaymentSettings() {
           setTenant(data);
           if (data.paymentMethods) {
             const manualData = (data.paymentMethods.manual || {}) as any;
+            const downPaymentData = (data.paymentMethods.downPayment || { isEnabled: false, type: 'percentage', amount: 50 });
             // Migrate old data pattern if accounts array doesn't exist but old fields do
             let accounts = manualData.accounts || [];
             if (accounts.length === 0 && (manualData.bankName || manualData.accountNumber)) {
@@ -60,7 +66,8 @@ export default function TenantPaymentSettings() {
                    ...data.paymentMethods.manual,
                    isEnabled: manualData.isEnabled || false,
                    accounts: accounts
-                 }
+                 },
+                 downPayment: downPaymentData
                } 
             });
           }
@@ -423,6 +430,95 @@ export default function TenantPaymentSettings() {
                   placeholder="Private Key dari platform payment"
                 />
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Down Payment Settings */}
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <PiggyBank className="w-5 h-5 text-indigo-600" />
+              Sistem Uang Muka (Booking/Reservasi)
+            </h3>
+            <button
+              type="button"
+              onClick={() => setFormData({
+                ...formData,
+                paymentMethods: {
+                  ...formData.paymentMethods,
+                  downPayment: {
+                    ...formData.paymentMethods.downPayment,
+                    isEnabled: !formData.paymentMethods.downPayment?.isEnabled
+                  }
+                }
+              })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                formData.paymentMethods.downPayment?.isEnabled ? 'bg-indigo-600' : 'bg-gray-200'
+              }`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                formData.paymentMethods.downPayment?.isEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+          
+          {formData.paymentMethods.downPayment?.isEnabled && (
+            <div className="p-6 space-y-6">
+              <div className="flex flex-col sm:flex-row gap-6">
+                <div className="flex-1 space-y-2">
+                  <label className="text-xs font-semibold text-gray-600">Tipe Uang Muka</label>
+                  <select
+                    value={formData.paymentMethods.downPayment.type || 'percentage'}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      paymentMethods: {
+                        ...formData.paymentMethods,
+                        downPayment: {
+                          ...formData.paymentMethods.downPayment,
+                          type: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold"
+                  >
+                    <option value="percentage">Persentase (%)</option>
+                    <option value="fixed">Nominal Tetap (Rp)</option>
+                  </select>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <label className="text-xs font-semibold text-gray-600">Besaran</label>
+                  <div className="relative">
+                    {formData.paymentMethods.downPayment.type === 'fixed' && (
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-gray-500">Rp</span>
+                    )}
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={formData.paymentMethods.downPayment.amount || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        paymentMethods: {
+                          ...formData.paymentMethods,
+                          downPayment: {
+                            ...formData.paymentMethods.downPayment,
+                            amount: parseInt(e.target.value) || 0
+                          }
+                        }
+                      })}
+                      className={`w-full ${formData.paymentMethods.downPayment.type === 'fixed' ? 'pl-10' : 'pl-4'} pr-8 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold`}
+                      placeholder={formData.paymentMethods.downPayment.type === 'percentage' ? '50' : '500000'}
+                    />
+                    {formData.paymentMethods.downPayment.type === 'percentage' && (
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-500">%</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                Uang muka (DP) akan diterapkan secara otomatis saat pelanggan melakukan checkout pada layanan booking/reservasi. Sisanya akan ditagihkan kemudian sesuai kesepakatan dengan pelanggan.
+              </p>
             </div>
           )}
         </div>

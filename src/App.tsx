@@ -89,6 +89,7 @@ import Profile from './pages/Profile';
 import MarketplaceV1 from './pages/marketplace/MarketplaceV1';
 import ProductDetailV1 from './pages/marketplace/ProductDetailV1';
 import MarketplaceCheckout from './pages/marketplace/MarketplaceCheckout';
+import BookingV1 from './pages/marketplace/BookingV1';
 import CustomerCategories from './pages/sales/CustomerCategories';
 
 const ProtectedRoute = ({ children, allowedRoles, permission, menuLabel }: { children: React.ReactNode; allowedRoles?: string[]; permission?: string; menuLabel?: string }) => {
@@ -96,7 +97,13 @@ const ProtectedRoute = ({ children, allowedRoles, permission, menuLabel }: { chi
   const location = useLocation();
 
   if (loading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  if (!user) return <Navigate to="/login" />;
+  if (!user) {
+    const match = location.pathname.match(/\/(marketplace|catalog|booking)\/([^/]+)/);
+    if (match) {
+      return <Navigate to={`/${match[1]}/${match[2]}/auth`} />;
+    }
+    return <Navigate to="/login" />;
+  }
   
   // Domain isolation check
   if (domainTenantId && profile?.role !== 'superadmin' && profile?.tenantId !== domainTenantId) {
@@ -241,6 +248,21 @@ export default function App() {
               <CustomerDashboard />
             </ProtectedRoute>
           } />
+
+          <Route path="/booking/:tenantSlug" element={<BookingV1 />} />
+          <Route path="/booking/:tenantSlug/auth" element={<CustomerAuth />} />
+          <Route path="/booking/:tenantSlug/checkout" element={<MarketplaceCheckout />} />
+          <Route path="/booking/:tenantSlug/dashboard" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/booking/:tenantSlug/history" element={
+            <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
+
           <Route path="/catalog/:tenantSlug/dashboard" element={
             <ProtectedRoute allowedRoles={['customer', 'admin', 'staff']}>
               <CustomerDashboard />

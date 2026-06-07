@@ -4,7 +4,7 @@ import { db, auth } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Booking, Customer } from '../../types';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
-import { Calendar as CalendarIcon, Clock, User, Phone, CheckCircle, XCircle, Search, Clock3, Plus, X, Eye, Edit, Trash2, Printer, Check, FileText, Save } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, Phone, CheckCircle, XCircle, Search, Clock3, Plus, X, Eye, Edit, Trash2, Printer, Check, FileText, Save, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 
@@ -453,128 +453,190 @@ export default function BookingList() {
 
       {/* Detail Modal */}
       {isDetailOpen && selectedBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden my-8">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden my-8 ring-1 ring-black/5">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Detail Pesanan</h3>
-                <p className="text-sm text-gray-500 mt-1">{selectedBooking.invoiceNumber || '-'}</p>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Detail Pesanan</h3>
+                <p className="text-sm font-medium text-gray-500 mt-0.5">{selectedBooking.invoiceNumber || '-'}</p>
               </div>
               <button 
                 onClick={() => setIsDetailOpen(false)}
-                className="text-gray-400 hover:text-gray-600 bg-white shadow-sm border border-gray-200 p-2 rounded-full transition-colors"
+                className="text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 p-2 rounded-lg transition-all duration-200"
                 title="Tutup"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="p-6 space-y-6">
-              {/* Header Info Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-gray-500 mb-2">
-                    <User className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Pelanggan</span>
-                  </div>
-                  <p className="font-semibold text-gray-900">{selectedBooking.customerName}</p>
-                  <p className="text-sm text-gray-600">{selectedBooking.customerPhone || '-'}</p>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-gray-500 mb-2">
-                    <CalendarIcon className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Jadwal</span>
-                  </div>
-                  <p className="font-semibold text-gray-900">
-                    {format(new Date(selectedBooking.bookingDate), 'dd MMM yyyy', { locale: idLocale })}
-                  </p>
-                  <p className="text-sm text-gray-600 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
-                    {selectedBooking.bookingTime}
-                  </p>
-                </div>
+            <div className="p-6 space-y-8 bg-gray-50/30 overflow-y-auto flex-1">
+               {/* Header Info Grid */}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {/* Customer Card */}
+                 <div className="bg-white rounded-xl p-6 border border-gray-200/60 shadow-sm space-y-4">
+                   <div>
+                     <div className="flex items-center gap-2 text-gray-400 mb-3">
+                       <User className="w-4 h-4 text-indigo-500" />
+                       <span className="text-xs font-bold uppercase tracking-wider text-gray-600">Informasi Pelanggan</span>
+                     </div>
+                     <p className="font-bold text-gray-900 text-lg leading-tight">{selectedBooking.customerName}</p>
+                     <p className="text-sm font-medium text-gray-600 mt-1">{(selectedBooking as any).customerPhone || selectedBooking.customerPhone || '-'}</p>
+                   </div>
+                   
+                   {/* Additional info from customerInfo */}
+                   {(selectedBooking as any).customerInfo && (
+                     <div className="pt-4 border-t border-gray-100 space-y-4">
+                       <div>
+                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Alamat Pengiriman</p>
+                         <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                           {(selectedBooking as any).customerInfo.address}<br />
+                           <span className="text-gray-500 font-normal">
+                             Desa {(selectedBooking as any).customerInfo.village}, Kec. {(selectedBooking as any).customerInfo.district}<br />
+                             {(selectedBooking as any).customerInfo.city}, {(selectedBooking as any).customerInfo.province}
+                           </span>
+                         </p>
+                         {(selectedBooking as any).customerInfo.shareLocation && (
+                           <a href={(selectedBooking as any).customerInfo.shareLocation} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-semibold hover:bg-indigo-100 transition-colors">
+                             <MapPin className="w-4 h-4" /> Buka Google Maps
+                           </a>
+                         )}
+                       </div>
+                       
+                       {(selectedBooking as any).customerInfo.pack && (
+                         <div>
+                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Keterangan Tambahan</p>
+                           <p className="text-sm text-gray-900 font-bold bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">{(selectedBooking as any).customerInfo.pack}</p>
+                         </div>
+                       )}
+                     </div>
+                   )}
+                 </div>
+                 
+                 {/* Schedule & Status */}
+                 <div className="space-y-6">
+                   <div className="bg-white rounded-xl p-6 border border-gray-200/60 shadow-sm">
+                     <div className="flex items-center gap-2 text-gray-400 mb-4">
+                       <CalendarIcon className="w-4 h-4 text-amber-500" />
+                       <span className="text-xs font-bold uppercase tracking-wider text-gray-600">Jadwal Pelaksanaan</span>
+                     </div>
+                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                       <p className="font-bold text-gray-900 text-lg">
+                         {format(new Date(selectedBooking.bookingDate), 'dd MMM yyyy', { locale: idLocale })}
+                       </p>
+                       <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-bold w-max">
+                         <Clock className="w-4 h-4 text-gray-400" />
+                         {selectedBooking.bookingTime}
+                       </span>
+                     </div>
+                   </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-gray-500 mb-2">
-                    <Check className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Status</span>
-                  </div>
-                  <div className="pt-1">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(selectedBooking.status)}`}>
-                      {getStatusIcon(selectedBooking.status)}
-                      <span className="capitalize">{selectedBooking.status}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
+                   <div className="bg-white rounded-xl p-6 border border-gray-200/60 shadow-sm">
+                     <div className="flex items-center gap-2 text-gray-400 mb-4">
+                       <Check className="w-4 h-4 text-emerald-500" />
+                       <span className="text-xs font-bold uppercase tracking-wider text-gray-600">Status Pesanan</span>
+                     </div>
+                     <div>
+                       <span className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-bold border shadow-sm ${getStatusColor(selectedBooking.status)}`}>
+                         {getStatusIcon(selectedBooking.status)}
+                         <span className="capitalize tracking-wide">{selectedBooking.status === 'pending' ? 'Tunggu Konfirmasi' : selectedBooking.status}</span>
+                       </span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
 
               {/* Items Section */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">Detail Layanan & Produk</h4>
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-gray-900 border-b border-gray-200 pb-3">Ringkasan Biaya & Layanan</h4>
                 
                 {selectedBooking.items && selectedBooking.items.length > 0 ? (
-                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <div className="overflow-x-auto rounded-xl border border-gray-200/60 shadow-sm bg-white">
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50/50">
                         <tr>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                          <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
-                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                          <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                          <th scope="col" className="px-5 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Item</th>
+                          <th scope="col" className="px-5 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Harga</th>
+                          <th scope="col" className="px-5 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Qty</th>
+                          <th scope="col" className="px-5 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-white divide-y divide-gray-100">
                         {selectedBooking.items.map((item: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">Rp {(item.price || 0).toLocaleString('id-ID')}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-center">{item.qty || item.quantity || 1}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 text-right">Rp {((item.price || 0) * (item.qty || item.quantity || 1)).toLocaleString('id-ID')}</td>
+                          <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-5 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{item.name}</td>
+                            <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-600 text-right">Rp {(item.price || 0).toLocaleString('id-ID')}</td>
+                            <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-600 text-center font-medium bg-gray-50/30">{item.qty || item.quantity || 1}</td>
+                            <td className="px-5 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">Rp {((item.price || 0) * (item.qty || item.quantity || 1)).toLocaleString('id-ID')}</td>
                           </tr>
                         ))}
                       </tbody>
-                      <tfoot className="bg-gray-50 border-t border-gray-200">
+                      <tfoot className="border-t border-gray-200 bg-gray-50/30">
                         <tr>
-                          <td colSpan={3} className="px-4 py-3 text-right text-sm font-bold text-gray-900">Total Keseluruhan</td>
-                          <td className="px-4 py-3 text-right text-sm font-bold text-blue-600">Rp {selectedBooking.totalAmount?.toLocaleString('id-ID') || '0'}</td>
+                          <td colSpan={3} className="px-5 py-4 text-right text-sm font-bold text-gray-900">Total Keseluruhan</td>
+                          <td className="px-5 py-4 text-right text-sm font-extrabold text-gray-900">Rp {selectedBooking.totalAmount?.toLocaleString('id-ID') || '0'}</td>
                         </tr>
+                        {(selectedBooking as any).downPaymentAmount > 0 && (
+                          <tr className="bg-indigo-50/30">
+                            <td colSpan={3} className="px-5 py-3 text-right text-sm font-bold text-indigo-700">Uang Muka (DP)</td>
+                            <td className="px-5 py-3 text-right text-sm font-bold text-indigo-700">Rp {((selectedBooking as any).downPaymentAmount).toLocaleString('id-ID')}</td>
+                          </tr>
+                        )}
+                        {(selectedBooking as any).downPaymentAmount > 0 && (
+                          <tr className="bg-orange-50/30">
+                            <td colSpan={3} className="px-5 py-3 text-right text-sm font-bold text-orange-700">Sisa Tagihan</td>
+                            <td className="px-5 py-3 text-right text-sm font-bold text-orange-700">Rp {(selectedBooking.totalAmount - (selectedBooking as any).downPaymentAmount).toLocaleString('id-ID')}</td>
+                          </tr>
+                        )}
                       </tfoot>
                     </table>
                   </div>
                 ) : (
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 flex justify-between items-center">
-                    <div>
-                      <p className="font-medium text-gray-900">{selectedBooking.serviceName || 'Layanan Custom'}</p>
-                      <p className="text-xs text-gray-500">Item tidak memiliki rincian produk khusus</p>
+                  <div className="bg-white p-6 rounded-xl border border-gray-200/60 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <p className="font-bold text-gray-900 text-lg">{selectedBooking.serviceName || 'Layanan Custom'}</p>
+                        <p className="text-sm text-gray-500 mt-1">Item tidak memiliki rincian produk khusus</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Harga</p>
+                        <p className="font-black text-gray-900 text-xl tracking-tight">Rp {selectedBooking.totalAmount?.toLocaleString('id-ID') || '0'}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">Total Harga</p>
-                      <p className="font-bold text-blue-600 text-lg">Rp {selectedBooking.totalAmount?.toLocaleString('id-ID') || '0'}</p>
-                    </div>
+                    {(selectedBooking as any).downPaymentAmount > 0 && (
+                      <div className="flex justify-between items-center pt-4 border-t border-gray-100 bg-indigo-50/30 my-2 px-4 py-3 rounded-lg">
+                         <p className="text-sm font-bold text-indigo-700">Uang Muka (DP)</p>
+                         <p className="font-bold text-indigo-700 text-lg">Rp {((selectedBooking as any).downPaymentAmount).toLocaleString('id-ID')}</p>
+                      </div>
+                    )}
+                    {(selectedBooking as any).downPaymentAmount > 0 && (
+                      <div className="flex justify-between items-center px-4 py-3 bg-orange-50/30 rounded-lg">
+                         <p className="text-sm font-bold text-orange-700">Sisa Tagihan</p>
+                         <p className="font-bold text-orange-700 text-lg">Rp {(selectedBooking.totalAmount - (selectedBooking as any).downPaymentAmount).toLocaleString('id-ID')}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
 
               {selectedBooking.notes && (
                 <div className="space-y-3">
-                  <h4 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-gray-900 border-b border-gray-200 pb-3 flex items-center gap-2">
                     <FileText className="w-4 h-4 text-gray-400" />
                     Catatan Tambahan
                   </h4>
-                  <div className="text-sm text-gray-700 bg-amber-50/50 p-4 rounded-xl border border-amber-100 italic leading-relaxed">
+                  <div className="text-sm text-gray-800 font-medium bg-amber-50/50 p-5 rounded-xl border border-amber-100/50 italic leading-relaxed">
                     "{selectedBooking.notes}"
                   </div>
                 </div>
               )}
               
-              <div className="text-xs text-gray-400 flex justify-between pt-4 border-t border-gray-100">
+              <div className="text-xs font-medium text-gray-400 flex justify-between pt-6 border-t border-gray-200 mt-8">
                 <span>Dibuat pada: {selectedBooking.createdAt ? format(selectedBooking.createdAt?.toDate ? selectedBooking.createdAt.toDate() : new Date(selectedBooking.createdAt), 'dd MMM yyyy HH:mm', { locale: idLocale }) : '-'}</span>
-                <span>ID Internal: {selectedBooking.id}</span>
+                <span className="font-mono bg-gray-100 px-2.5 py-1 rounded border border-gray-200/60 text-gray-500">ID: {selectedBooking.id}</span>
               </div>
             </div>
             
-            <div className="p-4 border-t border-gray-100 bg-gray-50/80 flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-gray-100 bg-white flex justify-end gap-3 mt-auto">
               <button
                 onClick={() => {
                   setIsDetailOpen(false);

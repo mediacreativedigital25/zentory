@@ -172,9 +172,15 @@ export default function Catalog() {
         
         if (tenantData) {
           setTenant(tenantData);
+          document.title = `${tenantData.name} | Bussines Service Management`;
 
           if (tenantData.catalogTheme === 'v1') {
             navigate(`/marketplace/${tenantData.slug}`, { replace: true });
+            return;
+          }
+
+          if (tenantData.catalogTheme === 'booking-v1') {
+            navigate(`/booking/${tenantData.slug}`, { replace: true });
             return;
           }
 
@@ -678,7 +684,11 @@ export default function Catalog() {
                     <span className="hidden sm:inline text-sm font-semibold text-gray-900">{profile?.displayName?.split(' ')[0] || 'Akun'}</span>
                   </button>
                   <button 
-                    onClick={() => signOut(auth)}
+                    onClick={async () => {
+                      const isCustomer = profile?.role === 'customer';
+                      await signOut(auth);
+                      if (isCustomer) navigate(`/catalog/${tenantSlug}/auth`);
+                    }}
                     className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
                     title="Keluar"
                   >

@@ -454,6 +454,7 @@ export default function Users() {
                         <option value="admin">Admin</option>
                         <option value="staff">Staff</option>
                         <option value="kasir">Kasir</option>
+                        <option value="customer">Customer</option>
                         {profile?.role === 'superadmin' && <option value="superadmin">Superadmin</option>}
                       </optgroup>
                       <optgroup label="Custom Roles">

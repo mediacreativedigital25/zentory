@@ -21,6 +21,12 @@ export default function ProductDetailV1() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+
+  const getBasePath = () => {
+    if (tenant?.catalogTheme === 'booking-v1') return 'booking';
+    if (tenant?.catalogTheme === 'v1') return 'marketplace';
+    return 'catalog';
+  };
   const [reviews, setReviews] = useState<any[]>([]);
   const [newReview, setNewReview] = useState({ rating: 0, hoverRating: 0, comment: '', name: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -184,7 +190,7 @@ export default function ProductDetailV1() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col gap-4">
         <h2 className="text-2xl font-bold text-gray-800">Toko atau Produk Tidak Ditemukan</h2>
         <button 
-          onClick={() => navigate(`/marketplace/${tenantSlug}`)}
+          onClick={() => navigate(`/${getBasePath()}/${tenantSlug}`)}
           className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
         >
           Kembali ke Beranda Store
@@ -203,7 +209,7 @@ export default function ProductDetailV1() {
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => navigate(`/marketplace/${tenantSlug}`)}
+                onClick={() => navigate(`/${getBasePath()}/${tenantSlug}`)}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
                 aria-label="Kembali"
               >
@@ -211,7 +217,7 @@ export default function ProductDetailV1() {
               </button>
               <div 
                 className="flex items-center gap-3 cursor-pointer"
-                onClick={() => navigate(`/marketplace/${tenantSlug}`)}
+                onClick={() => navigate(`/${getBasePath()}/${tenantSlug}`)}
               >
                 {tenant.settings?.logoUrl ? (
                   <img src={tenant.settings.logoUrl} alt={tenant.name} className="w-12 h-12 rounded-full object-cover border border-gray-100" />
@@ -244,14 +250,14 @@ export default function ProductDetailV1() {
               
               {user ? (
                 <button 
-                  onClick={() => navigate(`/marketplace/${tenantSlug}/dashboard`)}
+                  onClick={() => navigate(`/${getBasePath()}/${tenantSlug}/dashboard`)}
                   className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
                 >
                   Dashboard Saya
                 </button>
               ) : (
                 <button 
-                  onClick={() => navigate(`/marketplace/${tenantSlug}/auth`)}
+                  onClick={() => navigate(`/${getBasePath()}/${tenantSlug}/auth`)}
                   className="text-sm font-semibold text-gray-700 hover:text-indigo-600 transition-colors"
                 >
                   Login / Daftar
@@ -514,7 +520,7 @@ export default function ProductDetailV1() {
                 </div>
                 
                 <button 
-                  onClick={() => navigate(`/marketplace/${tenantSlug}`)}
+                  onClick={() => navigate(`/${getBasePath()}/${tenantSlug}`)}
                   className="w-full mt-6 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Kunjungi Toko
@@ -532,7 +538,7 @@ export default function ProductDetailV1() {
               {relatedProducts.map(rp => (
                 <div 
                   key={rp.id}
-                  onClick={() => navigate(`/marketplace/${tenantSlug}/product/${rp.id}`)}
+                  onClick={() => navigate(`/${getBasePath()}/${tenantSlug}/product/${rp.id}`)}
                   className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col h-full hover:-translate-y-1 cursor-pointer"
                 >
                   <div className="aspect-square bg-gray-100 relative overflow-hidden flex items-center justify-center">

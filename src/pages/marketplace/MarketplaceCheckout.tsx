@@ -8,13 +8,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { Tenant } from '../../types';
 import { sendCatalogOrderNotification } from '../../lib/fonnte';
 
-const STEPS = [
-  { id: 1, label: 'Cart', icon: ShoppingCart },
-  { id: 2, label: 'Address', icon: MapPin },
-  { id: 3, label: 'Payment', icon: CreditCard },
-  { id: 4, label: 'Confirmation', icon: CheckCircle2 }
-];
-
 export default function MarketplaceCheckout() {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const navigate = useNavigate();
@@ -23,6 +16,21 @@ export default function MarketplaceCheckout() {
   
   const [currentStep, setCurrentStep] = useState(1);
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  
+  const isBookingTheme = tenant?.catalogTheme === 'booking-v1';
+
+  const STEPS = [
+    { id: 1, label: 'Cart', icon: ShoppingCart },
+    { id: 2, label: isBookingTheme ? 'Order Details' : 'Address', icon: MapPin },
+    { id: 3, label: 'Payment', icon: CreditCard },
+    { id: 4, label: 'Confirmation', icon: CheckCircle2 }
+  ];
+
+  const getBasePath = () => {
+    if (tenant?.catalogTheme === 'booking-v1') return 'booking';
+    if (tenant?.catalogTheme === 'v1') return 'marketplace';
+    return 'catalog';
+  };
   
   // Form State
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -34,8 +42,152 @@ export default function MarketplaceCheckout() {
     city: profile?.addressDetails?.city || '',
     district: profile?.addressDetails?.district || '',
     village: profile?.addressDetails?.village || '',
-    postalCode: profile?.addressDetails?.postalCode || ''
+    postalCode: profile?.addressDetails?.postalCode || '',
+    shareLocation: '',
+    pack: '',
+    bookingDate: new Date().toISOString().split('T')[0],
+    bookingTime: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
   });
+
+  // Region API States
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [villages, setVillages] = useState<any[]>([]);
+
+  const [selectedProvinceId, setSelectedProvinceId] = useState('');
+  const [selectedCityId, setSelectedCityId] = useState('');
+  const [selectedDistrictId, setSelectedDistrictId] = useState('');
+  const [selectedVillageId, setSelectedVillageId] = useState('');
+
+  useEffect(() => {
+    fetch('https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json')
+      .then(res => res.json())
+      .then(data => setProvinces(data))
+      .catch(console.error);
+  }, []);
+
+  const fetchCities = (provinceId: string) => {
+    if (!provinceId) return;
+    fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${provinceId}.json`)
+      .then(res => res.json())
+      .then(data => setCities(data))
+      .catch(console.error);
+  };
+
+  const fetchDistricts = (cityId: string) => {
+    if (!cityId) return;
+    fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${cityId}.json`)
+      .then(res => res.json())
+      .then(data => setDistricts(data))
+      .catch(console.error);
+  };
+
+  const fetchVillages = (districtId: string) => {
+    if (!districtId) return;
+    fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${districtId}.json`)
+      .then(res => res.json())
+      .then(data => setVillages(data))
+      .catch(console.error);
+  };
+
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    const name = e.target.options[e.target.selectedIndex].text;
+    setSelectedProvinceId(id);
+    setSelectedCityId('');
+    setSelectedDistrictId('');
+    setSelectedVillageId('');
+    setCities([]);
+    setDistricts([]);
+    setVillages([]);
+    
+    setAddressData({ ...addressData, province: id ? name : '', city: '', district: '', village: '' });
+    
+    if (id) {
+      fetchCities(id);
+    }
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    const name = e.target.options[e.target.selectedIndex].text;
+    setSelectedCityId(id);
+    setSelectedDistrictId('');
+    setSelectedVillageId('');
+    setDistricts([]);
+    setVillages([]);
+    
+    setAddressData({ ...addressData, city: id ? name : '', district: '', village: '' });
+    
+    if (id) {
+      fetchDistricts(id);
+    }
+  };
+
+  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    const name = e.target.options[e.target.selectedIndex].text;
+    setSelectedDistrictId(id);
+    setSelectedVillageId('');
+    setVillages([]);
+    
+    setAddressData({ ...addressData, district: id ? name : '', village: '' });
+    
+    if (id) {
+      fetchVillages(id);
+    }
+  };
+
+  const handleVillageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    const name = e.target.options[e.target.selectedIndex].text;
+    setSelectedVillageId(id);
+    
+    setAddressData({ ...addressData, village: id ? name : '' });
+  };
+
+  // Sync province -> cities initialization
+  useEffect(() => {
+    if (addressData.province && provinces.length > 0 && cities.length === 0 && !selectedProvinceId) {
+      const p = provinces.find(x => x.name.toLowerCase() === addressData.province.toLowerCase());
+      if (p) {
+        setSelectedProvinceId(p.id);
+        fetchCities(p.id);
+      }
+    }
+  }, [addressData.province, provinces]);
+
+  // Sync city -> districts initialization
+  useEffect(() => {
+    if (addressData.city && cities.length > 0 && districts.length === 0 && !selectedCityId) {
+      const c = cities.find(x => x.name.toLowerCase() === addressData.city.toLowerCase());
+      if (c) {
+        setSelectedCityId(c.id);
+        fetchDistricts(c.id);
+      }
+    }
+  }, [addressData.city, cities]);
+
+  // Sync district -> villages initialization
+  useEffect(() => {
+    if (addressData.district && districts.length > 0 && villages.length === 0 && !selectedDistrictId) {
+      const d = districts.find(x => x.name.toLowerCase() === addressData.district.toLowerCase());
+      if (d) {
+        setSelectedDistrictId(d.id);
+        fetchVillages(d.id);
+      }
+    }
+  }, [addressData.district, districts]);
+
+  useEffect(() => {
+    if (addressData.village && villages.length > 0 && !selectedVillageId) {
+      const v = villages.find(x => x.name.toLowerCase() === addressData.village.toLowerCase());
+      if (v) {
+        setSelectedVillageId(v.id);
+      }
+    }
+  }, [addressData.village, villages]);
 
   useEffect(() => {
     if (profile) {
@@ -59,7 +211,8 @@ export default function MarketplaceCheckout() {
           city: prev.city || profile.addressDetails?.city || '',
           district: prev.district || profile.addressDetails?.district || '',
           village: prev.village || profile.addressDetails?.village || '',
-          postalCode: prev.postalCode || profile.addressDetails?.postalCode || ''
+          postalCode: prev.postalCode || profile.addressDetails?.postalCode || '',
+          pack: (prev as any).pack || ''
         };
       });
     }
@@ -79,7 +232,22 @@ export default function MarketplaceCheckout() {
     }, 2000);
   };
 
-  const hasAddress = !!addressData.address && !!addressData.city && !!addressData.province && !!addressData.district && !!addressData.village;
+  const hasAddress = !!addressData.address && !!addressData.city && !!addressData.province && !!addressData.district && !!addressData.village && (!isBookingTheme || !!addressData.shareLocation);
+
+  // Down Payment Logic
+  const downPaymentSettings = tenant?.paymentMethods?.downPayment;
+  const isDownPaymentApplied = isBookingTheme && downPaymentSettings?.isEnabled;
+  let downPaymentAmount = 0;
+  
+  if (isDownPaymentApplied && downPaymentSettings) {
+    if (downPaymentSettings.type === 'percentage') {
+      downPaymentAmount = (cartTotal * (downPaymentSettings.amount || 0)) / 100;
+    } else if (downPaymentSettings.type === 'fixed') {
+      downPaymentAmount = downPaymentSettings.amount || 0;
+    }
+  }
+  
+  const paymentAmountToProcess = isDownPaymentApplied ? downPaymentAmount : cartTotal;
 
   useEffect(() => {
     fetchTenant();
@@ -108,8 +276,8 @@ export default function MarketplaceCheckout() {
 
   const handleNextStep = () => {
     if (currentStep === 2) {
-      if (!addressData.name || !addressData.phone || !addressData.address || !addressData.district || !addressData.village || !addressData.city || !addressData.province) {
-        alert('Mohon lengkapi seluruh field alamat yang wajib diisi.');
+      if (!addressData.name || !addressData.phone || !addressData.address || !addressData.district || !addressData.village || !addressData.city || !addressData.province || (isBookingTheme && !addressData.shareLocation)) {
+        alert(isBookingTheme ? 'Mohon lengkapi seluruh field yang wajib diisi termasuk Link Google Maps.' : 'Mohon lengkapi seluruh field alamat yang wajib diisi.');
         return;
       }
     }
@@ -221,6 +389,7 @@ export default function MarketplaceCheckout() {
           paymentType: 'cash',
           paymentStatus: 'unpaid',
           totalAmount: cartTotal,
+          downPaymentAmount: isDownPaymentApplied ? downPaymentAmount : 0,
           totalItems,
           status: 'pending',
           type: 'catalog',
@@ -228,11 +397,37 @@ export default function MarketplaceCheckout() {
           createdAt: serverTimestamp(),
           date: serverTimestamp()
         });
+
+        if (isBookingTheme) {
+          const bookingRef = doc(collection(db, 'payment_corrections'));
+          transaction.set(bookingRef, {
+            tenantId: tenant.id,
+            docType: 'booking',
+            customerName: addressData.name,
+            customerPhone: addressData.phone,
+            customerInfo: addressData,     
+            invoiceNumber: generatedOrderNumber,
+            totalAmount: cartTotal,
+            downPaymentAmount: isDownPaymentApplied ? downPaymentAmount : 0,
+            bookingDate: addressData.bookingDate || new Date().toISOString().split('T')[0],
+            bookingTime: addressData.bookingTime || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }),
+            serviceName: cart.length > 0 ? cart[0].product.name : 'Booking Layanan',
+            items: cart.map(item => ({
+              productId: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              quantity: item.quantity
+            })),
+            status: 'pending',
+            createdAt: serverTimestamp()
+          });
+        }
       });
       
       // Post transaction actions
       setOrderId(generatedOrderNumber);
-      setFinalOrderTotal(cartTotal);
+      // Set final order total depending on down payment
+      setFinalOrderTotal(isDownPaymentApplied ? paymentAmountToProcess : cartTotal);
 
       // Async stock logging (doesn't block UI progression)
       import('../../lib/stock-logger').then(({ logStockChange }) => {
@@ -257,12 +452,21 @@ export default function MarketplaceCheckout() {
         const phoneNumber = tenant?.settings?.phone || tenant?.phone;
         if (phoneNumber) {
           let message = `Halo ${tenant?.name},\nSaya telah membuat pesanan dengan Nomor: *${generatedOrderNumber}*\n\n`;
-          message += `*Detail Pengiriman:*\nNama: ${addressData.name}\nNo. HP: ${addressData.phone}\nAlamat: ${addressData.address}, Desa/Kel ${addressData.village}, Kec. ${addressData.district}, ${addressData.city}, ${addressData.province} ${addressData.postalCode}\n\n`;
+          message += `*Detail Pengiriman:*\nNama: ${addressData.name}\nNo. HP: ${addressData.phone}\n`;
+          if (isBookingTheme && addressData.bookingDate) {
+             message += `Jadwal: ${new Date(addressData.bookingDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})} ${addressData.bookingTime}\n`;
+          }
+          message += `Alamat: ${addressData.address}, Desa/Kel ${addressData.village}, Kec. ${addressData.district}, ${addressData.city}, ${addressData.province} ${addressData.postalCode}\n\n`;
           message += `*Pesanan:*\n`;
           cart.forEach((item, index) => {
              message += `${index + 1}. *${item.product.name}* (${item.quantity}x)\n`;
           });
-          message += `\n*Total Tagihan: Rp ${cartTotal.toLocaleString('id-ID')}*\n\n`;
+          if (isDownPaymentApplied) {
+             message += `\n*Total Layanan: Rp ${cartTotal.toLocaleString('id-ID')}*\n`;
+             message += `*Uang Muka (DP): Rp ${paymentAmountToProcess.toLocaleString('id-ID')}*\n\n`;
+          } else {
+             message += `\n*Total Tagihan: Rp ${cartTotal.toLocaleString('id-ID')}*\n\n`;
+          }
           message += `Mohon info pembayarannya. Terima kasih!`;
           window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
         }
@@ -338,7 +542,7 @@ export default function MarketplaceCheckout() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center">
-          <Link to={`/marketplace/${tenantSlug}`} className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition-colors">
+          <Link to={`/${getBasePath()}/${tenantSlug}`} className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <span className="font-semibold hidden sm:inline">Kembali ke Toko</span>
           </Link>
@@ -368,7 +572,7 @@ export default function MarketplaceCheckout() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
                 {cart.length === 0 ? (
                   <div className="p-8 text-center text-gray-500">
-                    Keranjang kosong. <Link to={`/marketplace/${tenantSlug}`} className="text-indigo-600 underline">Ayo belanja!</Link>
+                    Keranjang kosong. <Link to={`/${getBasePath()}/${tenantSlug}`} className="text-indigo-600 underline">Ayo belanja!</Link>
                   </div>
                 ) : (
                   cart.map(item => (
@@ -431,9 +635,17 @@ export default function MarketplaceCheckout() {
                        <span className="text-green-600 font-semibold">TBD</span>
                      </div>
                   </div>
-                  <div className="border-t border-gray-100 mt-4 pt-4 flex justify-between font-bold text-lg text-gray-900">
-                     <span>Order Total</span>
-                     <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
+                  <div className="border-t border-gray-100 mt-4 pt-4">
+                     <div className="flex justify-between font-bold text-lg text-gray-900 mb-2">
+                       <span>{isDownPaymentApplied ? 'Total Layanan' : 'Order Total'}</span>
+                       <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
+                     </div>
+                     {isDownPaymentApplied && (
+                       <div className="flex justify-between items-center text-lg font-bold text-indigo-700 bg-indigo-50 p-4 rounded-xl mt-4">
+                         <span>Down Payment (DP)</span>
+                         <span>Rp {paymentAmountToProcess.toLocaleString('id-ID')}</span>
+                       </div>
+                     )}
                   </div>
                   
                   <button 
@@ -451,24 +663,46 @@ export default function MarketplaceCheckout() {
         {currentStep === 2 && (
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
-               <h2 className="text-xl font-bold text-gray-900 mb-6">Delivery Address</h2>
+               <h2 className="text-xl font-bold text-gray-900 mb-6">{isBookingTheme ? 'Detail Pemesan' : 'Delivery Address'}</h2>
                <div className="space-y-4 max-w-2xl">
                  {hasAddress ? (
                   <div className="border border-gray-300 rounded-lg p-4 mb-4">
                      <div className="grid grid-cols-[120px_10px_1fr] gap-2 mb-2 text-sm text-gray-800">
-                        <div className="font-semibold">Nama Penerima</div><div>:</div><div>{addressData.name}</div>
-                        <div className="font-semibold">No Hp</div><div>:</div><div>{addressData.phone}</div>
-                        <div className="font-semibold">Alamat</div><div>:</div><div>{addressData.address}, Desa/Kel {addressData.village}, Kec. {addressData.district}, {addressData.city}, {addressData.province} {addressData.postalCode}</div>
+                        <div className="font-semibold">Nama</div><div>:</div><div>{addressData.name}</div>
+                        <div className="font-semibold">No WhatsApp</div><div>:</div><div>{addressData.phone}</div>
+                        {isBookingTheme && addressData.bookingDate && (
+                           <>
+                             <div className="font-semibold">Jadwal</div><div>:</div>
+                             <div>{new Date(addressData.bookingDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})} {addressData.bookingTime}</div>
+                           </>
+                        )}
+                        <div className="font-semibold">Lokasi</div><div>:</div><div>{addressData.address}, Desa {addressData.village}, Kec. {addressData.district}, {addressData.city}, {addressData.province}</div>
+                        {isBookingTheme && addressData.shareLocation && (
+                           <>
+                             <div className="font-semibold">Share Location</div><div>:</div>
+                             <div>
+                               <a href={addressData.shareLocation} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Lihat Map</a>
+                             </div>
+                           </>
+                        )}
+                        {isBookingTheme && (addressData as any).pack && (
+                           <>
+                             <div className="font-semibold">Pack Catering</div><div>:</div>
+                             <div>{(addressData as any).pack}</div>
+                           </>
+                        )}
                      </div>
                      <div className="mt-4 flex justify-end">
-                       <button onClick={() => setIsAddressModalOpen(true)} className="text-indigo-600 font-semibold text-sm hover:text-indigo-700">Ubah Alamat</button>
+                       <button onClick={() => setIsAddressModalOpen(true)} className="text-indigo-600 font-semibold text-sm hover:text-indigo-700">
+                         {isBookingTheme ? 'Ubah Data' : 'Ubah Alamat'}
+                       </button>
                      </div>
                   </div>
                  ) : (
                   <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg mb-6">
-                    <p className="text-gray-500 mb-4">Belum ada alamat pengiriman</p>
+                    <p className="text-gray-500 mb-4">{isBookingTheme ? 'Belum ada data pemesan' : 'Belum ada alamat pengiriman'}</p>
                     <button onClick={() => setIsAddressModalOpen(true)} className="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
-                      Tambah Alamat
+                      {isBookingTheme ? 'Isi Data Pemesan' : 'Tambah Alamat'}
                     </button>
                   </div>
                  )}
@@ -509,9 +743,17 @@ export default function MarketplaceCheckout() {
                     ))}
                   </div>
                   
-                  <div className="border-t border-gray-100 pt-4 flex justify-between font-bold text-lg text-gray-900">
-                     <span>Total</span>
-                     <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
+                  <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
+                     <div className="flex justify-between font-bold text-lg text-gray-900">
+                       <span>{isDownPaymentApplied ? 'Total Layanan' : 'Total'}</span>
+                       <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
+                     </div>
+                     {isDownPaymentApplied && (
+                       <div className="flex justify-between font-bold text-indigo-700 bg-indigo-50 p-3 rounded-lg text-sm">
+                         <span>Down Payment (DP)</span>
+                         <span>Rp {paymentAmountToProcess.toLocaleString('id-ID')}</span>
+                       </div>
+                     )}
                   </div>
                </div>
             </div>
@@ -573,15 +815,28 @@ export default function MarketplaceCheckout() {
                   <div className="bg-gray-50 rounded-lg p-4 mb-4">
                     <h4 className="text-sm font-semibold text-gray-900 mb-1">Kirim Ke:</h4>
                     <p className="text-sm text-gray-600 font-medium">{addressData.name} ({addressData.phone})</p>
+                    {isBookingTheme && addressData.bookingDate && (
+                      <p className="text-sm text-indigo-700 font-semibold mb-1 mt-1">
+                        Jadwal: {new Date(addressData.bookingDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})} {addressData.bookingTime}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-600 mt-1">{addressData.address}</p>
                     <p className="text-sm text-gray-600">Desa/Kel {addressData.village}, Kec. {addressData.district}</p>
                     <p className="text-sm text-gray-600">{addressData.city}, {addressData.province}</p>
                     <p className="text-sm text-gray-600">{addressData.postalCode && `Kode Pos: ${addressData.postalCode}`}</p>
                   </div>
                   
-                  <div className="border-t border-gray-100 pt-4 flex justify-between font-bold text-lg text-gray-900">
-                     <span>Total</span>
-                     <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
+                  <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
+                     <div className="flex justify-between font-bold text-lg text-gray-900">
+                       <span>{isDownPaymentApplied ? 'Total Layanan' : 'Total'}</span>
+                       <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
+                     </div>
+                     {isDownPaymentApplied && (
+                       <div className="flex justify-between font-bold text-indigo-700 bg-indigo-50 p-3 rounded-lg text-sm">
+                         <span>Down Payment (DP)</span>
+                         <span>Rp {paymentAmountToProcess.toLocaleString('id-ID')}</span>
+                       </div>
+                     )}
                   </div>
                   
                   <button 
@@ -656,7 +911,7 @@ export default function MarketplaceCheckout() {
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
                <Link 
-                 to={`/marketplace/${tenantSlug}`}
+                 to={`/${getBasePath()}/${tenantSlug}`}
                  className="bg-indigo-600 text-white font-bold px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors w-full sm:w-auto"
                >
                  Kembali Belanja
@@ -669,9 +924,9 @@ export default function MarketplaceCheckout() {
       {/* Address Modal */}
       {isAddressModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="font-bold text-gray-900">Alamat Pengiriman</h3>
+              <h3 className="font-bold text-gray-900">{isBookingTheme ? 'Detail Pemesan' : 'Alamat Pengiriman'}</h3>
               <button 
                 onClick={() => setIsAddressModalOpen(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -684,7 +939,7 @@ export default function MarketplaceCheckout() {
               <div className="space-y-4">
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                    <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap *</label>
+                     <label className="block text-sm font-semibold text-gray-700 mb-1">{isBookingTheme ? 'Nama' : 'Nama Lengkap'} *</label>
                      <input 
                        type="text" 
                        required
@@ -707,6 +962,31 @@ export default function MarketplaceCheckout() {
                    </div>
                  </div>
                  
+                 {isBookingTheme && (
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pelaksanaan *</label>
+                       <input 
+                         type="date" 
+                         required
+                         value={addressData.bookingDate || ''}
+                         onChange={e => setAddressData({...addressData, bookingDate: e.target.value})}
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" 
+                       />
+                     </div>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Waktu Pelaksanaan *</label>
+                       <input 
+                         type="time" 
+                         required
+                         value={addressData.bookingTime || ''}
+                         onChange={e => setAddressData({...addressData, bookingTime: e.target.value})}
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" 
+                       />
+                     </div>
+                   </div>
+                 )}
+
                  <div>
                    <label className="block text-sm font-semibold text-gray-700 mb-1">Alamat Lengkap *</label>
                    <textarea 
@@ -721,64 +1001,107 @@ export default function MarketplaceCheckout() {
                  
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                    <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">Kota / Kabupaten *</label>
-                     <input 
-                       type="text"
+                     <label className="block text-sm font-semibold text-gray-700 mb-1">Provinsi *</label>
+                     <select
                        required
-                       value={addressData.city}
-                       onChange={e => setAddressData({...addressData, city: e.target.value})}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                       placeholder="Misal: Jakarta Selatan"
-                     />
+                       value={selectedProvinceId || (provinces.find(p => p.name === addressData.province)?.id || '')}
+                       onChange={handleProvinceChange}
+                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                     >
+                       <option value="">Pilih Provinsi</option>
+                       {provinces.map(p => (
+                         <option key={p.id} value={p.id}>{p.name}</option>
+                       ))}
+                     </select>
                    </div>
                    <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">Provinsi *</label>
-                     <input 
-                       type="text"
+                     <label className="block text-sm font-semibold text-gray-700 mb-1">Kota / Kabupaten *</label>
+                     <select
                        required
-                       value={addressData.province}
-                       onChange={e => setAddressData({...addressData, province: e.target.value})}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                       placeholder="Misal: DKI Jakarta"
-                     />
+                       value={selectedCityId || (cities.find(c => c.name === addressData.city)?.id || '')}
+                       onChange={handleCityChange}
+                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                       disabled={!selectedProvinceId && !addressData.province}
+                     >
+                       <option value="">Pilih Kota/Kabupaten</option>
+                       {cities.map(c => (
+                         <option key={c.id} value={c.id}>{c.name}</option>
+                       ))}
+                     </select>
                    </div>
                  </div>
 
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                    <div>
                      <label className="block text-sm font-semibold text-gray-700 mb-1">Kecamatan *</label>
-                     <input 
-                       type="text"
+                     <select
                        required
-                       value={addressData.district}
-                       onChange={e => setAddressData({...addressData, district: e.target.value})}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                       placeholder="Misal: Kebayoran Baru"
-                     />
+                       value={selectedDistrictId || (districts.find(d => d.name === addressData.district)?.id || '')}
+                       onChange={handleDistrictChange}
+                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                       disabled={!selectedCityId && !addressData.city}
+                     >
+                       <option value="">Pilih Kecamatan</option>
+                       {districts.map(d => (
+                         <option key={d.id} value={d.id}>{d.name}</option>
+                       ))}
+                     </select>
                    </div>
                    <div>
                      <label className="block text-sm font-semibold text-gray-700 mb-1">Desa / Kelurahan *</label>
-                     <input 
-                       type="text"
+                     <select
                        required
-                       value={addressData.village}
-                       onChange={e => setAddressData({...addressData, village: e.target.value})}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                       placeholder="Misal: Senayan"
-                     />
+                       value={selectedVillageId || (villages.find(v => v.name === addressData.village)?.id || '')}
+                       onChange={handleVillageChange}
+                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                       disabled={!selectedDistrictId && !addressData.district}
+                     >
+                       <option value="">Pilih Desa/Kelurahan</option>
+                       {villages.map(v => (
+                         <option key={v.id} value={v.id}>{v.name}</option>
+                       ))}
+                     </select>
                    </div>
                  </div>
                  
-                 <div>
-                   <label className="block text-sm font-semibold text-gray-700 mb-1">Kode Pos</label>
-                   <input 
-                     type="text"
-                     value={addressData.postalCode}
-                     onChange={e => setAddressData({...addressData, postalCode: e.target.value})} 
-                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                     placeholder="Misal: 12345"
-                   />
-                 </div>
+                 {!isBookingTheme && (
+                   <div>
+                     <label className="block text-sm font-semibold text-gray-700 mb-1">Kode Pos</label>
+                     <input 
+                       type="text"
+                       value={addressData.postalCode}
+                       onChange={e => setAddressData({...addressData, postalCode: e.target.value})} 
+                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
+                       placeholder="Misal: 12345"
+                     />
+                   </div>
+                 )}
+
+                 {isBookingTheme && (
+                   <>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Share Location (URL/Link Google Maps) *</label>
+                       <input 
+                         type="url"
+                         required
+                         value={addressData.shareLocation || ''}
+                         onChange={e => setAddressData({...addressData, shareLocation: e.target.value})} 
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
+                         placeholder="https://maps.google.com/..."
+                       />
+                     </div>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Pack Catering / Keterangan (Opsional)</label>
+                       <textarea
+                         rows={2}
+                         value={(addressData as any).pack || ''}
+                         onChange={e => setAddressData({...addressData, pack: e.target.value})} 
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 resize-none" 
+                         placeholder="Misal: 50 Pack"
+                       />
+                     </div>
+                   </>
+                 )}
               </div>
             </div>
             
@@ -791,15 +1114,15 @@ export default function MarketplaceCheckout() {
                </button>
                <button 
                  onClick={() => {
-                   if (!addressData.name || !addressData.phone || !addressData.address || !addressData.district || !addressData.village || !addressData.city || !addressData.province) {
-                       alert('Mohon lengkapi seluruh field alamat yang wajib diisi.');
+                   if (!addressData.name || !addressData.phone || !addressData.address || !addressData.district || !addressData.village || !addressData.city || !addressData.province || (isBookingTheme && !addressData.shareLocation)) {
+                       alert(isBookingTheme ? 'Mohon lengkapi seluruh field yang wajib diisi termasuk Link Google Maps.' : 'Mohon lengkapi seluruh field yang wajib diisi.');
                        return;
                    }
                    setIsAddressModalOpen(false);
                  }}
                  className="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
                >
-                 Simpan Alamat
+                 Simpan
                </button>
             </div>
           </div>

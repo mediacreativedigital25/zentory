@@ -77,9 +77,16 @@ export default function CustomerAuth() {
 
         // Add to customers collection for admin view
         if (tenant) {
+          const customersRef = collection(db, 'customers');
+          const cq = query(customersRef, where('tenantId', '==', tenant.id));
+          const csnap = await getDocs(cq);
+          const sequence = (csnap.size + 1).toString().padStart(4, '0');
+          const newCode = `A${sequence}`;
+
           await addDoc(collection(db, 'customers'), {
             uid: userCred.user.uid,
             name: formData.name,
+            code: newCode,
             email: formData.email,
             address: formData.address,
             phone: '-',
@@ -88,7 +95,7 @@ export default function CustomerAuth() {
           });
         }
       }
-      const basePath = tenant?.catalogTheme === 'v1' ? 'marketplace' : 'catalog';
+      const basePath = tenant?.catalogTheme === 'booking-v1' ? 'booking' : tenant?.catalogTheme === 'v1' ? 'marketplace' : 'catalog';
       navigate(`/${basePath}/${tenantSlug}/dashboard`);
     } catch (err: any) {
       setError('Email atau sandi salah.');
@@ -109,7 +116,7 @@ export default function CustomerAuth() {
     );
   }
 
-  const basePath = tenant.catalogTheme === 'v1' ? 'marketplace' : 'catalog';
+  const basePath = tenant.catalogTheme === 'booking-v1' ? 'booking' : tenant.catalogTheme === 'v1' ? 'marketplace' : 'catalog';
 
   return (
     <div className="min-h-screen bg-white flex font-sans">

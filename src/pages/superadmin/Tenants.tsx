@@ -13,16 +13,21 @@ import { motion, AnimatePresence } from 'motion/react';
 const AVAILABLE_MENUS = [
   { label: 'Dashboard', icon: LayoutDashboard },
   { label: 'Approval', icon: CheckCircle2 },
+  { label: 'Marketplace V1', icon: Store },
   { 
     label: 'Sales', 
     icon: ShoppingCart,
     children: [
+      { label: 'Sales Booking' },
+      { label: 'Booking List' },
       { label: 'Sales Order V1' },
       { label: 'Sales Order' },
       { label: 'Sales POS' },
       { label: 'Sales Order Receive' },
       { label: 'Kupon' },
       { label: 'Customers' },
+      { label: 'Tipe Pelanggan' },
+      { label: 'Review Produk' },
     ]
   },
   { 
@@ -41,6 +46,7 @@ const AVAILABLE_MENUS = [
       { label: 'Daftar Produk' },
       { label: 'Riwayat Produk' },
       { label: 'Kategori' },
+      { label: 'Lini Bisnis' },
       { label: 'Stock' },
       { label: 'Gudang' },
       { label: 'Report Inventory' },
@@ -65,7 +71,9 @@ const AVAILABLE_MENUS = [
       { label: 'Invoice' },
       { label: 'Receive Payment' },
       { label: 'Invoice Collection' },
+      { label: 'Tabungan Pelanggan' },
       { label: 'Akun Bank' },
+      { label: 'Transfer Kas/Bank' },
       { label: 'Claim Expense' },
       { label: 'Amal' },
       { label: 'Report Keuangan' },
@@ -82,8 +90,24 @@ const AVAILABLE_MENUS = [
     ]
   },
   { label: 'Catalog Editor', icon: Store },
-  { label: 'Profil Bisnis', icon: Building2 },
-  { label: 'Layanan', icon: ShieldCheck, children: [{ label: 'Invoice' }, { label: 'Layanan Saya' }] },
+  { 
+    label: 'Setting', 
+    icon: Settings,
+    children: [
+      { label: 'Profil Bisnis' },
+      { label: 'Payment Metode' },
+      { label: 'Alamat Toko' },
+    ]
+  },
+  { 
+    label: 'Paket & Upgrade', 
+    icon: ShieldCheck, 
+    children: [
+      { label: 'Pilih Paket' }, 
+      { label: 'Invoice Transaksi' }, 
+      { label: 'Layanan Saya' }
+    ] 
+  },
   { label: 'Changelog', icon: History },
   { label: 'Panduan', icon: BookOpen }
 ];
@@ -103,7 +127,8 @@ export default function SuperAdminTenants() {
     slug: '',
     ownerId: '',
     subscription: 'free' as SubscriptionPlan,
-    subscriptionEndDate: ''
+    subscriptionEndDate: '',
+    catalogTheme: 'v1'
   });
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; showCancel?: boolean } | null>(null);
 
@@ -245,6 +270,7 @@ export default function SuperAdminTenants() {
             plan: newTenantData.subscription,
             features: planDef.features,
             limits: planDef.limits,
+            catalogTheme: newTenantData.catalogTheme,
             subscriptionEndDate: newTenantData.subscriptionEndDate ? new Date(newTenantData.subscriptionEndDate) : null,
             createdAt: serverTimestamp(),
           });
@@ -265,8 +291,9 @@ export default function SuperAdminTenants() {
             name: '',
             slug: '',
             ownerId: '',
-            subscription: 'free',
-            subscriptionEndDate: ''
+            subscription: 'free' as SubscriptionPlan,
+            subscriptionEndDate: '',
+            catalogTheme: 'v1'
           });
 
           setConfirmConfig({
@@ -583,10 +610,11 @@ export default function SuperAdminTenants() {
                             >
                               <option value="default">Default</option>
                               <option value="v1">Tema V1 (Katalog)</option>
+                              <option value="booking-v1">Tema Booking V1</option>
                             </select>
                           ) : (
                             <p className="text-gray-900 font-medium">
-                              {selectedTenantForDetail.catalogTheme === 'v1' ? 'Tema V1 (Katalog)' : 'Default'}
+                              {selectedTenantForDetail.catalogTheme === 'v1' ? 'Tema V1 (Katalog)' : selectedTenantForDetail.catalogTheme === 'booking-v1' ? 'Tema Booking V1' : 'Default'}
                             </p>
                           )}
                         </div>
@@ -879,14 +907,26 @@ export default function SuperAdminTenants() {
                     </select>
                   </div>
                   <div>
-                    <label className="block mb-1 text-xs font-semibold text-gray-600">Expiry Date</label>
-                    <input
-                      type="date"
-                      value={newTenantData.subscriptionEndDate}
-                      onChange={(e) => setNewTenantData({ ...newTenantData, subscriptionEndDate: e.target.value })}
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">Jenis Sistem</label>
+                    <select
+                      value={newTenantData.catalogTheme}
+                      onChange={(e) => setNewTenantData({ ...newTenantData, catalogTheme: e.target.value })}
                       className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                    >
+                      <option value="v1">Sistem Marketplace</option>
+                      <option value="booking-v1">Sistem Booking</option>
+                      <option value="default">Default Katalog</option>
+                    </select>
                   </div>
+                </div>
+                <div>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Expiry Date</label>
+                  <input
+                    type="date"
+                    value={newTenantData.subscriptionEndDate}
+                    onChange={(e) => setNewTenantData({ ...newTenantData, subscriptionEndDate: e.target.value })}
+                    className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
                 </div>
               </div>
 

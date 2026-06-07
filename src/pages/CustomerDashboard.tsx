@@ -8,14 +8,21 @@ import {
   ShoppingBag, 
   MapPin, 
   Clock, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronLeft,
+  Calendar as CalendarIcon,
   Package, 
   CheckCircle2, XCircle, Search, ArrowLeft, User, Save, LogOut, Plus, Trash2, Edit2, Star, Eye
 } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, getDay, addMonths, subMonths } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Order, UserAddress } from '../types';
 
 type Tab = 'overview' | 'history' | 'status' | 'downloads' | 'address';
+
+// Extend Order type inline for bookingInfo
+type DashboardOrder = Order & { bookingInfo?: any };
 
 export default function CustomerDashboard() {
   const { tenantSlug } = useParams();
@@ -36,9 +43,24 @@ export default function CustomerDashboard() {
   useEffect(() => {
     setActiveTab(getTabFromPath());
   }, [location.pathname]);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<DashboardOrder[]>([]);
   const [tenant, setTenant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Calendar State
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const isBookingTenant = location.pathname.startsWith('/booking/');
+  const nextMonth = () => setCurrentMonth(prev => addMonths(prev, 1));
+  const prevMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
+  
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const startDay = getDay(monthStart);
+
+  const confirmedBookings = orders.filter(o => 
+    o.bookingInfo && (o.bookingInfo.status === 'confirmed' || o.bookingInfo.status === 'completed')
+  );
   
   // Addresses State
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
@@ -162,8 +184,40 @@ export default function CustomerDashboard() {
         );
         
         const snap = await getDocs(q);
-        const ordersData = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+        let ordersData = snap.docs.map(d => ({ id: d.id, ...d.data() } as DashboardOrder));
         
+        // Fetch booking info for booking tenant
+        if (location.pathname.startsWith('/booking/')) {
+          const orderNumbers = ordersData.map(o => o.orderNumber).filter(Boolean);
+          const bookingsMap = new Map();
+          
+          for (let i = 0; i < orderNumbers.length; i += 10) {
+            const chunk = orderNumbers.slice(i, i + 10);
+            if (chunk.length > 0) {
+              const bQuery = query(
+                collection(db, 'payment_corrections'),
+                where('tenantId', '==', tenantId),
+                where('docType', '==', 'booking'),
+                where('invoiceNumber', 'in', chunk)
+              );
+              try {
+                const bSnap = await getDocs(bQuery);
+                bSnap.forEach(doc => {
+                  bookingsMap.set(doc.data().invoiceNumber, doc.data());
+                });
+              } catch (err) {
+                console.error("Error fetching bookings:", err);
+              }
+            }
+          }
+
+          ordersData.forEach(o => {
+            if (bookingsMap.has(o.orderNumber)) {
+              o.bookingInfo = bookingsMap.get(o.orderNumber);
+            }
+          });
+        }
+
         // Sort in memory because composite index might not exist yet
         ordersData.sort((a, b) => {
           const dateA = a.date?.seconds || 0;
@@ -238,6 +292,22 @@ export default function CustomerDashboard() {
         } : {})
       });
       
+      if (newAddress.isMain && tenant) {
+        const cq = query(collection(db, 'customers'), where('uid', '==', user.uid), where('tenantId', '==', tenant.id));
+        const csnap = await getDocs(cq);
+        if (!csnap.empty) {
+          const cDocRef = doc(db, 'customers', csnap.docs[0].id);
+           await updateDoc(cDocRef, {
+             address: newAddress.fullAddress,
+             phone: newAddress.phone || '-',
+             province: newAddress.province || '',
+             regency: newAddress.city || '',
+             district: newAddress.district || '',
+             village: newAddress.village || '',
+           });
+        }
+      }
+      
       setAddresses(updatedAddresses);
       setIsAddressModalOpen(false);
       resetAddressForm();
@@ -287,6 +357,22 @@ export default function CustomerDashboard() {
           detail: newMain.detail
         }
       });
+      
+      if (tenant) {
+        const cq = query(collection(db, 'customers'), where('uid', '==', user.uid), where('tenantId', '==', tenant.id));
+        const csnap = await getDocs(cq);
+        if (!csnap.empty) {
+          const cDocRef = doc(db, 'customers', csnap.docs[0].id);
+           await updateDoc(cDocRef, {
+             address: newMain.fullAddress,
+             phone: newMain.phone || '-',
+             province: newMain.province || '',
+             regency: newMain.city || '',
+             district: newMain.district || '',
+             village: newMain.village || '',
+           });
+        }
+      }
       setAddresses(updatedAddresses);
     } catch (error) {
       console.error('Error setting main address:', error);
@@ -389,26 +475,94 @@ export default function CustomerDashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              className="space-y-6"
             >
-              <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
-                  <Package className="w-6 h-6 text-indigo-600" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
+                    <Package className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Total Pesanan</p>
+                    <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Total Pesanan</p>
-                  <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+                <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Pesanan Selesai</p>
+                    <p className="text-2xl font-bold text-gray-900">{orders.filter(o => o.status === 'completed' || (o.bookingInfo && (o.bookingInfo.status === 'completed' || o.bookingInfo.status === 'confirmed'))).length}</p>
+                  </div>
                 </div>
               </div>
-              <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+
+              {isBookingTenant && (
+                <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm mt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <CalendarIcon className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-lg font-black text-gray-900">Jadwal Booking Terkonfirmasi</h3>
+                    </div>
+                    <div className="flex items-center gap-4 bg-gray-50 p-1.5 rounded-full border border-gray-100">
+                      <button onClick={prevMonth} className="p-2 bg-white hover:bg-gray-100 rounded-full shadow-sm transition"><ChevronLeft className="w-4 h-4 text-gray-600" /></button>
+                      <span className="font-bold text-gray-900 min-w-[100px] text-center text-sm">{format(currentMonth, 'MMMM yyyy', { locale: idLocale })}</span>
+                      <button onClick={nextMonth} className="p-2 bg-white hover:bg-gray-100 rounded-full shadow-sm transition"><ChevronRight className="w-4 h-4 text-gray-600" /></button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                    {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(day => (
+                      <div key={day} className="bg-gray-50 p-2 sm:p-3 text-center text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {day}
+                      </div>
+                    ))}
+                    {Array.from({ length: startDay }).map((_, i) => (
+                      <div key={`empty-${i}`} className="bg-white p-2 min-h-[80px] sm:min-h-[120px]" />
+                    ))}
+                    {monthDays.map(day => {
+                      const formattedDay = format(day, 'yyyy-MM-dd');
+                      const dayBookings = confirmedBookings.filter(o => {
+                        const dateStr = o.bookingInfo?.bookingDate || (o.customerInfo as any)?.bookingDate;
+                        return dateStr === formattedDay;
+                      });
+                      const isToday = isSameDay(day, new Date());
+
+                      return (
+                        <div key={day.toString()} className={`bg-white p-1.5 sm:p-2 min-h-[80px] sm:min-h-[120px] transition hover:bg-gray-50 ${isToday ? 'ring-2 ring-indigo-600 ring-inset relative z-10' : ''}`}>
+                          <div className={`text-xs sm:text-sm font-bold w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full mb-1 sm:mb-2 ${isToday ? 'bg-indigo-600 text-white' : 'text-gray-700'}`}>
+                            {format(day, 'd')}
+                          </div>
+                          <div className="space-y-1.5 max-h-[60px] sm:max-h-[80px] overflow-y-auto no-scrollbar">
+                            {dayBookings.map((b, i) => {
+                               const time = b.bookingInfo?.bookingTime || (b.customerInfo as any)?.bookingTime || '';
+                               const serviceName = b.bookingInfo?.serviceName || (b.items && b.items.length > 0 ? b.items[0].name : 'Booking');
+                               return (
+                                <div key={`${b.id}-${i}`} className="text-[9px] sm:text-[10px] px-1.5 py-1 bg-indigo-50 text-indigo-700 rounded border border-indigo-100 font-semibold truncate leading-tight" title={`${time} - ${serviceName}`}>
+                                  {time} <span className="opacity-75">{serviceName}</span>
+                                </div>
+                               );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {Array.from({ length: (7 - ((startDay + monthDays.length) % 7)) % 7 }).map((_, i) => (
+                      <div key={`empty-end-${i}`} className="bg-white p-2 min-h-[80px] sm:min-h-[120px]" />
+                    ))}
+                  </div>
+                  
+                  {confirmedBookings.length === 0 && (
+                    <div className="text-center mt-8 mb-4">
+                      <CalendarIcon className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm font-medium">Belum ada jadwal booking yang dikonfirmasi bulan ini.</p>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Pesanan Selesai</p>
-                  <p className="text-2xl font-bold text-gray-900">{orders.filter(o => o.status === 'completed').length}</p>
-                </div>
-              </div>
+              )}
             </motion.div>
           )}
 

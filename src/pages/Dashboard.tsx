@@ -5,19 +5,35 @@ import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { useAuth } from '../hooks/useAuth';
 import { Transaction, Product, Tenant } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, Package, ShoppingCart, Wallet, ArrowUpRight, ArrowDownRight, Building2, CheckCircle2, CreditCard, Tag, Users } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Package, ShoppingCart, Wallet, ArrowUpRight, ArrowDownRight, Building2, CheckCircle2, CreditCard, Tag, Users } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, getDay, addMonths, subMonths } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Dashboard() {
-  const { profile, domainTenantId } = useAuth();
+  const { profile, domainTenantId, tenant } = useAuth();
   const navigate = useNavigate();
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [allOrders, setAllOrders] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [productCount, setProductCount] = useState(0);
+
+  // Calendar State
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const isBookingTenant = tenant?.catalogTheme === 'booking-v1';
+  const nextMonth = () => setCurrentMonth(prev => addMonths(prev, 1));
+  const prevMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
+  
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const startDay = getDay(monthStart);
+
+  const confirmedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
 
   useEffect(() => {
     if (!profile) return;
@@ -26,8 +42,10 @@ export default function Dashboard() {
     let allTransQuery;
     let prodQuery;
     let ordersQuery;
+    let bookingsQuery;
 
     let unsubTenants: (() => void) | null = null;
+    let unsubBookings: (() => void) | null = null;
 
     const targetTenantId = domainTenantId || profile.tenantId;
 
@@ -49,6 +67,11 @@ export default function Dashboard() {
       ordersQuery = query(
         collection(db, 'orders'),
         where('tenantId', '==', targetTenantId)
+      );
+      bookingsQuery = query(
+        collection(db, 'payment_corrections'),
+        where('tenantId', '==', targetTenantId),
+        where('docType', '==', 'booking')
       );
     } else if (profile.role === 'superadmin' && !domainTenantId) {
       transQuery = query(collection(db, 'transactions'), orderBy('date', 'desc'), limit(10));
@@ -79,6 +102,12 @@ export default function Dashboard() {
       setAllOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (err) => handleFirestoreError(err, OperationType.GET, 'orders_count', auth, profile));
 
+    if (bookingsQuery) {
+      unsubBookings = onSnapshot(bookingsQuery, (snap) => {
+        setBookings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }, (err) => handleFirestoreError(err, OperationType.GET, 'bookings', auth, profile));
+    }
+
     const unsubBanks = onSnapshot(
       targetTenantId 
         ? query(collection(db, 'bank_accounts'), where('tenantId', '==', targetTenantId))
@@ -96,6 +125,7 @@ export default function Dashboard() {
       unsubOrders();
       unsubBanks();
       if (unsubTenants) unsubTenants();
+      if (unsubBookings) unsubBookings();
     };
   }, [profile, domainTenantId]);
 
@@ -249,7 +279,9 @@ export default function Dashboard() {
         <StatCard title="Total Expenses" value={stats.totalExpenses} icon={Wallet} trend={-5} color="bg-rose-500" />
       </div>
 
-      {/* Payment Status Summary */}
+      {!isBookingTenant && (
+        <>
+          {/* Payment Status Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-gray-100 flex items-center justify-between group">
           <div className="flex items-center gap-5">
@@ -434,6 +466,139 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      </>
+      )}
+
+      {/* Booking Calendar & List */}
+      {isBookingTenant && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+          <div className="xl:col-span-2 bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <CalendarIcon className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-black text-gray-900">Jadwal Booking Terkonfirmasi</h3>
+              </div>
+              <div className="flex items-center gap-4 bg-gray-50 p-1.5 rounded-full border border-gray-100">
+                <button onClick={prevMonth} className="p-2 bg-white hover:bg-gray-100 rounded-full shadow-sm transition"><ChevronLeft className="w-4 h-4 text-gray-600" /></button>
+                <span className="font-bold text-gray-900 min-w-[150px] text-center text-sm">{format(currentMonth, 'MMMM yyyy', { locale: idLocale })}</span>
+                <button onClick={nextMonth} className="p-2 bg-white hover:bg-gray-100 rounded-full shadow-sm transition"><ChevronRight className="w-4 h-4 text-gray-600" /></button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+              {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(day => (
+                <div key={day} className="bg-gray-50 p-2 sm:p-3 text-center text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  {day}
+                </div>
+              ))}
+              {Array.from({ length: startDay }).map((_, i) => (
+                <div key={`empty-${i}`} className="bg-white p-2 min-h-[80px] sm:min-h-[120px]" />
+              ))}
+              {monthDays.map(day => {
+                const formattedDay = format(day, 'yyyy-MM-dd');
+                const dayBookings = confirmedBookings.filter(b => b.bookingDate === formattedDay);
+                const isToday = isSameDay(day, new Date());
+
+                return (
+                  <div key={day.toString()} className={`bg-white p-1.5 sm:p-2 min-h-[80px] sm:min-h-[120px] transition hover:bg-gray-50 ${isToday ? 'ring-2 ring-indigo-600 ring-inset relative z-10' : ''}`}>
+                    <div className={`text-xs sm:text-sm font-bold w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full mb-1 sm:mb-2 ${isToday ? 'bg-indigo-600 text-white' : 'text-gray-700'}`}>
+                      {format(day, 'd')}
+                    </div>
+                    <div className="space-y-1.5 max-h-[60px] sm:max-h-[80px] overflow-y-auto no-scrollbar">
+                      {dayBookings.map((b, i) => {
+                         const time = b.bookingTime || '';
+                         const serviceName = b.serviceName || (b.items && b.items.length > 0 ? b.items[0].name : (b.notes || 'Booking'));
+                         return (
+                          <div key={`${b.id}-${i}`} className="text-[9px] sm:text-[10px] px-1.5 py-1 bg-indigo-50 text-indigo-700 rounded border border-indigo-100 font-semibold truncate leading-tight" title={`${time} - ${serviceName}`}>
+                            {time} <span className="opacity-75">{serviceName}</span>
+                          </div>
+                         );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              {Array.from({ length: (7 - ((startDay + monthDays.length) % 7)) % 7 }).map((_, i) => (
+                <div key={`empty-end-${i}`} className="bg-white p-2 min-h-[80px] sm:min-h-[120px]" />
+              ))}
+            </div>
+            
+            {confirmedBookings.length === 0 && (
+              <div className="text-center mt-8 mb-4">
+                <CalendarIcon className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm font-medium">Belum ada jadwal booking yang dikonfirmasi bulan ini.</p>
+              </div>
+            )}
+          </div>
+
+          {/* List Jadwal */}
+          <div className="bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-6 flex flex-col">
+            <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-indigo-600" />
+              List Jadwal Mendatang
+            </h3>
+            
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[600px] no-scrollbar">
+              {confirmedBookings
+                .filter(b => {
+                   if (!b.bookingDate) return false;
+                   const bDate = new Date(`${b.bookingDate}T${b.bookingTime || '00:00'}`);
+                   return bDate >= new Date(new Date().setHours(0,0,0,0));
+                })
+                .sort((a, b) => {
+                   const dateA = new Date(`${a.bookingDate}T${a.bookingTime || '00:00'}`);
+                   const dateB = new Date(`${b.bookingDate}T${b.bookingTime || '00:00'}`);
+                   return dateA.getTime() - dateB.getTime();
+                })
+                .slice(0, 15)
+                .map((b, i) => {
+                  const dateDate = new Date(b.bookingDate);
+                  const isToday = isSameDay(dateDate, new Date());
+                  const isTmrw = isSameDay(dateDate, new Date(new Date().setDate(new Date().getDate() + 1)));
+
+                  let dayLabel = format(dateDate, 'dd MMM yyyy', { locale: idLocale });
+                  if (isToday) dayLabel = 'Hari Ini';
+                  else if (isTmrw) dayLabel = 'Besok';
+
+                  const serviceName = b.serviceName || (b.items && b.items.length > 0 ? b.items[0].name : (b.notes || 'Booking'));
+                  const customerName = b.customerName || (b.customerInfo as any)?.name || 'Pelanggan';
+                  const time = b.bookingTime || '';
+
+                  return (
+                    <div key={b.id || i} className="p-4 rounded-xl border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow bg-gray-50/50">
+                      <div className="bg-white py-2 px-3 rounded-lg border border-gray-200 text-center min-w-[65px] flex-shrink-0">
+                        <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">{format(dateDate, 'MMM', { locale: idLocale })}</span>
+                        <span className="block text-lg font-black text-indigo-600 leading-none my-0.5">{format(dateDate, 'dd')}</span>
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <div className="flex justify-between items-start mb-1">
+                          <h4 className="font-bold text-gray-900 text-sm truncate pr-2">{serviceName}</h4>
+                          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded flex-shrink-0">{time}</span>
+                        </div>
+                        <p className="text-xs text-gray-600 truncate flex items-center gap-1.5 font-medium mt-1">
+                          <Users className="w-3 h-3 text-gray-400" />
+                          {customerName}
+                        </p>
+                        <p className="text-[11px] text-gray-400 font-medium mt-1">
+                          {dayLabel}
+                        </p>
+                      </div>
+                    </div>
+                  );
+              })}
+
+              {confirmedBookings.filter(b => b.bookingDate && new Date(`${b.bookingDate}T${b.bookingTime || '00:00'}`) >= new Date(new Date().setHours(0,0,0,0))).length === 0 && (
+                <div className="text-center py-10">
+                  <Package className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500 font-medium">Tidak ada jadwal mendatang.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,11 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 export default function NoAccess() {
+  const handleLogout = async () => {
+    await signOut(auth);
+    window.location.href = '/login';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-md shadow-xl max-w-md w-full text-center space-y-6 border border-gray-100">
@@ -28,7 +33,7 @@ export default function NoAccess() {
             Ke Beranda
           </Link>
           <button
-            onClick={() => signOut(auth)}
+            onClick={handleLogout}
             className="inline-flex items-center justify-center w-full px-6 py-4 bg-white border-2 border-gray-100 text-gray-600 rounded-md font-medium hover:bg-white hover:border-gray-200 transition-all"
           >
             <LogOut className="w-5 h-5 mr-3" />

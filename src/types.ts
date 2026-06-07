@@ -75,6 +75,10 @@ export interface Tenant {
     phone?: string;
     heroImageUrl?: string;
     heroImageUrls?: string[];
+    tagline?: string;
+    galleryUrls?: string[];
+    whyChooseUs?: { icon: string; title: string; description: string; }[];
+    faqs?: { question: string; answer: string; }[];
     operationalHours?: string;
     receiptFooter?: string;
   };
@@ -131,6 +135,11 @@ export interface Tenant {
       merchantCode: string;
       apiKey: string;
       privateKey: string;
+    };
+    downPayment?: {
+      isEnabled: boolean;
+      type: 'fixed' | 'percentage';
+      amount: number;
     };
   };
 }

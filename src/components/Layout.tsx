@@ -20,12 +20,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState<{ isOpen: boolean; feature: string } | null>(null);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const toggleMenu = (label: string) => {
     setOpenMenus(prev => prev.includes(label) ? [] : [label]);
   };
 
   const handleLogout = async () => {
+    const isCustomer = profile?.role === 'customer';
+    const targetTenantId = tenant?.slug || profile?.tenantId || tenant?.id;
+
     if (auth.currentUser) {
       const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
       const { db } = await import('../lib/firebase');
@@ -40,7 +58,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }
     }
     await auth.signOut();
-    navigate('/login');
+
+    if (isCustomer && targetTenantId) {
+      if (location.pathname.startsWith('/catalog')) {
+        navigate(`/catalog/${targetTenantId}/auth`);
+      } else {
+        navigate(`/marketplace/${targetTenantId}/auth`);
+      }
+    } else {
+      navigate('/login');
+    }
   };
 
   const navItems = [
@@ -94,8 +121,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ]
     },
     { label: 'Katalog Produk', icon: Store, path: `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}`, roles: ['customer'] },
-    { label: 'Approval', icon: CheckCircle2, path: '/approvals', roles: ['admin'], permission: 'approvals' },
-    { label: 'Marketplace V1', icon: Store, path: `/marketplace/${tenant?.slug || profile?.tenantId || tenant?.id || ''}`, roles: ['admin', 'staff', 'superadmin'], permission: 'dashboard' },
     { 
       label: 'Sales', 
       icon: ShoppingCart, 
@@ -114,15 +139,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ]
     },
     { 
-      label: 'Sales Analisis', 
-      icon: TrendingUp, 
+      label: 'Finance', 
+      icon: Wallet, 
       roles: ['admin', 'staff', 'superadmin'],
       children: [
-        { label: 'Setting Target', path: '/sales/analysis/target', permission: 'sales_order' },
-        { label: 'Pencapaian', path: '/sales/analysis/achievement', permission: 'sales_order' },
-        { label: 'Operational Cost Ratio', path: '/sales/analysis/cost-ratio', permission: 'sales_order' },
+        { label: 'Invoice', path: '/finance/invoices', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
+        { label: 'Receive Payment', path: '/finance/receive-payment', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
+        { label: 'Invoice Collection', path: '/finance/collections', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
+        { label: 'Tabungan Pelanggan', path: '/finance/customer-savings', permission: 'finance_settings' },
+        { label: 'Akun Bank', path: '/finance/bank-accounts', permission: 'finance_bank_accounts' },
+        { label: 'Transfer Kas/Bank', path: '/finance/bank-transfers', permission: 'finance_bank_accounts' },
+        { label: 'Claim Expense', path: '/finance/claim', permission: 'finance_claim' },
+        { label: 'Amal', path: '/finance/charity', roles: ['admin', 'superadmin'], permission: 'finance_charity' },
+        { label: 'Report Keuangan', path: '/finance/report', roles: ['admin', 'superadmin'], permission: 'finance_report' },
+        { label: 'Setting Claim Expense', path: '/finance/settings', roles: ['admin'], permission: 'finance_settings' },
+        { label: 'Daily Settlement', path: '/daily-settlement', roles: ['admin'], permission: 'daily_settlement' },
       ]
     },
+    { label: 'Approval', icon: CheckCircle2, path: '/approvals', roles: ['admin'], permission: 'approvals' },
     { 
       label: 'Inventory', 
       icon: Package, 
@@ -151,23 +185,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ]
     },
     { 
-      label: 'Finance', 
-      icon: Wallet, 
+      label: 'Sales Analisis', 
+      icon: TrendingUp, 
       roles: ['admin', 'staff', 'superadmin'],
       children: [
-        { label: 'Invoice', path: '/finance/invoices', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
-        { label: 'Receive Payment', path: '/finance/receive-payment', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
-        { label: 'Invoice Collection', path: '/finance/collections', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
-        { label: 'Tabungan Pelanggan', path: '/finance/customer-savings', permission: 'finance_settings' },
-        { label: 'Akun Bank', path: '/finance/bank-accounts', permission: 'finance_bank_accounts' },
-        { label: 'Transfer Kas/Bank', path: '/finance/bank-transfers', permission: 'finance_bank_accounts' },
-        { label: 'Claim Expense', path: '/finance/claim', permission: 'finance_claim' },
-        { label: 'Amal', path: '/finance/charity', roles: ['admin', 'superadmin'], permission: 'finance_charity' },
-        { label: 'Report Keuangan', path: '/finance/report', roles: ['admin', 'superadmin'], permission: 'finance_report' },
-        { label: 'Setting Claim Expense', path: '/finance/settings', roles: ['admin'], permission: 'finance_settings' },
+        { label: 'Setting Target', path: '/sales/analysis/target', permission: 'sales_order' },
+        { label: 'Pencapaian', path: '/sales/analysis/achievement', permission: 'sales_order' },
+        { label: 'Operational Cost Ratio', path: '/sales/analysis/cost-ratio', permission: 'sales_order' },
       ]
     },
-    { label: 'Daily Settlement', icon: Calculator, path: '/daily-settlement', roles: ['admin'], permission: 'daily_settlement' },
     { 
       label: 'Master', 
       icon: Settings, 
@@ -177,12 +203,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Tambah Role', path: '/master/roles', permission: 'master_roles' },
       ]
     },
-    { label: 'Catalog Editor', icon: Store, path: '/catalog-editor', roles: ['admin', 'superadmin'], permission: 'catalog_editor' },
     { 
       label: 'Setting', 
       icon: Settings, 
       roles: ['admin', 'superadmin'],
       children: [
+        { label: 'Catalog Editor', path: '/catalog-editor', roles: ['admin', 'superadmin'], permission: 'catalog_editor' },
         { label: 'Profil Bisnis', path: '/settings/business', permission: 'tenant_settings' },
         { label: 'Payment Metode', path: '/settings/payment-methods', permission: 'tenant_settings' },
         { label: 'Alamat Toko', path: '/settings/store-address', permission: 'tenant_settings' },
@@ -199,7 +225,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ]
     },
     { label: 'Changelog', icon: History, path: '/changelog', roles: ['admin', 'staff', 'superadmin'], permission: 'changelog' },
-    { label: 'Panduan', icon: BookOpen, path: '/guide', roles: ['admin', 'staff', 'superadmin'], permission: 'guide' },
+    { label: 'Panduan', icon: BookOpen, path: '/guide', roles: ['admin', 'staff', 'superadmin'], permission: 'guide' }
   ];
 
   const [roleName, setRoleName] = useState<string>('');
@@ -268,6 +294,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             return false;
           }
 
+          // Strict check: if child is customer-only, hide from others
+          if (child.roles && child.roles.includes('customer') && child.roles.length === 1 && profile?.role !== 'customer') {
+            return false;
+          }
+
           if (profile?.role === 'superadmin') return true;
 
           // Check if tenant has disabled this sub-menu
@@ -285,6 +316,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     .filter(item => {
       // Strict check: if item is superadmin-only, hide from others immediately
       if (item.roles && item.roles.includes('superadmin') && item.roles.length === 1 && profile?.role !== 'superadmin') {
+        return false;
+      }
+
+      // Strict check: if item is customer-only, hide from others
+      if (item.roles && item.roles.includes('customer') && item.roles.length === 1 && profile?.role !== 'customer') {
         return false;
       }
 
@@ -312,6 +348,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     });
 
   const isKasir = profile?.role === 'kasir';
+
+  const searchableItems = React.useMemo(() => {
+    const items: { label: string; path: string; icon: any; parent?: string }[] = [];
+    filteredNav.forEach(item => {
+      if (item.children) {
+        item.children.forEach((child: any) => {
+          items.push({
+            label: child.label,
+            path: child.path,
+            icon: child.icon || item.icon,
+            parent: item.label
+          });
+        });
+      } else if (item.path) {
+        items.push({
+          label: item.label,
+          path: item.path,
+          icon: item.icon
+        });
+      }
+    });
+    return items;
+  }, [filteredNav]);
+
+  const searchResults = searchableItems.filter(item => 
+    item.label.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (item.parent && item.parent.toLowerCase().includes(searchQuery.toLowerCase()))
+  ).slice(0, 8); // Limit results
 
   return (
     <div className="min-h-screen bg-[#f8f8f9] flex font-sans">
@@ -415,15 +479,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )})}
           </nav>
 
-          <div className="p-4 border-t border-gray-100">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600 rounded-lg transition-colors"
-            >
-              <LogOut className="w-[1.125rem] h-[1.125rem] mr-2" />
-              Logout
-            </button>
-          </div>
+
         </aside>
       )}
 
@@ -442,9 +498,58 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Menu className="w-5 h-5" />
               </button>
               
-              <div className="hidden sm:flex items-center text-gray-400 bg-gray-50/50 px-3 py-1.5 rounded-lg border border-transparent hover:border-gray-200 transition-colors focus-within:border-[#7367f0] focus-within:bg-white focus-within:text-[#7367f0] focus-within:shadow-sm">
-                <Search className="w-4 h-4 mr-2" />
-                <input type="text" placeholder="Search (Ctrl+K)" className="bg-transparent border-none outline-none text-[15px] text-gray-700 w-48 xl:w-64 placeholder-gray-400" />
+              <div className="relative">
+                <div className="hidden sm:flex items-center text-gray-400 bg-gray-50/50 px-3 py-1.5 rounded-lg border border-transparent hover:border-gray-200 transition-colors focus-within:border-[#7367f0] focus-within:bg-white focus-within:text-[#7367f0] focus-within:shadow-sm">
+                  <Search className="w-4 h-4 mr-2" />
+                  <input 
+                    ref={searchInputRef}
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                    placeholder="Search (Ctrl+K)" 
+                    className="bg-transparent border-none outline-none text-[15px] text-gray-700 w-48 xl:w-64 placeholder-gray-400" 
+                  />
+                </div>
+
+                <AnimatePresence>
+                  {isSearchFocused && searchQuery && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full left-0 mt-2 w-full min-w-[300px] bg-white rounded-xl shadow-[0_4px_24px_0_rgba(34,41,47,0.1)] border border-gray-100 py-2 z-50 max-h-[400px] overflow-y-auto"
+                    >
+                      {searchResults.length > 0 ? (
+                        searchResults.map((item, index) => (
+                          <Link
+                            key={index}
+                            to={item.path}
+                            className="flex items-center px-4 py-2.5 hover:bg-gray-50 transition-colors rounded-lg mx-2"
+                            onClick={() => {
+                              setSearchQuery('');
+                              setIsSearchFocused(false);
+                            }}
+                          >
+                            <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mr-3 flex-shrink-0">
+                              <item.icon className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">{item.label}</p>
+                              {item.parent && <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-0.5">{item.parent}</p>}
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-sm text-gray-500 text-center flex flex-col items-center">
+                          <Search className="w-8 h-8 text-gray-300 mb-2" />
+                          <p>Tidak ada hasil untuk "{searchQuery}"</p>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
@@ -509,28 +614,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <Link to="/profile" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
                           <UserRound className="w-4 h-4" />
                           Profile
-                        </Link>
-                        <Link to="/settings" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
-                          <Settings className="w-4 h-4" />
-                          Settings
-                        </Link>
-                        <Link to="/subscription" className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
-                          <div className="flex items-center gap-3">
-                            <BookOpen className="w-4 h-4" />
-                            Billing Plan
-                          </div>
-                          <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">4</span>
-                        </Link>
-                      </div>
-
-                      <div className="p-2 border-b border-gray-100">
-                        <Link to="/subscription" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
-                          <Wallet className="w-4 h-4" />
-                          Pricing
-                        </Link>
-                        <Link to="#" className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-[#7367f0] hover:bg-[#7367f0]/5 rounded-md transition-colors" onClick={() => setIsProfileOpen(false)}>
-                          <Circle className="w-4 h-4" />
-                          FAQ
                         </Link>
                       </div>
 
