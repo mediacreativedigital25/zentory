@@ -259,6 +259,167 @@ export default function TenantSettings() {
                 <option value="booking-v1">Tema Booking V1</option>
               </select>
             </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-600">Store URL Slug</label>
+              <div className="flex">
+                <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-500 text-xs">
+                  /catalog/
+                </span>
+                <input
+                  type="text"
+                  value={formData.slug || ''}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                  className="w-full pl-3 pr-4 py-2 border border-gray-200 rounded-r-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  placeholder="nama-toko"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+              <ImageIcon className="w-5 h-5 mr-2 text-indigo-600" />
+              Pengaturan Tampilan & Katalog Umum
+            </h3>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-600">Jam Operasional</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.settings?.operationalHours || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    settings: { ...(formData.settings || {}), operationalHours: e.target.value } 
+                  })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  placeholder="Senin-Jumat, 09:00 - 17:00"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-600">Footer Struk / Katalog</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.settings?.receiptFooter || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    settings: { ...(formData.settings || {}), receiptFooter: e.target.value } 
+                  })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  placeholder="Terima kasih telah berbelanja!"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-600">Warna Tema (Hex Code)</label>
+              <div className="flex items-center gap-4">
+                  <input
+                    type="color"
+                    value={formData.settings?.themeColor || '#6366f1'}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      settings: { ...(formData.settings || {}), themeColor: e.target.value } 
+                    })}
+                    className="w-10 h-10 border-none rounded-md cursor-pointer bg-transparent"
+                  />
+                  <span className="text-sm font-mono text-gray-500 uppercase">{formData.settings?.themeColor || '#6366f1'}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs font-semibold text-gray-600">Deskripsi Bisnis (Tampil di Katalog)</label>
+              <textarea
+                value={formData.settings?.description || ''}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  settings: { ...(formData.settings || {}), description: e.target.value } 
+                })}
+                className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
+                placeholder="Deskripsi singkat toko Anda..."
+              />
+            </div>
+            
+            <div className="md:col-span-2 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold text-gray-600">Hero Banner Slides (Max 5)</label>
+                {(formData.settings?.heroImageUrls || []).length < 5 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const urls = [...(formData.settings?.heroImageUrls || [])];
+                      urls.push('');
+                      setFormData({ 
+                        ...formData, 
+                        settings: { ...(formData.settings || {}), heroImageUrls: urls } 
+                      });
+                    }}
+                    className="text-xs text-indigo-600 font-medium hover:text-indigo-700"
+                  >
+                    + Tambah Slide
+                  </button>
+                )}
+              </div>
+              <div className="space-y-4">
+                {(formData.settings?.heroImageUrls || []).map((url, index) => (
+                  <div key={index} className="relative bg-gray-50 p-4 rounded-md border border-gray-100 flex items-start gap-4">
+                    <div className="flex-1 max-w-[200px]">
+                      <ImageUpload
+                        value={url}
+                        onChange={(newUrl) => {
+                          const urls = [...(formData.settings?.heroImageUrls || [])];
+                          urls[index] = newUrl;
+                          setFormData({ 
+                            ...formData, 
+                            settings: { ...(formData.settings || {}), heroImageUrls: urls } 
+                          });
+                        }}
+                        label={`Slide ${index + 1}`}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const urls = [...(formData.settings?.heroImageUrls || [])];
+                          urls.splice(index, 1);
+                          setFormData({ 
+                            ...formData, 
+                            settings: { ...(formData.settings || {}), heroImageUrls: urls } 
+                          });
+                        }}
+                        className="text-red-500 hover:text-red-700 text-xs font-medium bg-red-50 px-3 py-1.5 rounded"
+                      >
+                        Hapus Slide
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {(!formData.settings?.heroImageUrls || formData.settings.heroImageUrls.length === 0) && (
+                  <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-md">
+                    <p className="text-sm text-gray-500 mb-2">Belum ada banner utama</p>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ 
+                        ...formData, 
+                        settings: { ...(formData.settings || {}), heroImageUrls: [''] } 
+                      })}
+                      className="text-sm text-indigo-600 font-medium hover:text-indigo-700"
+                    >
+                      Tambah Banner Pertama
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
           </div>
         </div>
 

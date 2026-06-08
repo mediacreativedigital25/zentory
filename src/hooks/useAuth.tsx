@@ -96,6 +96,22 @@ export const AuthProvider = ({ children, domainTenantId }: { children: React.Rea
         }
       };
 
+      const getDeviceInfo = () => {
+        const ua = navigator.userAgent;
+        let device = 'Desktop';
+        if (/Mobi|Android/i.test(ua)) device = 'Mobile';
+        else if (/Tablet|iPad/i.test(ua)) device = 'Tablet';
+        
+        let os = 'Unknown OS';
+        if (/Windows/i.test(ua)) os = 'Windows';
+        else if (/Mac OS|Macintosh/i.test(ua)) os = 'Mac OS';
+        else if (/Linux/i.test(ua)) os = 'Linux';
+        else if (/Android/i.test(ua)) os = 'Android';
+        else if (/iOS|iPhone|iPad/i.test(ua)) os = 'iOS';
+        
+        return `${os} ${device}`;
+      };
+
       if (user) {
         // Start inactivity timer
         resetInactivityTimer();
@@ -110,6 +126,7 @@ export const AuthProvider = ({ children, domainTenantId }: { children: React.Rea
             lastLoginAt: serverTimestamp(),
             lastActive: serverTimestamp(),
             isOnline: true,
+            deviceInfo: getDeviceInfo(),
             ...(ip ? { ipAddress: ip } : {})
           }).catch(err => console.error("Failed to update login status", err));
           

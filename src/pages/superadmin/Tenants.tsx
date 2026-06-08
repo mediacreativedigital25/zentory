@@ -665,6 +665,74 @@ export default function SuperAdminTenants() {
                   </div>
                 </div>
 
+                {/* Inventory Settings */}
+                <div className="mt-12 pt-8 border-t border-gray-100">
+                  <h4 className="font-bold text-gray-900 flex items-center mb-6">
+                    <Package className="w-5 h-5 mr-2 text-indigo-600" />
+                    Pengaturan Inventory
+                  </h4>
+                  
+                  <div className="space-y-4 bg-white border border-gray-100 rounded-md p-6">
+                    <label className="block text-sm font-bold text-gray-900">Tipe Produk yang Tersedia</label>
+                    <p className="text-xs text-gray-500 mb-4">Pilih tipe produk mana saja yang akan ditampilkan untuk tenant ini saat menambahkan produk baru. Jika tidak diatur, akan mengikuti Global Settings.</p>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { id: 'tunggal', label: 'Produk Tunggal', description: 'Satu item, satu harga' },
+                        { id: 'variasi', label: 'Produk Variasi', description: 'Beberapa warna/ukuran' },
+                        { id: 'grosir', label: 'Produk Grosir', description: 'Harga bertingkat' },
+                        { id: 'service', label: 'Jasa (Service)', description: 'Layanan tanpa stok' },
+                        { id: 'booking', label: 'Produk Booking', description: 'Layanan booking/reservasi' }
+                      ].map((type) => {
+                        // By default, if inventory.enabledProductTypes is undefined, it might fall back to global
+                        // Here we just check what's checked in tenantFormData
+                        const isEnabled = tenantFormData.inventory?.enabledProductTypes 
+                          ? tenantFormData.inventory.enabledProductTypes.includes(type.id)
+                          : true; // Or we can assume true if undefined
+                          
+                        return (
+                          <label key={type.id} className="cursor-pointer">
+                            <div className={`p-4 rounded-lg border-2 transition-all ${isEnabled ? 'border-indigo-600 bg-indigo-50/50' : 'border-gray-200 bg-white'}`}>
+                              <div className="flex justify-between items-start mb-2">
+                                <p className={`text-sm font-bold ${isEnabled ? 'text-indigo-900' : 'text-gray-700'}`}>{type.label}</p>
+                                <input
+                                  type="checkbox"
+                                  checked={isEnabled}
+                                  disabled={!isEditingTenant}
+                                  onChange={(e) => {
+                                    if (!isEditingTenant) return;
+                                    const currentEnabled = tenantFormData.inventory?.enabledProductTypes || ['tunggal', 'variasi', 'grosir', 'service'];
+                                    let newEnabled;
+                                    if (e.target.checked) {
+                                      if (!currentEnabled.includes(type.id)) {
+                                        newEnabled = [...currentEnabled, type.id];
+                                      } else {
+                                        newEnabled = currentEnabled;
+                                      }
+                                    } else {
+                                      newEnabled = currentEnabled.filter((id: string) => id !== type.id);
+                                    }
+                                    
+                                    setTenantFormData({
+                                      ...tenantFormData,
+                                      inventory: {
+                                        ...tenantFormData.inventory,
+                                        enabledProductTypes: newEnabled
+                                      }
+                                    });
+                                  }}
+                                  className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
+                                />
+                              </div>
+                              <p className={`text-xs ${isEnabled ? 'text-indigo-600/80' : 'text-gray-500'}`}>{type.description}</p>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Menu Access Settings */}
                 <div className="mt-12 pt-8 border-t border-gray-100">
                   <div className="flex items-center justify-between mb-6">

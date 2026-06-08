@@ -80,6 +80,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { label: 'Pengaturan Global', path: '/superadmin/settings' },
         { label: 'Brand & Tampilan', path: '/superadmin/brand' },
         { label: 'Logo Bank', path: '/superadmin/bank-logos' },
+        { label: 'Sistem Audit', path: '/superadmin/audit' },
+        { label: 'Riwayat Aktivitas', path: '/superadmin/history' },
         { label: 'Roadmap Produk', path: '/superadmin/roadmap' },
         { label: 'Reset Database', path: '/superadmin/reset' },
         { label: 'Periksa Data Harian', path: '/superadmin/data-check' },
@@ -163,7 +165,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       roles: ['admin', 'staff', 'superadmin'],
       children: [
         { label: 'Daftar Produk', path: '/inventory/products', permission: 'inventory_products' },
-        { label: 'Riwayat Produk', path: '/inventory/products?tab=history', permission: 'inventory_products' },
         { label: 'Kategori', path: '/inventory/categories', permission: 'inventory_categories' },
         { label: 'Lini Bisnis', path: '/inventory/business-lines', permission: 'inventory_categories' },
         { label: 'Stock', path: '/inventory/stock', permission: 'inventory_stock' },
@@ -208,7 +209,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: Settings, 
       roles: ['admin', 'superadmin'],
       children: [
-        { label: 'Catalog Editor', path: '/catalog-editor', roles: ['admin', 'superadmin'], permission: 'catalog_editor' },
         { label: 'Profil Bisnis', path: '/settings/business', permission: 'tenant_settings' },
         { label: 'Payment Metode', path: '/settings/payment-methods', permission: 'tenant_settings' },
         { label: 'Alamat Toko', path: '/settings/store-address', permission: 'tenant_settings' },

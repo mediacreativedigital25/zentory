@@ -110,6 +110,31 @@ export const sendSubscriptionInfoNotification = async (
   return sendFonnteMessage(targetPhone, message);
 };
 
+export const sendLoginNotification = async (
+  data: { nama_user: string; email_user: string; no_hp: string; nama_tenant: string; tanggal_jam: string; ip_address: string; lokasi: string }
+) => {
+  let message = `🔔 *NOTIFIKASI LOGIN USER*
+
+Halo Admin,
+User berikut telah berhasil login ke sistem Zyvora:
+👤 Nama: {nama_user}
+📧 Email: {email_user}
+📱 No. HP: {no_hp}
+🏢 Tenant: {nama_tenant}
+🕒 Waktu Login: {tanggal_jam}
+🌐 IP Address: {ip_address}
+📍 Lokasi: {lokasi}
+Status: ✅ Login Berhasil
+
+Silakan lakukan pengecekan apabila aktivitas login ini dirasa tidak dikenal atau mencurigakan.`;
+
+  Object.entries(data).forEach(([key, value]) => {
+    message = message.replace(new RegExp(`{${key}}`, 'g'), String(value));
+  });
+  
+  return sendFonnteMessage('085314205643', message);
+};
+
 export const sendCatalogOrderNotification = async (
   targetPhone: string,
   data: { nama_tenant: string; nama_customer: string; produk: string; qty: string; total: string; tanggal_order: string; nomor_customer: string; link_dashboard: string }

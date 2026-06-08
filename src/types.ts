@@ -47,6 +47,7 @@ export interface UserProfile {
   lastActive?: any;
   isOnline?: boolean;
   ipAddress?: string;
+  deviceInfo?: string;
 }
 
 export interface Tenant {
@@ -85,6 +86,9 @@ export interface Tenant {
   customDomains?: string[];
   menuSettings?: {
     [key: string]: boolean;
+  };
+  inventory?: {
+    enabledProductTypes?: string[];
   };
   customerSavingsSettings?: {
     enabled: boolean;
@@ -188,8 +192,16 @@ export interface Product {
   businessLineId?: string;
   imageUrl?: string;
   description?: string;
-  type: 'manual' | 'service';
+  type: 'manual' | 'service' | 'booking';
   serviceActiveDays?: number; // active days for service
+  
+  // Booking Fields
+  bookingType?: 'per_jam' | 'per_hari' | 'per_sesi' | 'per_event' | 'custom';
+  customBookingType?: string;
+  bookingDuration?: '30_menit' | '1_jam' | '2_jam' | '1_hari' | 'custom';
+  customBookingDuration?: string;
+  minDp?: number;
+
   createdAt: any;
   variants?: ProductVariant[];
   wholesalePrices?: WholesalePrice[];

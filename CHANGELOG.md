@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - 2026-06-07
+
+### Added
+- **Inventory Settings Configuration**: Added ability to toggle enabled product types (`Tunggal`, `Variasi`, `Grosir`, `Service`, `Booking`).
+- **Global & Tenant Overrides**: Added Inventory Settings in Global Settings (default for all) and in Tenant configuration for a tenant-specific override.
+- **Dynamic Product Formulation**: Product creation UI now dynamically adapts the available types based on tenant settings (falling back to global settings).
+
 ## [2.5.0] - 2026-04-22
 
 ### Added

@@ -85,7 +85,7 @@ export default function SuperAdminUsers() {
                 <th className="px-6 py-4 font-medium">User</th>
                 <th className="px-6 py-4 font-medium">Tenant ID</th>
                 <th className="px-6 py-4 font-medium">Role</th>
-                <th className="px-6 py-4 font-medium">Status / Activity</th>
+                <th className="px-6 py-4 font-medium">Status / Device</th>
                 <th className="px-6 py-4 font-medium">IP Address</th>
               </tr>
             </thead>
@@ -131,12 +131,15 @@ export default function SuperAdminUsers() {
                             <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
                             ONLINE
                           </span>
-                          <span className="text-xs text-gray-500">Active Now</span>
+                          <span className="text-[10px] text-gray-500 font-mono mt-0.5">{user.deviceInfo || 'Unknown Device'}</span>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-1">
-                          <span className="text-gray-400 text-xs font-bold">OFFLINE</span>
-                          <span className="text-xs text-gray-500">
+                          <span className="flex items-center text-gray-400 text-xs font-bold">
+                            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2" />
+                            OFFLINE
+                          </span>
+                          <span className="text-[10px] text-gray-400">
                             {user.lastActive ? new Date(user.lastActive.seconds * 1000).toLocaleString('id-ID', {
                                day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'
                             }) : '-'}

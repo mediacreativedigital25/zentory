@@ -410,6 +410,64 @@ export default function SuperAdminGlobalSettings() {
           </div>
         </div>
       </div>
+      
+      {/* Inventory Settings */}
+      <div className="bg-white rounded-md shadow-sm border border-gray-100 p-8 space-y-6 mt-8">
+        <h3 className="text-lg font-bold text-gray-900 mb-6">⚙️ Pengaturan Inventory (Global)</h3>
+        
+        <div className="space-y-4">
+          <label className="block text-sm font-bold text-gray-900">Tipe Produk yang Tersedia</label>
+          <p className="text-xs text-gray-500 mb-4">Pilih tipe produk mana saja yang akan ditampilkan saat menambahkan produk baru.</p>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { id: 'tunggal', label: 'Produk Tunggal', description: 'Satu item, satu harga' },
+              { id: 'variasi', label: 'Produk Variasi', description: 'Beberapa warna/ukuran' },
+              { id: 'grosir', label: 'Produk Grosir', description: 'Harga bertingkat' },
+              { id: 'service', label: 'Jasa (Service)', description: 'Layanan tanpa stok' },
+              { id: 'booking', label: 'Produk Booking', description: 'Layanan booking/reservasi' }
+            ].map((type) => {
+              // Default is true if inventory settings don't exist yet
+              const isEnabled = globalSettings.inventory?.enabledProductTypes 
+                ? globalSettings.inventory.enabledProductTypes.includes(type.id)
+                : true;
+                
+              return (
+                <label key={type.id} className="cursor-pointer">
+                  <div className={`p-4 rounded-lg border-2 transition-all ${isEnabled ? 'border-indigo-600 bg-indigo-50/50' : 'border-gray-200 bg-white'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <p className={`text-sm font-bold ${isEnabled ? 'text-indigo-900' : 'text-gray-700'}`}>{type.label}</p>
+                      <input
+                        type="checkbox"
+                        checked={isEnabled}
+                        onChange={(e) => {
+                          const currentEnabled = globalSettings.inventory?.enabledProductTypes || ['tunggal', 'variasi', 'grosir', 'service'];
+                          let newEnabled;
+                          if (e.target.checked) {
+                            newEnabled = [...currentEnabled, type.id];
+                          } else {
+                            newEnabled = currentEnabled.filter((id: string) => id !== type.id);
+                          }
+                          
+                          setGlobalSettings({
+                            ...globalSettings,
+                            inventory: {
+                              ...globalSettings.inventory,
+                              enabledProductTypes: newEnabled
+                            }
+                          });
+                        }}
+                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                      />
+                    </div>
+                    <p className={`text-xs ${isEnabled ? 'text-indigo-600/80' : 'text-gray-500'}`}>{type.description}</p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {confirmConfig && (
         <ConfirmModal

@@ -20,6 +20,8 @@ import SuperAdminNotifications from './pages/superadmin/Notifications';
 import SuperAdminNotificationTemplates from './pages/superadmin/NotificationTemplates';
 import SuperAdminApprovals from './pages/superadmin/Approvals';
 import SuperAdminUsers from './pages/superadmin/Users';
+import SuperAdminAudit from './pages/superadmin/Audit';
+import SuperAdminHistory from './pages/superadmin/History';
 import SuperAdminResetData from './pages/superadmin/ResetData';
 import SuperAdminRoadmaps from './pages/superadmin/Roadmaps';
 import SuperAdminGlobalSettings from './pages/superadmin/GlobalSettings';
@@ -61,7 +63,6 @@ import BankAccounts from './pages/finance/BankAccounts';
 import BankTransfers from './pages/finance/BankTransfers';
 import Charity from './pages/Charity';
 import DailySettlement from './pages/DailySettlement';
-import CatalogEditor from './pages/CatalogEditor';
 import Users from './pages/master/Users';
 import Suppliers from './pages/purchase/Suppliers';
 import PurchaseRequest from './pages/purchase/PurchaseRequest';
@@ -491,12 +492,6 @@ export default function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/catalog-editor" element={
-            <ProtectedRoute allowedRoles={['admin']} permission="catalog_editor" menuLabel="Catalog Editor">
-              <CatalogEditor />
-            </ProtectedRoute>
-          } />
-
           <Route path="/master/users" element={
             <ProtectedRoute allowedRoles={['admin', 'superadmin']} permission="master_users" menuLabel="Master">
               <Users />
@@ -617,6 +612,18 @@ export default function App() {
           <Route path="/superadmin/users" element={
             <ProtectedRoute allowedRoles={['superadmin']}>
               <SuperAdminUsers />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/audit" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminAudit />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/superadmin/history" element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminHistory />
             </ProtectedRoute>
           } />
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, updateDoc, doc, getDocs, getDoc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { db, auth } from '../../lib/firebase';
 import firebaseConfig from '../../../firebase-applet-config.json';
@@ -30,6 +30,14 @@ export default function Users() {
 
   const [activeTab, setActiveTab] = useState<'app' | 'customer'>('app');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const checkIsOnline = (user: UserProfile) => {
+    if (!user.isOnline) return false;
+    if (!user.lastActive) return true;
+    const activeTime = user.lastActive.seconds ? user.lastActive.seconds * 1000 : user.lastActive.toMillis?.() || Date.now();
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+    return activeTime > twoMinutesAgo;
+  };
 
   useEffect(() => {
     if (!profile) return;
@@ -136,7 +144,12 @@ export default function Users() {
       } else {
         // Create user in Firebase Auth using a secondary app instance
         // to avoid logging out the current admin
-        const secondaryApp = initializeApp(firebaseConfig, 'Secondary');
+        let secondaryApp;
+        try {
+          secondaryApp = getApp('Secondary');
+        } catch {
+          secondaryApp = initializeApp(firebaseConfig, 'Secondary');
+        }
         const secondaryAuth = getAuth(secondaryApp);
         
         const userCredential = await createUserWithEmailAndPassword(
@@ -167,7 +180,9 @@ export default function Users() {
       setEditingUser(null);
       setFormData({ email: '', displayName: '', role: '', tenantId: '', password: '' });
     } catch (err: any) {
-      console.error(err);
+      if (!err.code?.startsWith('auth/')) {
+        console.error(err);
+      }
       let errorMessage = 'Gagal menyimpan user.';
       if (err.code === 'auth/email-already-in-use') {
         errorMessage = 'Email ini sudah terdaftar di sistem. Gunakan email lain.';
@@ -264,7 +279,7 @@ export default function Users() {
                 <th className="px-6 py-4 font-medium">Kode Sales</th>
                 <th className="px-6 py-4 font-medium">Role</th>
                 {profile?.role === 'superadmin' && <th className="px-6 py-4 font-medium">Tenant</th>}
-                <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium">Status & Device</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -308,10 +323,27 @@ export default function Users() {
                     </td>
                   )}
                   <td className="px-6 py-4">
-                    <span className="flex items-center text-xs text-green-600 font-medium">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2" />
-                      Active
-                    </span>
+                    {checkIsOnline(user) ? (
+                      <div className="flex flex-col gap-1">
+                        <span className="flex items-center text-green-600 text-xs font-bold">
+                          <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+                          ONLINE
+                        </span>
+                        <span className="text-[10px] text-gray-500">{user.deviceInfo || 'Unknown Device'}</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <span className="flex items-center text-gray-400 text-xs font-bold">
+                          <span className="w-2 h-2 bg-gray-400 rounded-full mr-2" />
+                          OFFLINE
+                        </span>
+                        <span className="text-[10px] text-gray-400">
+                          {user.lastActive ? new Date(user.lastActive.seconds * 1000).toLocaleString('id-ID', {
+                             day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'
+                          }) : '-'}
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end space-x-2">

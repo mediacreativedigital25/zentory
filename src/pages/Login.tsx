@@ -6,6 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { LogIn, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useBrand } from '../hooks/useBrand';
+import { sendLoginNotification } from '../lib/fonnte';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -25,6 +26,44 @@ export default function Login() {
       const profileDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
       if (profileDoc.exists()) {
         const profileData = profileDoc.data();
+        
+        try {
+          let ip_address = 'Tidak diketahui';
+          let lokasi = 'Tidak diketahui';
+          try {
+             const res = await fetch('https://ipapi.co/json/');
+             if (res.ok) {
+               const data = await res.json();
+               ip_address = data.ip || 'Tidak diketahui';
+               lokasi = `${data.city || ''}, ${data.region || ''}, ${data.country_name || ''}`.replace(/^,\s+/, '').replace(/,\s+$/, '');
+             }
+          } catch (e) {
+             console.log("Failed to fetch IP details");
+          }
+
+          const now = new Date();
+          const tanggal_jam = now.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+          let nama_tenant = 'Tidak ada tenant';
+          if (profileData.tenantId) {
+             const tenantDoc = await getDoc(doc(db, 'tenants', profileData.tenantId));
+             if (tenantDoc.exists()) {
+                nama_tenant = tenantDoc.data().name || profileData.tenantId;
+             }
+          }
+          
+          await sendLoginNotification({
+            nama_user: profileData.name || 'Admin',
+            email_user: email,
+            no_hp: profileData.phone || '-',
+            nama_tenant,
+            tanggal_jam,
+            ip_address,
+            lokasi
+          });
+        } catch (e) {
+          console.error("Failed sending login notification:", e);
+        }
+
         if (profileData.role === 'kasir') {
           navigate('/sales/order');
         } else {
