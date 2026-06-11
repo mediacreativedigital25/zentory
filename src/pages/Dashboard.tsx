@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [allOrders, setAllOrders] = useState<any[]>([]);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const bookings = useMemo(() => allOrders.filter(o => o.type === 'booking'), [allOrders]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [productCount, setProductCount] = useState(0);
@@ -42,10 +42,8 @@ export default function Dashboard() {
     let allTransQuery;
     let prodQuery;
     let ordersQuery;
-    let bookingsQuery;
 
     let unsubTenants: (() => void) | null = null;
-    let unsubBookings: (() => void) | null = null;
 
     const targetTenantId = domainTenantId || profile.tenantId;
 
@@ -67,11 +65,6 @@ export default function Dashboard() {
       ordersQuery = query(
         collection(db, 'orders'),
         where('tenantId', '==', targetTenantId)
-      );
-      bookingsQuery = query(
-        collection(db, 'payment_corrections'),
-        where('tenantId', '==', targetTenantId),
-        where('docType', '==', 'booking')
       );
     } else if (profile.role === 'superadmin' && !domainTenantId) {
       transQuery = query(collection(db, 'transactions'), orderBy('date', 'desc'), limit(10));
@@ -102,12 +95,6 @@ export default function Dashboard() {
       setAllOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, (err) => handleFirestoreError(err, OperationType.GET, 'orders_count', auth, profile));
 
-    if (bookingsQuery) {
-      unsubBookings = onSnapshot(bookingsQuery, (snap) => {
-        setBookings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      }, (err) => handleFirestoreError(err, OperationType.GET, 'bookings', auth, profile));
-    }
-
     const unsubBanks = onSnapshot(
       targetTenantId 
         ? query(collection(db, 'bank_accounts'), where('tenantId', '==', targetTenantId))
@@ -125,7 +112,6 @@ export default function Dashboard() {
       unsubOrders();
       unsubBanks();
       if (unsubTenants) unsubTenants();
-      if (unsubBookings) unsubBookings();
     };
   }, [profile, domainTenantId]);
 

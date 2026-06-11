@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 import { Calendar, Clock, User, Phone, FileText, CheckCircle2, Hash, CreditCard, Search, ChevronDown } from 'lucide-react';
@@ -23,10 +23,6 @@ export default function SalesBooking() {
     bookingDate: new Date().toISOString().split('T')[0],
     bookingTime: '08:00',
     pax: 1,
-    paymentStatus: 'lunas',
-    paymentMethod: 'tunai',
-    bankAccountId: '',
-    downPaymentAmount: '',
     notes: '',
   });
 
@@ -91,10 +87,10 @@ export default function SalesBooking() {
     };
   }, [profile, domainTenantId]);
 
-  const generateInvoiceNumber = () => {
-    const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const rand = Math.floor(1000 + Math.random() * 9000);
-    return `BK-${date}-${rand}`;
+  const generateInvoiceNumber = async () => {
+    const targetTenantId = domainTenantId || profile?.tenantId;
+    const { generateSequentialNumber } = await import('../../lib/sequence');
+    return await generateSequentialNumber(targetTenantId || '', 'INV');
   };
 
   const handleCustomerSelect = (custId: string) => {
@@ -157,11 +153,18 @@ export default function SalesBooking() {
     setLoading(true);
     try {
       const targetTenantId = domainTenantId || profile.tenantId;
+      const orderNumber = await generateInvoiceNumber();
+      const isPaid = false;
+      const paidAmount = 0;
+      const paymentStatusStr = 'unpaid';
       
       const newBooking = {
         tenantId: targetTenantId,
-        docType: 'booking',
-        invoiceNumber: generateInvoiceNumber(),
+        type: 'booking',
+        orderNumber: orderNumber,
+        invoiceNumber: orderNumber,
+        date: serverTimestamp(),
+        dueDate: serverTimestamp(), // since no specific due date is set, use server time or perhaps booking Date
         customerId: formData.customerId,
         customerName: formData.customerName,
         customerPhone: formData.customerPhone,
@@ -169,10 +172,11 @@ export default function SalesBooking() {
         bookingTime: formData.bookingTime,
         pax: formData.pax,
         totalAmount: totalAmount,
-        paymentStatus: formData.paymentStatus,
-        paymentMethod: formData.paymentMethod,
-        bankAccountId: formData.paymentMethod === 'transfer' ? formData.bankAccountId : null,
-        downPaymentAmount: formData.paymentStatus === 'dp' ? (Number(formData.downPaymentAmount) || 0) : 0,
+        paidAmount: paidAmount,
+        paymentStatus: paymentStatusStr,
+        paymentMethod: 'tunai',
+        bankAccountId: null,
+        downPaymentAmount: paidAmount,
         status: 'pending',
         notes: formData.notes,
         createdAt: serverTimestamp(),
@@ -181,7 +185,7 @@ export default function SalesBooking() {
         items: bookingItems
       };
 
-      await addDoc(collection(db, 'payment_corrections'), newBooking);
+      const docRef = await addDoc(collection(db, 'orders'), newBooking);
       
       // Redirect to booking list
       navigate('/sales/bookings');
@@ -339,7 +343,20 @@ export default function SalesBooking() {
                           {selectedCust.regency && `, ${selectedCust.regency}`}
                           {selectedCust.province && `, ${selectedCust.province}`}
                         </span>
+                        {selectedCust.locationUrl && (
+                          <div className="mt-1">
+                            <a href={selectedCust.locationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
+                              Buka Peta (Share Loc)
+                            </a>
+                          </div>
+                        )}
                       </div>
+                      {selectedCust.notes && (
+                        <div className="md:col-span-2 lg:col-span-3">
+                          <span className="block text-xs font-semibold text-gray-500 mb-1">Keterangan</span>
+                          <span className="font-medium text-gray-900 whitespace-pre-wrap">{selectedCust.notes}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -348,7 +365,14 @@ export default function SalesBooking() {
           </div>
 
           {/* 2. Waktu & Jadwal */}
-          <div className="bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-4 sm:p-5">
+          <div className={`bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-4 sm:p-5 transition-all ${!formData.customerId ? 'opacity-60 pointer-events-none relative' : ''}`}>
+            {!formData.customerId && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px] rounded-xl">
+                <span className="bg-white px-4 py-2 font-bold text-sm text-indigo-600 rounded-lg shadow-sm border border-indigo-100">
+                  Pilih pelanggan terlebih dahulu
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
               <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                 <Calendar className="w-4 h-4" />
@@ -502,108 +526,6 @@ export default function SalesBooking() {
             </div>
           </div>
 
-          {/* 3. Pembayaran */}
-          <div className="bg-white rounded-xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-4 sm:p-5">
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-              <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <CreditCard className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-gray-900">Pembayaran</h3>
-                <p className="text-xs text-gray-500">Informasi pembayaran</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-700">Metode Pembayaran</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, paymentMethod: 'tunai' })}
-                      className={`py-2 px-3 flex justify-center items-center gap-1.5 text-xs font-bold border-2 rounded-lg transition-all ${
-                        formData.paymentMethod === 'tunai' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-200 hover:text-indigo-600'
-                      }`}
-                    >
-                      Tunai
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, paymentMethod: 'transfer' })}
-                      className={`py-2 px-3 flex justify-center items-center gap-1.5 text-xs font-bold border-2 rounded-lg transition-all ${
-                        formData.paymentMethod === 'transfer' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-200 hover:text-indigo-600'
-                      }`}
-                    >
-                      Transfer
-                    </button>
-                  </div>
-                </div>
-
-                {formData.paymentMethod === 'transfer' && (
-                  <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                    <label className="text-xs font-semibold text-gray-700">Rekening Tujuan <span className="text-red-500">*</span></label>
-                    <select
-                      required
-                      value={formData.bankAccountId}
-                      onChange={(e) => setFormData({...formData, bankAccountId: e.target.value})}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 bg-gray-50/50 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all appearance-none font-medium"
-                    >
-                      <option value="">Pilih Rekening...</option>
-                      {banks.map(b => (
-                        <option key={b.id} value={b.id}>{b.bankName} - {b.accountNumber} ({b.accountName})</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-700">Status Bayar</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, paymentStatus: 'lunas' })}
-                      className={`py-2 px-3 flex justify-center items-center gap-1.5 text-xs font-bold border-2 rounded-lg transition-all ${
-                        formData.paymentStatus === 'lunas' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-500 hover:border-emerald-200 hover:text-emerald-600'
-                      }`}
-                    >
-                      Lunas
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, paymentStatus: 'dp' })}
-                      className={`py-2 px-3 flex justify-center items-center gap-1.5 text-xs font-bold border-2 rounded-lg transition-all ${
-                        formData.paymentStatus === 'dp' ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-500 hover:border-amber-200 hover:text-amber-600'
-                      }`}
-                    >
-                      DP
-                    </button>
-                  </div>
-                </div>
-
-                {formData.paymentStatus === 'dp' && (
-                  <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                    <label className="text-xs font-semibold text-gray-700">Jumlah DP <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-gray-500 text-sm">Rp</span>
-                      <input
-                        type="number"
-                        min="0"
-                        required
-                        value={formData.downPaymentAmount}
-                        onChange={(e) => setFormData({...formData, downPaymentAmount: e.target.value})}
-                        className="w-full pl-9 pr-3 py-2 border border-gray-300 bg-amber-50/30 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-white transition-all font-bold text-base"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
           <div className={`fixed bottom-0 left-0 ${!isKasir ? 'lg:left-[260px]' : ''} right-0 z-50 p-4 sm:p-5 lg:px-8 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] transition-all`}>
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
               <div className="w-full sm:w-auto">
@@ -616,7 +538,7 @@ export default function SalesBooking() {
               
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !formData.customerId}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-0.5 active:translate-y-0"
               >
                 {loading ? 'Menyimpan...' : (

@@ -46,8 +46,8 @@ export default function BusinessLines() {
 
     setConfirmConfig({
       isOpen: true,
-      title: editingBL ? 'Simpan Perubahan' : 'Tambah Lini Bisnis',
-      message: editingBL ? 'Apakah Anda yakin ingin menyimpan perubahan lini bisnis ini?' : 'Apakah Anda yakin ingin menambah lini bisnis baru?',
+      title: editingBL ? 'Simpan Perubahan' : 'Tambah Market Bisnis',
+      message: editingBL ? 'Apakah Anda yakin ingin menyimpan perubahan market bisnis ini?' : 'Apakah Anda yakin ingin menambah market bisnis baru?',
       onConfirm: async () => {
         setConfirmConfig(null);
         try {
@@ -73,8 +73,8 @@ export default function BusinessLines() {
   const handleDelete = async (id: string) => {
     setConfirmConfig({
       isOpen: true,
-      title: 'Hapus Lini Bisnis',
-      message: 'Apakah Anda yakin ingin menghapus lini bisnis ini?',
+      title: 'Hapus Market Bisnis',
+      message: 'Apakah Anda yakin ingin menghapus market bisnis ini?',
       type: 'danger',
       onConfirm: async () => {
         setConfirmConfig(null);
@@ -83,21 +83,21 @@ export default function BusinessLines() {
     });
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Loading Lini Bisnis...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading Market Bisnis...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Lini Bisnis</h2>
-          <p className="text-gray-500">Kelola lini bisnis untuk mengkategorikan produk dan melacak omzet.</p>
+          <h2 className="text-2xl font-bold text-gray-900">Market Bisnis</h2>
+          <p className="text-gray-500">Kelola market bisnis untuk mengkategorikan produk dan melacak omzet.</p>
         </div>
         <button
           onClick={() => { setEditingBL(null); setFormData({ name: '', description: '' }); setIsModalOpen(true); }}
           className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Tambah Lini Bisnis
+          Tambah Market Bisnis
         </button>
       </div>
 
@@ -128,7 +128,7 @@ export default function BusinessLines() {
         {businessLines.length === 0 && (
           <div className="col-span-full text-center py-12 bg-white rounded-md border border-dashed border-gray-200">
             <Briefcase className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-500">Belum ada lini bisnis. Mulai dengan menambah satu!</p>
+            <p className="text-gray-500">Belum ada market bisnis. Mulai dengan menambah satu!</p>
           </div>
         )}
       </div>
@@ -143,14 +143,14 @@ export default function BusinessLines() {
               className="bg-white rounded-md shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-xl font-bold">{editingBL ? 'Edit Lini Bisnis' : 'Tambah Lini Bisnis'}</h3>
+                <h3 className="text-xl font-bold">{editingBL ? 'Edit Market Bisnis' : 'Tambah Market Bisnis'}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1 overflow-y-auto auto-rows-max">
                 <div>
-                  <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Lini Bisnis</label>
+                  <label className="block mb-1 text-xs font-semibold text-gray-600">Nama Market Bisnis</label>
                   <input
                     type="text"
                     required

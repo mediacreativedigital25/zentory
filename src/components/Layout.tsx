@@ -141,21 +141,28 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       ]
     },
     { 
-      label: 'Finance', 
-      icon: Wallet, 
+      label: 'Accounting', 
+      icon: Calculator, 
       roles: ['admin', 'staff', 'superadmin'],
       children: [
         { label: 'Invoice', path: '/finance/invoices', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
-        { label: 'Receive Payment', path: '/finance/receive-payment', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
         { label: 'Invoice Collection', path: '/finance/collections', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
-        { label: 'Tabungan Pelanggan', path: '/finance/customer-savings', permission: 'finance_settings' },
+        { label: 'Receive Payment', path: '/finance/receive-payment', roles: ['admin', 'superadmin'], permission: 'finance_invoices' },
+      ]
+    },
+    { 
+      label: 'Cash Management', 
+      icon: Wallet, 
+      roles: ['admin', 'staff', 'superadmin'],
+      children: [
         { label: 'Akun Bank', path: '/finance/bank-accounts', permission: 'finance_bank_accounts' },
-        { label: 'Transfer Kas/Bank', path: '/finance/bank-transfers', permission: 'finance_bank_accounts' },
-        { label: 'Claim Expense', path: '/finance/claim', permission: 'finance_claim' },
         { label: 'Amal', path: '/finance/charity', roles: ['admin', 'superadmin'], permission: 'finance_charity' },
+        { label: 'Claim Expense', path: '/finance/claim', permission: 'finance_claim' },
+        { label: 'Daily Settlement', path: '/daily-settlement', roles: ['admin'], permission: 'daily_settlement' },
         { label: 'Report Keuangan', path: '/finance/report', roles: ['admin', 'superadmin'], permission: 'finance_report' },
         { label: 'Setting Claim Expense', path: '/finance/settings', roles: ['admin'], permission: 'finance_settings' },
-        { label: 'Daily Settlement', path: '/daily-settlement', roles: ['admin'], permission: 'daily_settlement' },
+        { label: 'Tabungan Pelanggan', path: '/finance/customer-savings', permission: 'finance_settings' },
+        { label: 'Transfer Kas/Bank', path: '/finance/bank-transfers', permission: 'finance_bank_accounts' },
       ]
     },
     { label: 'Approval', icon: CheckCircle2, path: '/approvals', roles: ['admin'], permission: 'approvals' },
@@ -164,9 +171,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: Package, 
       roles: ['admin', 'staff', 'superadmin'],
       children: [
-        { label: 'Daftar Produk', path: '/inventory/products', permission: 'inventory_products' },
+        ...(tenant?.businessType === 'booking' ? [] : [{ label: 'Daftar Produk', path: '/inventory/products', permission: 'inventory_products' }]),
+        { label: 'Layanan Booking', path: '/inventory/booking-services', permission: 'inventory_products' },
         { label: 'Kategori', path: '/inventory/categories', permission: 'inventory_categories' },
-        { label: 'Lini Bisnis', path: '/inventory/business-lines', permission: 'inventory_categories' },
+        { label: 'Market Bisnis', path: '/inventory/business-lines', permission: 'inventory_categories' },
         { label: 'Stock', path: '/inventory/stock', permission: 'inventory_stock' },
         { label: 'Gudang', path: '/inventory/warehouses', permission: 'inventory_warehouses' },
         { label: 'Report Inventory', path: '/inventory/report', permission: 'inventory_report' },
@@ -453,7 +461,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                   : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50 hover:translate-x-1'
                               }`}
                             >
-                              <Circle className={`w-2 h-2 mr-3 ${location.pathname === child.path ? 'fill-white' : 'border-2 border-gray-400 rounded-full'}`} />
                               {child.label}
                             </Link>
                           ))}

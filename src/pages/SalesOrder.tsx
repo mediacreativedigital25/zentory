@@ -319,19 +319,9 @@ export default function SalesOrder() {
   const change = cashReceived - total;
 
   const generateOrderNumber = async (type: 'manual' | 'catalog' | 'service') => {
-    const now = new Date();
-    const yearMonth = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0');
-    const prefix = type === 'manual' ? 'M' : type === 'catalog' ? 'IN' : '0J';
     const targetTenantId = domainTenantId || profile?.tenantId;
-    
-    // In a real app, you'd use a counter in Firestore to ensure uniqueness
-    // For this demo, we'll use a random suffix or count existing orders
-    const ordersRef = collection(db, 'orders');
-    const q = query(ordersRef, where('tenantId', '==', targetTenantId), where('type', '==', type));
-    const snap = await getDocs(q);
-    const sequence = (snap.size + 1).toString().padStart(6, '0');
-    
-    return `${prefix}${yearMonth}${sequence}`;
+    const { generateSequentialNumber } = await import('../lib/sequence');
+    return await generateSequentialNumber(targetTenantId || '', 'INV');
   };
 
   const currentCustomer = customers.find(c => c.id === selectedCustomer);
@@ -424,7 +414,8 @@ export default function SalesOrder() {
         setIsProcessing(true);
         const targetTenantId = domainTenantId || profile?.tenantId;
         try {
-          let orderNumber = '';
+          const { generateSequentialNumber } = await import('../lib/sequence');
+          let orderNumber = await generateSequentialNumber(targetTenantId || '', 'INV');
 
           const customer = customers.find(c => c.id === selectedCustomer);
           
@@ -443,15 +434,16 @@ export default function SalesOrder() {
           let status = 'pending';
           let paymentStatus = 'unpaid';
           let actualPaidAmount = 0;
+          
+          if (paymentType === 'cash') {
+            status = 'completed';
+            paymentStatus = 'paid';
+            actualPaidAmount = total;
+          }
 
           const stockLogsToProcess: any[] = [];
           await runTransaction(db, async (transaction) => {
             // 1. READS FIRST
-            const now = new Date();
-            const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const counterRef = doc(db, 'counters', `${targetTenantId}_orders_${yearMonth}`);
-            const counterDoc = await transaction.get(counterRef);
-            
             const productDocs: { ref: any; data: Product; item: any }[] = [];
             if (orderType === 'manual' || isKasir) {
               for (const item of cart) {
@@ -467,13 +459,6 @@ export default function SalesOrder() {
             }
 
             // 2. CALCULATIONS
-            let sequence = 1;
-            if (counterDoc.exists()) {
-              sequence = (counterDoc.data().sequence || 0) + 1;
-            }
-            const prefix = isKasir ? 'M' : (orderType === 'manual' ? 'M' : 'IN');
-            orderNumber = `${prefix}${yearMonth}${String(sequence).padStart(6, '0')}`;
-
             const productUpdatesMap = new Map<string, { ref: any; updateData: any; productData: Product }>();
 
             for (const pInfo of productDocs) {
@@ -545,17 +530,6 @@ export default function SalesOrder() {
             }
 
             // 3. WRITES LAST
-            if (counterDoc.exists()) {
-              transaction.update(counterRef, { sequence });
-            } else {
-              transaction.set(counterRef, { 
-                tenantId: targetTenantId,
-                prefix: yearMonth,
-                sequence: 1,
-                updatedAt: serverTimestamp()
-              });
-            }
-
             if (appliedCoupon) {
               const couponRef = doc(db, 'coupons', appliedCoupon.id);
               const cDoc = await transaction.get(couponRef);
@@ -624,6 +598,37 @@ export default function SalesOrder() {
               { id: orderRef.id, number: orderNumber },
               `Sales Order ${log.variant ? '(Variant)' : ''}`
             );
+          }
+
+          if (paymentType === 'cash') {
+            await addDoc(collection(db, 'transactions'), {
+              tenantId: targetTenantId,
+              type: 'sale',
+              category: 'Sales',
+              amount: total,
+              discountAmount: discountAmount,
+              items: cart.map(item => {
+                const itemVid = (item as any).variantId;
+                const variant = itemVid ? item.product.variants?.find((v: any) => v.id === itemVid) : null;
+                return {
+                  productId: item.product.id,
+                  variantId: itemVid || null,
+                  name: variant ? `${item.product.name} (${variant.name})` : item.product.name,
+                  price: getProductPrice(item.product, itemVid),
+                  hpp: variant ? (variant.hpp || 0) : (item.product.hpp || 0),
+                  quantity: item.quantity
+                };
+              }),
+              description: `Sales from Kasir/Manual: ${orderNumber}`,
+              transactionNumber: `TRX-${orderNumber}`,
+              orderId: orderRef.id,
+              orderNumber: orderNumber,
+              status: 'completed',
+              date: serverTimestamp(),
+              userId: profile?.uid,
+              bankAccountId: selectedBankAccountId || null,
+              createdAt: serverTimestamp()
+            });
           }
 
           setLastOrder({

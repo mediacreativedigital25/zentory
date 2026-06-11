@@ -61,7 +61,10 @@ export default function SuperAdminResetData() {
     { id: 'roles', label: 'Custom Roles (Jabatan)' },
     { id: 'counters', label: 'Counters (Sequence Numbers / ID)' },
     { id: 'services', label: 'Layanan / Services (Produk Jasa)' },
-    { id: 'service_categories', label: 'Kategori Layanan' }
+    { id: 'service_categories', label: 'Kategori Layanan' },
+    { id: 'business_lines', label: 'Business Lines (Market Bisnis)' },
+    { id: 'stock_opnames', label: 'Stock Opname' },
+    { id: 'reviews', label: 'Product Reviews (Ulasan Produk)' }
   ];
 
   const handleResetInitiate = () => {
@@ -93,15 +96,15 @@ export default function SuperAdminResetData() {
               const countersToDelete = counterSnap.docs.filter(d => d.id.startsWith(`${selectedResetTenant}_`));
               let cBatch = writeBatch(db);
               let cCount = 0;
-              countersToDelete.forEach(c => {
+              for (const c of countersToDelete) {
                  cBatch.delete(c.ref);
                  cCount++;
                  if (cCount === 490) {
-                     cBatch.commit();
+                     await cBatch.commit();
                      cBatch = writeBatch(db);
                      cCount = 0;
                  }
-              });
+              }
               if (cCount > 0) await cBatch.commit();
             } catch(e) {
                 console.error('Error deleting counters', e);

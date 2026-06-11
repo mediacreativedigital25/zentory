@@ -33,28 +33,45 @@ export default function BookingList() {
 
     const targetTenantId = domainTenantId || profile.tenantId;
     
-    // To handle firestore rules without deployment, we use an unused collection 'payment_corrections'
-    const q = query(
-      collection(db, 'payment_corrections'),
-      where('tenantId', '==', targetTenantId),
-      where('docType', '==', 'booking') // To ensure we only fetch bookings
-    );
+    let currentOrders: Booking[] = [];
+    let currentLegacy: Booking[] = [];
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const bData: Booking[] = [];
-      snapshot.forEach((doc) => {
-        bData.push({ id: doc.id, ...doc.data() } as Booking);
-      });
-      bData.sort((a, b) => {
+    const updateBookings = () => {
+      const combined = [...currentOrders, ...currentLegacy];
+      combined.sort((a, b) => {
         const dA = new Date(`${a.bookingDate}T${a.bookingTime}`);
         const dB = new Date(`${b.bookingDate}T${b.bookingTime}`);
         return dB.getTime() - dA.getTime();
       });
-      setBookings(bData);
+      setBookings(combined);
       setLoading(false);
+    };
+
+    const qOrders = query(
+      collection(db, 'orders'),
+      where('tenantId', '==', targetTenantId),
+      where('type', '==', 'booking')
+    );
+
+    const unsubOrders = onSnapshot(qOrders, (snapshot) => {
+      currentOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+      updateBookings();
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'payment_corrections', auth, profile);
+      handleFirestoreError(error, OperationType.GET, 'orders', auth, profile);
       setLoading(false);
+    });
+
+    const qLegacy = query(
+      collection(db, 'payment_corrections'),
+      where('tenantId', '==', targetTenantId),
+      where('docType', '==', 'booking')
+    );
+
+    const unsubLegacy = onSnapshot(qLegacy, (snapshot) => {
+      currentLegacy = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+      updateBookings();
+    }, (error) => {
+      console.error('Legacy data failed to load:', error);
     });
 
     const customersRef = collection(db, 'customers');
@@ -69,7 +86,8 @@ export default function BookingList() {
     });
 
     return () => {
-      unsubscribe();
+      unsubOrders();
+      unsubLegacy();
       unsubscribeCustomers();
     };
   }, [profile, domainTenantId]);
@@ -265,24 +283,20 @@ export default function BookingList() {
       if (editData.status === 'cancelled') {
          const targetTenantId = domainTenantId || profile.tenantId;
          if (targetTenantId) {
-             const orderQ = query(collection(db, 'orders'), where('tenantId', '==', targetTenantId), where('orderNumber', '==', selectedBooking.invoiceNumber));
-             const orderSnap = await getDocs(orderQ);
-             for (const oDoc of orderSnap.docs) {
-                 const trxQ = query(collection(db, 'transactions'), where('tenantId', '==', targetTenantId), where('orderId', '==', oDoc.id));
-                 const trxSnap = await getDocs(trxQ);
-                 for (const tDoc of trxSnap.docs) {
-                     const tData = tDoc.data();
-                     if (tData.receiptId) {
-                         await deleteDoc(doc(db, 'payment_receipts', tData.receiptId));
-                     }
-                     await deleteDoc(tDoc.ref);
+             const trxQ = query(collection(db, 'transactions'), where('tenantId', '==', targetTenantId), where('orderId', '==', selectedBooking.id));
+             const trxSnap = await getDocs(trxQ);
+             for (const tDoc of trxSnap.docs) {
+                 const tData = tDoc.data();
+                 if (tData.receiptId) {
+                     await deleteDoc(doc(db, 'payment_receipts', tData.receiptId));
                  }
-                 await updateDoc(oDoc.ref, { status: 'cancelled' });
+                 await deleteDoc(tDoc.ref);
              }
          }
       }
 
-      await updateDoc(doc(db, 'payment_corrections', selectedBooking.id), {
+      const collectionName = (selectedBooking as any).docType === 'booking' ? 'payment_corrections' : 'orders';
+      await updateDoc(doc(db, collectionName, selectedBooking.id), {
         status: editData.status,
         bookingDate: editData.bookingDate,
         bookingTime: editData.bookingTime,
@@ -291,7 +305,8 @@ export default function BookingList() {
       });
       setIsEditOpen(false);
     } catch (error: any) {
-      handleFirestoreError(error, OperationType.UPDATE, 'payment_corrections', auth, profile);
+      const collectionName = (selectedBooking as any)?.docType === 'booking' ? 'payment_corrections' : 'orders';
+      handleFirestoreError(error, OperationType.UPDATE, collectionName, auth, profile);
     }
   };
 
@@ -300,26 +315,23 @@ export default function BookingList() {
     try {
       const targetTenantId = domainTenantId || profile.tenantId;
       if (targetTenantId) {
-          const orderQ = query(collection(db, 'orders'), where('tenantId', '==', targetTenantId), where('orderNumber', '==', selectedBooking.invoiceNumber));
-          const orderSnap = await getDocs(orderQ);
-          for (const oDoc of orderSnap.docs) {
-              const trxQ = query(collection(db, 'transactions'), where('tenantId', '==', targetTenantId), where('orderId', '==', oDoc.id));
-              const trxSnap = await getDocs(trxQ);
-              for (const tDoc of trxSnap.docs) {
-                  const tData = tDoc.data();
-                  if (tData.receiptId) {
-                      await deleteDoc(doc(db, 'payment_receipts', tData.receiptId));
-                  }
-                  await deleteDoc(tDoc.ref);
+          const trxQ = query(collection(db, 'transactions'), where('tenantId', '==', targetTenantId), where('orderId', '==', selectedBooking.id));
+          const trxSnap = await getDocs(trxQ);
+          for (const tDoc of trxSnap.docs) {
+              const tData = tDoc.data();
+              if (tData.receiptId) {
+                  await deleteDoc(doc(db, 'payment_receipts', tData.receiptId));
               }
-              await deleteDoc(oDoc.ref);
+              await deleteDoc(tDoc.ref);
           }
       }
 
-      await deleteDoc(doc(db, 'payment_corrections', selectedBooking.id));
+      const collectionName = (selectedBooking as any).docType === 'booking' ? 'payment_corrections' : 'orders';
+      await deleteDoc(doc(db, collectionName, selectedBooking.id));
       setIsDeleteOpen(false);
     } catch (error: any) {
-      handleFirestoreError(error, OperationType.DELETE, 'payment_corrections', auth, profile);
+      const collectionName = (selectedBooking as any)?.docType === 'booking' ? 'payment_corrections' : 'orders';
+      handleFirestoreError(error, OperationType.DELETE, collectionName, auth, profile);
     }
   };
 
@@ -484,28 +496,30 @@ export default function BookingList() {
                    </div>
                    
                    {/* Additional info from customerInfo */}
-                   {(selectedBooking as any).customerInfo && (
+                   {((selectedBooking as any).customerInfo || customers[selectedBooking.customerId]) && (
                      <div className="pt-4 border-t border-gray-100 space-y-4">
                        <div>
-                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Alamat Pengiriman</p>
+                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Alamat Pengiriman / Pelanggan</p>
                          <p className="text-sm text-gray-800 leading-relaxed font-medium">
-                           {(selectedBooking as any).customerInfo.address}<br />
+                           {(selectedBooking as any).customerInfo?.address || customers[selectedBooking.customerId]?.address || '-'}<br />
                            <span className="text-gray-500 font-normal">
-                             Desa {(selectedBooking as any).customerInfo.village}, Kec. {(selectedBooking as any).customerInfo.district}<br />
-                             {(selectedBooking as any).customerInfo.city}, {(selectedBooking as any).customerInfo.province}
+                             {((selectedBooking as any).customerInfo?.village || customers[selectedBooking.customerId]?.village) && `Desa ${(selectedBooking as any).customerInfo?.village || customers[selectedBooking.customerId]?.village}`}
+                             {((selectedBooking as any).customerInfo?.district || customers[selectedBooking.customerId]?.district) && `, Kec. ${(selectedBooking as any).customerInfo?.district || customers[selectedBooking.customerId]?.district}`}<br />
+                             {((selectedBooking as any).customerInfo?.city || customers[selectedBooking.customerId]?.regency) && `${(selectedBooking as any).customerInfo?.city || customers[selectedBooking.customerId]?.regency}`}
+                             {((selectedBooking as any).customerInfo?.province || customers[selectedBooking.customerId]?.province) && `, ${(selectedBooking as any).customerInfo?.province || customers[selectedBooking.customerId]?.province}`}
                            </span>
                          </p>
-                         {(selectedBooking as any).customerInfo.shareLocation && (
-                           <a href={(selectedBooking as any).customerInfo.shareLocation} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-semibold hover:bg-indigo-100 transition-colors">
-                             <MapPin className="w-4 h-4" /> Buka Google Maps
+                         {((selectedBooking as any).customerInfo?.shareLocation || customers[selectedBooking.customerId]?.locationUrl) && (
+                           <a href={(selectedBooking as any).customerInfo?.shareLocation || customers[selectedBooking.customerId]?.locationUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-semibold hover:bg-indigo-100 transition-colors">
+                             <MapPin className="w-4 h-4" /> Buka Peta Lokasi
                            </a>
                          )}
                        </div>
                        
-                       {(selectedBooking as any).customerInfo.pack && (
+                       {((selectedBooking as any).customerInfo?.pack || customers[selectedBooking.customerId]?.notes) && (
                          <div>
-                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Keterangan Tambahan</p>
-                           <p className="text-sm text-gray-900 font-bold bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">{(selectedBooking as any).customerInfo.pack}</p>
+                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Keterangan Tambahan / Catatan</p>
+                           <p className="text-sm text-gray-900 font-bold bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 whitespace-pre-wrap">{(selectedBooking as any).customerInfo?.pack || customers[selectedBooking.customerId]?.notes}</p>
                          </div>
                        )}
                      </div>

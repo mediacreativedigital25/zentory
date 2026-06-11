@@ -487,7 +487,9 @@ export default function Catalog() {
 
     setIsCheckingOut(true);
     try {
-      const orderNumber = `ORD-${Date.now()}`;
+      const { generateSequentialNumber } = await import('../lib/sequence');
+      const orderNumber = await generateSequentialNumber(tenant?.id || '', 'INV');
+      
       await addDoc(collection(db, 'orders'), {
         tenantId: tenant?.id,
         orderNumber,

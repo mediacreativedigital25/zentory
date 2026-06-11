@@ -43,6 +43,15 @@ export default function ReceivePayment() {
     remaining: number,
     orderIds: string[]
   }[]>([]);
+  
+  const [unpaidStandaloneOrders, setUnpaidStandaloneOrders] = useState<Order[]>([]);
+  const [selectedStandaloneOrders, setSelectedStandaloneOrders] = useState<{
+    orderId: string,
+    orderNumber: string,
+    amountToPay: number,
+    remaining: number
+  }[]>([]);
+
   const [paymentMethod, setPaymentMethod] = useState<'Tunai' | 'Bank Transfer'>('Tunai');
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState('');
@@ -115,30 +124,26 @@ export default function ReceivePayment() {
   useEffect(() => {
     if (!selectedCustomerId || !targetTenantId) return;
 
-    const fetchCollections = async () => {
+    const fetchUnpaidItems = async () => {
       try {
-        const q = query(
+        const qCol = query(
           collection(db, 'invoice_collections'),
           where('tenantId', '==', targetTenantId),
           where('customerId', '==', selectedCustomerId),
           where('status', '==', 'open')
         );
-        const snap = await getDocs(q);
-        const collections = snap.docs.map(d => ({ id: d.id, ...d.data() } as InvoiceCollection));
+        const snapCol = await getDocs(qCol);
+        const collections = snapCol.docs.map(d => ({ id: d.id, ...d.data() } as InvoiceCollection));
         
-        // Auto-fix any NaN/0 totals by recalculating from orders (Legacy data fix)
         for (const col of collections) {
           if (!col.totalAmount || isNaN(col.totalAmount)) {
              if (col.orderIds && col.orderIds.length > 0) {
-               // Batch fetch the orders in chunks of 10 if necessary, but usually it's < 10
                const chunks = [];
                for (let i = 0; i < col.orderIds.length; i += 10) {
                  chunks.push(col.orderIds.slice(i, i + 10));
                }
-               
                let fixedTotal = 0;
                let fixedPaid = 0;
-               
                for (const chunk of chunks) {
                  const ordersSnap = await getDocs(query(collection(db, 'orders'), where('__name__', 'in', chunk)));
                  ordersSnap.forEach(oDoc => {
@@ -147,12 +152,9 @@ export default function ReceivePayment() {
                    fixedPaid += (Number(data.paidAmount) || 0);
                  });
                }
-               
                col.totalAmount = fixedTotal;
                col.totalPaid = fixedPaid;
                col.totalSisa = fixedTotal - fixedPaid;
-               
-               // Update it in the database permanently
                await updateDoc(doc(db, 'invoice_collections', col.id), {
                  totalAmount: fixedTotal,
                  totalPaid: fixedPaid,
@@ -161,14 +163,27 @@ export default function ReceivePayment() {
              }
           }
         }
-        
         setUnpaidCollections(collections);
+
+        // Fetch Standalone Orders
+        const qOrd = query(
+          collection(db, 'orders'),
+          where('tenantId', '==', targetTenantId),
+          where('customerId', '==', selectedCustomerId)
+        );
+        const snapOrd = await getDocs(qOrd);
+        const orders = snapOrd.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+        const standaloneUnpaid = orders.filter(o => 
+          (o.paymentStatus === 'unpaid' || o.paymentStatus === 'partial') && o.isInCollection !== true
+        );
+        setUnpaidStandaloneOrders(standaloneUnpaid);
+        
       } catch (err) {
-        console.error('Error fetching collections:', err);
+        console.error('Error fetching unpaid items:', err);
       }
     };
 
-    fetchCollections();
+    fetchUnpaidItems();
   }, [selectedCustomerId, targetTenantId]);
 
   const toggleCollectionSelection = (col: InvoiceCollection) => {
@@ -196,11 +211,37 @@ export default function ReceivePayment() {
     ));
   };
 
+  const toggleOrderSelection = (order: Order) => {
+    const isSelected = selectedStandaloneOrders.find(i => i.orderId === order.id);
+    if (isSelected) {
+      setSelectedStandaloneOrders(prev => prev.filter(i => i.orderId !== order.id));
+    } else {
+      const colTotalAmount = Number(order.totalAmount) || 0;
+      const colTotalPaid = Number(order.paidAmount) || 0;
+      const colSisa = colTotalAmount - colTotalPaid;
+      const sisa = Math.round(Math.max(0, colSisa));
+      setSelectedStandaloneOrders(prev => [...prev, { 
+        orderId: order.id, 
+        orderNumber: order.orderNumber, 
+        amountToPay: sisa,
+        remaining: sisa
+      }]);
+    }
+  };
+
+  const handleOrderAmountChange = (orderId: string, amount: number) => {
+    setSelectedStandaloneOrders(prev => prev.map(i => 
+      i.orderId === orderId ? { ...i, amountToPay: amount } : i
+    ));
+  };
+
   const resetForm = () => {
     setStep(1);
     setSelectedCustomerId('');
     setUnpaidCollections([]);
     setSelectedCollections([]);
+    setUnpaidStandaloneOrders([]);
+    setSelectedStandaloneOrders([]);
     setPaymentMethod('Tunai');
     setSelectedBankAccountId('');
     setUseSavings(false);
@@ -210,7 +251,7 @@ export default function ReceivePayment() {
   };
 
   const handleSaveReceipt = async () => {
-    if (!targetTenantId || selectedCollections.length === 0) return;
+    if (!targetTenantId || (selectedCollections.length === 0 && selectedStandaloneOrders.length === 0)) return;
     setIsSubmitting(true);
 
     try {
@@ -312,6 +353,7 @@ export default function ReceivePayment() {
                 orderNumber: orderData.orderNumber,
                 date: orderData.date,
                 dueDate: orderData.dueDate,
+                createdAt: orderData.createdAt,
                 totalAmount: orderTotal,
                 amountPaid: payToThisOrder
               });
@@ -322,30 +364,88 @@ export default function ReceivePayment() {
         }
       }
 
+      for (const item of selectedStandaloneOrders) {
+        const orderDoc = unpaidStandaloneOrders.find(o => o.id === item.orderId);
+        if (!orderDoc) continue;
+
+        const orderRef = doc(db, 'orders', item.orderId);
+        const orderSnap = await getDoc(orderRef);
+        if (orderSnap.exists()) {
+          const orderData = orderSnap.data();
+          const orderTotal = Number(orderData.totalAmount) || Number(orderData.total) || 0;
+          const orderPaid = Number(orderData.paidAmount) || 0;
+          
+          const payToThisOrder = item.amountToPay;
+          const orderNewPaid = orderPaid + payToThisOrder;
+          
+          const isFullyPaid = orderNewPaid >= orderTotal;
+          const updateData: any = {
+            paidAmount: increment(payToThisOrder),
+            paymentStatus: isFullyPaid ? 'paid' : 'partial'
+          };
+          
+          if (isFullyPaid && orderData.status !== 'completed') {
+            updateData.status = 'completed';
+          }
+          
+          await updateDoc(orderRef, updateData);
+
+          if (isFullyPaid) {
+             import('../../lib/savings').then(({ processCustomerSavings }) => {
+                processCustomerSavings({
+                   orderId: item.orderId,
+                   orderTotal: orderTotal,
+                   customerId: orderData.customerId || selectedCustomerId,
+                   tenantId: targetTenantId || ''
+                }).catch(err => console.error("Error processing savings", err));
+             });
+          }
+
+          orderAllocations.push({
+            orderId: item.orderId,
+            orderNumber: orderData.orderNumber,
+            date: orderData.date,
+            dueDate: orderData.dueDate,
+            createdAt: orderData.createdAt,
+            totalAmount: orderTotal,
+            amountPaid: payToThisOrder
+          });
+        }
+      }
+
       // 2. Create Receipt
-      const totalPaid = selectedCollections.reduce((sum, i) => sum + i.amountToPay, 0);
+      const totalPaid = selectedCollections.reduce((sum, i) => sum + i.amountToPay, 0) + selectedStandaloneOrders.reduce((sum, i) => sum + i.amountToPay, 0);
       const actualSavingsUsed = useSavings ? useSavingsAmount : 0;
       const cashAmount = Math.max(0, totalPaid - actualSavingsUsed);
       const customer = customers.find(c => c.id === selectedCustomerId);
       const bank = bankAccounts.find(b => b.id === selectedBankAccountId);
 
-      const receiptData = {
+      const cleanObj = (obj: any) => {
+        Object.keys(obj).forEach(key => {
+          if (obj[key] === undefined) {
+            delete obj[key];
+          }
+        });
+        return obj;
+      };
+
+      const receiptData = cleanObj({
         tenantId: targetTenantId,
         receiptNumber,
         customerId: selectedCustomerId,
         customerName: customer?.name || 'Unknown',
         date: serverTimestamp(),
         paymentMethod,
-        bankAccountId: paymentMethod === 'Bank Transfer' ? selectedBankAccountId : null,
-        bankAccountName: paymentMethod === 'Bank Transfer' ? bank?.name : null,
+        bankAccountId: paymentMethod === 'Bank Transfer' ? (selectedBankAccountId || null) : null,
+        bankAccountName: paymentMethod === 'Bank Transfer' ? (bank?.name || null) : null,
         amount: cashAmount,
         savingsAmount: actualSavingsUsed,
-        note,
-        collections: collectionDataList,
-        invoices: orderAllocations,
+        note: note || null,
+        collections: collectionDataList.map(cleanObj),
+        invoices: orderAllocations.map(cleanObj),
         createdBy: profile.uid,
         createdAt: serverTimestamp()
-      };
+      });
 
       await addDoc(collection(db, 'payment_receipts'), receiptData);
 
@@ -358,24 +458,24 @@ export default function ReceivePayment() {
       // 3. Create Transaction Records (One per Order so it links properly on Sales Order view)
       if (orderAllocations.length > 0) {
         for (const alloc of orderAllocations) {
-          await addDoc(collection(db, 'transactions'), {
+          await addDoc(collection(db, 'transactions'), cleanObj({
             tenantId: targetTenantId,
             type: 'sale',
             amount: alloc.amountPaid,
             date: serverTimestamp(),
             status: 'completed',
             userId: profile.uid,
-            description: `Receive Payment dari ${customer?.name} - ${receiptNumber} (Order ${alloc.orderNumber})`,
-            transactionNumber: `TRX-RP-${receiptNumber}-${alloc.orderNumber}`,
-            orderId: alloc.orderId,
-            orderNumber: alloc.orderNumber,
-            bankAccountId: paymentMethod === 'Bank Transfer' ? selectedBankAccountId : null,
+            description: `Receive Payment dari ${customer?.name} - ${receiptNumber} (Order ${alloc.orderNumber || 'Unknown'})`,
+            transactionNumber: `TRX-RP-${receiptNumber}-${alloc.orderNumber || new Date().getTime()}`,
+            orderId: alloc.orderId || null,
+            orderNumber: alloc.orderNumber || null,
+            bankAccountId: paymentMethod === 'Bank Transfer' ? (selectedBankAccountId || null) : null,
             createdAt: serverTimestamp()
-          });
+          }));
         }
       } else {
         // Fallback if no order allocations were mapped (should be rare)
-        await addDoc(collection(db, 'transactions'), {
+        await addDoc(collection(db, 'transactions'), cleanObj({
           tenantId: targetTenantId,
           type: 'sale',
           amount: totalPaid,
@@ -384,9 +484,9 @@ export default function ReceivePayment() {
           userId: profile.uid,
           description: `Receive Payment dari ${customer?.name} - ${receiptNumber}`,
           transactionNumber: `TRX-RP-${receiptNumber}`,
-          bankAccountId: paymentMethod === 'Bank Transfer' ? selectedBankAccountId : null,
+          bankAccountId: paymentMethod === 'Bank Transfer' ? (selectedBankAccountId || null) : null,
           createdAt: serverTimestamp()
-        });
+        }));
       }
 
       alert(`Berhasil menyimpan pembayaran #${receiptNumber}`);
@@ -674,41 +774,82 @@ export default function ReceivePayment() {
                     </div>
 
                     {selectedCustomerId && (
-                      <div className="space-y-4">
-                        <label className="block text-xs font-semibold text-gray-600">Pilih Koleksi Tagihan Yang Akan Dibayar</label>
-                        <div className="space-y-2">
-                          {unpaidCollections.length === 0 ? (
-                            <p className="p-8 text-center text-gray-400 font-medium bg-white rounded-md border border-dashed border-gray-200">Tidak ada koleksi tagihan untuk pelanggan ini.</p>
-                          ) : unpaidCollections.map(col => {
-                            const selected = selectedCollections.find(i => i.collectionId === col.id);
-                            const sisa = col.totalSisa || (col.totalAmount - col.totalPaid);
-                            return (
-                              <div 
-                                key={col.id} 
-                                className={`p-5 rounded-[1.5rem] border transition-all cursor-pointer flex items-center justify-between group ${
-                                  selected ? 'bg-indigo-50 border-indigo-200 ring-2 ring-indigo-100' : 'bg-white border-gray-100 hover:border-indigo-100'
-                                }`}
-                                onClick={() => toggleCollectionSelection(col)}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <div className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${
-                                    selected ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
-                                  }`}>
-                                    <Layers className="w-5 h-5" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-black text-gray-900 uppercase">#{col.collectionNumber}</p>
-                                    <p className="text-[10px] font-bold text-gray-400 mt-0.5">{col.date?.toDate().toLocaleDateString('id-ID')}</p>
-                                    <p className="text-[8px] font-bold text-indigo-500 uppercase mt-1">{col.orderNumbers.length} Invoices</p>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Sisa Tagihan</p>
-                                  <p className="text-sm font-black text-gray-900">Rp.{sisa.toLocaleString()}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <label className="block text-xs font-semibold text-gray-600">Pilih Tagihan (Kolektif / Standalone) Yang Akan Dibayar</label>
+                          <div className="space-y-2">
+                            {unpaidCollections.length === 0 && unpaidStandaloneOrders.length === 0 ? (
+                              <p className="p-8 text-center text-gray-400 font-medium bg-white rounded-md border border-dashed border-gray-200">Tidak ada tagihan tertunggak untuk pelanggan ini.</p>
+                            ) : (
+                              <>
+                                {/* Collections */}
+                                {unpaidCollections.map(col => {
+                                  const selected = selectedCollections.find(i => i.collectionId === col.id);
+                                  const sisa = col.totalSisa || (col.totalAmount - col.totalPaid);
+                                  return (
+                                    <div 
+                                      key={col.id} 
+                                      className={`p-5 rounded-[1.5rem] border transition-all cursor-pointer flex items-center justify-between group ${
+                                        selected ? 'bg-indigo-50 border-indigo-200 ring-2 ring-indigo-100' : 'bg-white border-gray-100 hover:border-indigo-100'
+                                      }`}
+                                      onClick={() => toggleCollectionSelection(col)}
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${
+                                          selected ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
+                                        }`}>
+                                          <Layers className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-black text-gray-900 uppercase">#{col.collectionNumber}</p>
+                                          <p className="text-[10px] font-bold text-gray-400 mt-0.5">{col.date?.toDate().toLocaleDateString('id-ID')}</p>
+                                          <p className="text-[8px] font-bold text-indigo-500 uppercase mt-1">Kolektif ({col.orderNumbers.length} Invoices)</p>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Sisa Tagihan</p>
+                                        <p className="text-sm font-black text-gray-900">Rp.{sisa.toLocaleString()}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                
+                                {/* Standalone Orders */}
+                                {unpaidStandaloneOrders.map(order => {
+                                  const selected = selectedStandaloneOrders.find(i => i.orderId === order.id);
+                                  const total = Number(order.totalAmount) || 0;
+                                  const paid = Number(order.paidAmount) || 0;
+                                  const sisa = Math.max(0, total - paid);
+                                  return (
+                                    <div 
+                                      key={order.id} 
+                                      className={`p-5 rounded-[1.5rem] border transition-all cursor-pointer flex items-center justify-between group ${
+                                        selected ? 'bg-amber-50 border-amber-200 ring-2 ring-amber-100' : 'bg-white border-gray-100 hover:border-amber-100'
+                                      }`}
+                                      onClick={() => toggleOrderSelection(order)}
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${
+                                          selected ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-400'
+                                        }`}>
+                                          <Banknote className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-black text-gray-900 uppercase">#{order.orderNumber}</p>
+                                          <p className="text-[10px] font-bold text-gray-400 mt-0.5">{(order.date || order.createdAt)?.toDate().toLocaleDateString('id-ID') || '-'}</p>
+                                          <p className="text-[8px] font-bold text-amber-600 uppercase mt-1">Invoice Langsung</p>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Sisa Tagihan</p>
+                                        <p className="text-sm font-black text-gray-900">Rp.{sisa.toLocaleString()}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -741,12 +882,34 @@ export default function ReceivePayment() {
                             </div>
                           </div>
                         ))}
+
+                        {selectedStandaloneOrders.map(item => (
+                          <div key={item.orderId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-md border border-amber-50">
+                            <div>
+                              <p className="text-xs font-black text-gray-900 uppercase">#{item.orderNumber}</p>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5">Sisa: Rp.{item.remaining.toLocaleString()}</p>
+                            </div>
+                            <div className="relative w-full sm:w-48">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">Rp</span>
+                              <input 
+                                type="text"
+                                value={item.amountToPay > 0 ? item.amountToPay.toLocaleString('id-ID') : ''}
+                                onChange={(e) => {
+                                  let val = e.target.value.replace(/\./g, '');
+                                  val = val.replace(/\D/g, '');
+                                  handleOrderAmountChange(item.orderId, Number(val));
+                                }}
+                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-100 rounded-md text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 transition-all text-amber-600"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
                     {(() => {
                       const selCust = customers.find(c => c.id === selectedCustomerId);
-                      const totalAllocated = selectedCollections.reduce((sum, item) => sum + item.amountToPay, 0);
+                      const totalAllocated = selectedCollections.reduce((sum, item) => sum + item.amountToPay, 0) + selectedStandaloneOrders.reduce((sum, item) => sum + item.amountToPay, 0);
                       if (selCust && selCust.hasSavingsProgram && (selCust.savingsBalance || 0) > 0) {
                         return (
                           <div className="bg-emerald-50/50 p-6 rounded-xl border border-emerald-100">
@@ -859,7 +1022,7 @@ export default function ReceivePayment() {
               <div className="p-8 border-t border-gray-100 bg-gray-50 flex gap-4">
                 {step === 1 ? (
                   <button
-                    disabled={!selectedCustomerId || selectedCollections.length === 0}
+                    disabled={!selectedCustomerId || (selectedCollections.length === 0 && selectedStandaloneOrders.length === 0)}
                     onClick={() => setStep(2)}
                     className="w-full px-8 py-4 bg-indigo-600 text-white rounded-md font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 text-sm uppercase tracking-widest active:scale-95"
                   >
@@ -875,7 +1038,7 @@ export default function ReceivePayment() {
                       KEMBALI
                     </button>
                     <button
-                      disabled={isSubmitting || (paymentMethod === 'Bank Transfer' && !selectedBankAccountId && (selectedCollections.reduce((s,i) => s + i.amountToPay, 0) - (useSavings ? useSavingsAmount : 0) > 0))}
+                      disabled={isSubmitting || (paymentMethod === 'Bank Transfer' && !selectedBankAccountId && ((selectedCollections.reduce((s,i) => s + i.amountToPay, 0) + selectedStandaloneOrders.reduce((s,i) => s + i.amountToPay, 0)) - (useSavings ? useSavingsAmount : 0) > 0))}
                       onClick={handleSaveReceipt}
                       className="flex-1 px-8 py-4 bg-emerald-600 text-white rounded-md font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm uppercase tracking-widest active:scale-95"
                     >
@@ -1003,12 +1166,12 @@ export default function ReceivePayment() {
                             </td>
                             <td className="p-5 text-center">
                               <span className="text-xs font-bold text-gray-500 tabular-nums">
-                                {inv.date?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '/')}
+                                {(inv.date || inv.createdAt)?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '/') || '-'}
                               </span>
                             </td>
                             <td className="p-5 text-center">
                               <span className="text-xs font-bold text-gray-400 tabular-nums">
-                                {inv.dueDate?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '/')}
+                                {(inv.dueDate || inv.date || inv.createdAt)?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '/') || '-'}
                               </span>
                             </td>
                             <td className="p-5 text-right">

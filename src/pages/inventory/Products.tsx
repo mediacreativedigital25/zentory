@@ -953,7 +953,7 @@ export default function Products() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 font-medium italic">
-                      Rp.${(product.hpp || 0).toLocaleString()}
+                      Rp.{(product.hpp || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-sm font-bold text-indigo-600">
                       Rp.{(product.price || 0).toLocaleString()}
@@ -1897,7 +1897,7 @@ export default function Products() {
                     }
                   >
                     <label className="block mb-1 text-xs font-semibold text-gray-600">
-                      Lini Bisnis (Opsional)
+                      Market Bisnis (Opsional)
                     </label>
                     <select
                       value={formData.businessLineId || ""}
@@ -1909,7 +1909,7 @@ export default function Products() {
                       }
                       className="w-full p-2 border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value="">Pilih Lini Bisnis</option>
+                      <option value="">Pilih Market Bisnis</option>
                       {businessLines.map((bl) => (
                         <option key={bl.id} value={bl.id}>
                           {bl.name}
@@ -2229,8 +2229,7 @@ export default function Products() {
                               </div>
                               <div>
                                 <label className="block text-red-600 mb-1 flex items-center text-xs font-semibold text-gray-600">
-                                  HPP (Rp.){" "}
-                                  <DollarSign className="w-3 h-3 ml-1" />
+                                  HPP (Rp.)
                                 </label>
                                 <input
                                   type="number"
@@ -2399,8 +2398,7 @@ export default function Products() {
                     <div className="col-span-2 grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-red-600 mb-1 flex items-center text-xs font-semibold text-gray-600">
-                          Harga Modal (HPP){" "}
-                          <DollarSign className="w-3 h-3 ml-1" />
+                          Harga Modal (HPP)
                         </label>
                         <input
                           type="number"

@@ -38,6 +38,7 @@ import BookingList from './pages/sales/BookingList';
 import SalesBooking from './pages/sales/SalesBooking';
 import ProductReviews from './pages/sales/ProductReviews';
 import Products from './pages/inventory/Products';
+import BookingServices from './pages/inventory/BookingServices';
 import Categories from './pages/inventory/Categories';
 import ServiceList from './pages/services/ServiceList';
 import ServiceCategories from './pages/services/ServiceCategories';
@@ -303,6 +304,12 @@ export default function App() {
           <Route path="/inventory/products" element={
             <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_products" menuLabel="Inventory">
               <Products />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/inventory/booking-services" element={
+            <ProtectedRoute allowedRoles={['admin', 'staff']} permission="inventory_products" menuLabel="Inventory">
+              <BookingServices />
             </ProtectedRoute>
           } />
 

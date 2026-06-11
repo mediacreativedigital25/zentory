@@ -176,7 +176,7 @@ export default function Achievement() {
                 onChange={(e) => setSelectedBusinessLine(e.target.value)}
                 className="bg-transparent text-sm font-bold text-gray-700 outline-none cursor-pointer"
               >
-                <option value="all">Semua Lini Bisnis</option>
+                <option value="all">Semua Market Bisnis</option>
                 {businessLines.map(bl => (
                   <option key={bl.id} value={bl.id}>{bl.name}</option>
                 ))}

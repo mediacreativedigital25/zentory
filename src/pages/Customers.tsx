@@ -6,7 +6,7 @@ import { Customer, CustomerCategory } from '../types';
 import { 
   Plus, Search, Edit2, Trash2, UserRound, Mail, Phone, MapPin, X, 
   ChevronLeft, ChevronRight, Lock, CreditCard, Calendar, User, 
-  ShoppingBag, Info, Eye, Tag, Upload, Download, CheckCircle2
+  ShoppingBag, Info, Eye, Tag, Upload, Download, CheckCircle2, Link
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from '../components/ConfirmModal';
@@ -43,6 +43,8 @@ export default function Customers() {
     regency: '',
     district: '',
     village: '',
+    locationUrl: '',
+    notes: '',
     type: 'umum' as 'umum' | 'langganan',
     categoryId: '',
     allowTempo: false,
@@ -280,7 +282,7 @@ export default function Customers() {
           }
           setIsModalOpen(false);
           setEditingCustomer(null);
-          setFormData({ name: '', code: '', email: '', phone: '', address: '', province: '', regency: '', district: '', village: '', type: 'umum', categoryId: '', allowTempo: false, tempoLimitDays: 30, discount: 0, hasSavingsProgram: false });
+          setFormData({ name: '', code: '', email: '', phone: '', address: '', province: '', regency: '', district: '', village: '', locationUrl: '', notes: '', type: 'umum', categoryId: '', allowTempo: false, tempoLimitDays: 30, discount: 0, hasSavingsProgram: false });
           setSelectedProvinceId('');
           setSelectedRegencyId('');
           setSelectedDistrictId('');
@@ -394,6 +396,77 @@ export default function Customers() {
         await deleteDoc(doc(db, 'customers', id));
       }
     });
+  };
+
+  const handleEditCustomer = async (customer: Customer) => {
+    setEditingCustomer(customer); 
+    setFormData({
+      name: customer.name,
+      code: customer.code || '',
+      email: customer.email,
+      phone: customer.phone,
+      address: customer.address,
+      province: customer.province || '',
+      regency: customer.regency || '',
+      district: customer.district || '',
+      village: customer.village || '',
+      locationUrl: customer.locationUrl || '',
+      notes: customer.notes || '',
+      type: customer.type || 'umum',
+      categoryId: customer.categoryId || '',
+      allowTempo: customer.allowTempo || false,
+      tempoLimitDays: customer.tempoLimitDays || 30,
+      discount: customer.discount || 0,
+      hasSavingsProgram: customer.hasSavingsProgram || false
+    });
+    
+    let pId = '', rId = '', dId = '', vId = '';
+    
+    if (customer.province) {
+      const prov = provinces.find(p => p.name === customer.province);
+      if (prov) {
+        pId = prov.id;
+        try {
+          const regRes = await fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${pId}.json`);
+          const regData = await regRes.json();
+          setRegencies(regData);
+          if (customer.regency) {
+            const reg = regData.find((r: any) => r.name === customer.regency);
+            if (reg) {
+              rId = reg.id;
+              const distRes = await fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/districts/${rId}.json`);
+              const distData = await distRes.json();
+              setDistricts(distData);
+              if (customer.district) {
+                const dist = distData.find((d: any) => d.name === customer.district);
+                if (dist) {
+                  dId = dist.id;
+                  const vilRes = await fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${dId}.json`);
+                  const vilData = await vilRes.json();
+                  setVillages(vilData);
+                  if (customer.village) {
+                    const vil = vilData.find((v: any) => v.name === customer.village);
+                    if (vil) vId = vil.id;
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+            console.error("Error fetching regions: ", e);
+        }
+      }
+    } else {
+        setRegencies([]);
+        setDistricts([]);
+        setVillages([]);
+    }
+
+    setSelectedProvinceId(pId);
+    setSelectedRegencyId(rId);
+    setSelectedDistrictId(dId);
+    setSelectedVillageId(vId); 
+    setIsModalOpen(true); 
   };
 
   const formatDate = (date: any) => {
@@ -570,31 +643,7 @@ export default function Customers() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button 
-                        onClick={() => { 
-                          setEditingCustomer(customer); 
-                          setFormData({
-                            name: customer.name,
-                            code: customer.code || '',
-                            email: customer.email,
-                            phone: customer.phone,
-                            address: customer.address,
-                            province: customer.province || '',
-                            regency: customer.regency || '',
-                            district: customer.district || '',
-                            village: customer.village || '',
-                            type: customer.type || 'umum',
-                            categoryId: customer.categoryId || '',
-                            allowTempo: customer.allowTempo || false,
-                            tempoLimitDays: customer.tempoLimitDays || 30,
-                            discount: customer.discount || 0,
-                            hasSavingsProgram: customer.hasSavingsProgram || false
-                          });
-                          setSelectedProvinceId('');
-                          setSelectedRegencyId('');
-                          setSelectedDistrictId('');
-                          setSelectedVillageId(''); 
-                          setIsModalOpen(true); 
-                        }} 
+                        onClick={() => handleEditCustomer(customer)} 
                         className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm hover:shadow border border-transparent hover:border-indigo-100"
                         title="Edit Customer"
                       >
@@ -734,6 +783,46 @@ export default function Customers() {
                             />
                           </div>
                         </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-gray-700">Email</label>
+                            <div className="relative group">
+                              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                              <input
+                                type="email"
+                                placeholder="email@perusahaan.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-gray-700">No. WA</label>
+                            <div className="relative group">
+                              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                              <input
+                                type="text"
+                                required
+                                placeholder="+62 812..."
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-gray-700">Keterangan</label>
+                          <textarea
+                            placeholder="Catatan tambahan..."
+                            value={formData.notes || ''}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            className="w-full p-4 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all h-[100px] text-sm resize-none"
+                          />
+                        </div>
                         
                         <div className="space-y-1.5">
                           <label className="text-sm font-medium text-gray-700">Customer Code</label>
@@ -869,40 +958,8 @@ export default function Customers() {
                     {/* Section: Contact & Address */}
                     <div className="space-y-6">
                       <div className="flex items-center gap-2 text-indigo-600 mb-2">
-                        <Mail className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-wider">Kontak & Alamat</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                          <label className="text-sm font-medium text-gray-700">Alamat Email</label>
-                          <div className="relative group">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
-                            <input
-                              type="email"
-                              required
-                              placeholder="email@perusahaan.com"
-                              value={formData.email}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                              className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label className="text-sm font-medium text-gray-700">Nomor Telepon/WA</label>
-                          <div className="relative group">
-                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
-                            <input
-                              type="text"
-                              required
-                              placeholder="+62 812..."
-                              value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                              className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                            />
-                          </div>
-                        </div>
+                        <MapPin className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Detail Alamat</span>
                       </div>
 
                       <div className="space-y-4">
@@ -974,6 +1031,20 @@ export default function Customers() {
                               value={formData.address}
                               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                               className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all h-[130px] text-sm resize-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-medium text-gray-700">Share Loc (Tautan Maps)</label>
+                          <div className="relative group">
+                            <Link className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                            <input
+                              type="url"
+                              placeholder="Link Google Maps..."
+                              value={formData.locationUrl || ''}
+                              onChange={(e) => setFormData({ ...formData, locationUrl: e.target.value })}
+                              className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                             />
                           </div>
                         </div>
@@ -1070,7 +1141,27 @@ export default function Customers() {
                             selectedCustomerForDetail.province
                           ].filter(Boolean).join(', ') || '-'}
                         </p>
+                        {selectedCustomerForDetail.locationUrl && (
+                          <div className="pl-7 mt-2">
+                            <a href={selectedCustomerForDetail.locationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
+                              <Link className="w-3 h-3" />
+                              Buka Peta (Share Loc)
+                            </a>
+                          </div>
+                        )}
                       </div>
+                      
+                      {selectedCustomerForDetail.notes && (
+                        <div className="p-4 rounded-xl bg-gray-50 border border-gray-100/50 md:col-span-2">
+                          <div className="flex items-center gap-3 mb-1">
+                            <Info className="w-4 h-4 text-gray-400" />
+                            <span className="text-xs font-semibold text-gray-500">Keterangan</span>
+                          </div>
+                          <p className="text-sm font-bold text-gray-900 pl-7 whitespace-pre-wrap">
+                            {selectedCustomerForDetail.notes}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

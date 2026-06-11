@@ -46,7 +46,7 @@ const AVAILABLE_MENUS = [
       { label: 'Daftar Produk' },
       { label: 'Riwayat Produk' },
       { label: 'Kategori' },
-      { label: 'Lini Bisnis' },
+      { label: 'Market Bisnis' },
       { label: 'Stock' },
       { label: 'Gudang' },
       { label: 'Report Inventory' },

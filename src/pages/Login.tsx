@@ -117,11 +117,11 @@ export default function Login() {
       </div>
 
       {/* Right Login Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-12 lg:p-24 relative z-20 bg-white">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center p-8 sm:p-12 lg:p-24 relative z-20 bg-gray-50">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[400px] mx-auto"
+          className="w-full max-w-[440px] mx-auto bg-white p-8 sm:p-10 rounded-2xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.1)] border border-gray-200/50"
         >
           <div className="lg:hidden mb-8 flex items-center gap-2">
              <img src={brand.faviconUrl} alt={brand.appName} className="w-8 h-8 rounded-lg" />

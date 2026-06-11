@@ -144,8 +144,8 @@ export default function Invoices() {
       return [
         (index + 1).toString(),
         o.orderNumber,
-        o.date?.toDate().toLocaleDateString('id-ID') || '-',
-        o.dueDate?.toDate().toLocaleDateString('id-ID') || '-',
+        (o.date || o.createdAt)?.toDate().toLocaleDateString('id-ID') || '-',
+        (o.dueDate || o.date || o.createdAt)?.toDate().toLocaleDateString('id-ID') || '-',
         o.totalAmount.toLocaleString(),
         runningTotal.toLocaleString()
       ];
@@ -382,7 +382,7 @@ export default function Invoices() {
                       <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="w-3 h-3" />
                         <span className="text-xs font-medium">
-                          {order.date?.toDate().toLocaleDateString('id-ID')}
+                          {(order.date || order.createdAt)?.toDate().toLocaleDateString('id-ID') || '-'}
                         </span>
                       </div>
                     </td>
@@ -390,7 +390,7 @@ export default function Invoices() {
                       <div className={`flex items-center gap-2 ${isOverdue ? 'text-red-600' : 'text-orange-600'}`}>
                         <AlertCircle className="w-3 h-3" />
                         <span className="text-xs font-black">
-                          {order.dueDate?.toDate().toLocaleDateString('id-ID') || '-'}
+                          {(order.dueDate || order.date || order.createdAt)?.toDate().toLocaleDateString('id-ID') || '-'}
                         </span>
                       </div>
                     </td>
@@ -577,7 +577,7 @@ export default function Invoices() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tanggal Transaksi</p>
-                      <p className="text-sm font-bold text-gray-900">{selectedOrder.date?.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                      <p className="text-sm font-bold text-gray-900">{(selectedOrder.date || selectedOrder.createdAt)?.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) || '-'}</p>
                     </div>
                   </div>
                   <div className="space-y-4">

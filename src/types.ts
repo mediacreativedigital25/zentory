@@ -263,6 +263,8 @@ export interface Customer {
   regency?: string;
   district?: string;
   village?: string;
+  locationUrl?: string;
+  notes?: string;
   type: 'umum' | 'langganan';
   categoryId?: string;
   allowTempo: boolean;
