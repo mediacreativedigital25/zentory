@@ -301,6 +301,12 @@ export default function SalesOrderReceive() {
           // 1. Update Order Status
           await updateDoc(doc(db, 'orders', orderId), { status: newStatus });
           
+          if ((newStatus === 'confirmed' || newStatus === 'processed') && (oldStatus !== 'confirmed' && oldStatus !== 'processed')) {
+              import('../lib/autoReceipt').then(({ autoGenerateReceiptForConfirm }) => {
+                 autoGenerateReceiptForConfirm({ ...order, status: newStatus }, profile).catch(err => console.error("Auto receipt error:", err));
+              });
+          }
+          
           // 2. Update corresponding transaction if it exists
           if (order.orderNumber) {
             const transQuery = profile?.role === 'superadmin'

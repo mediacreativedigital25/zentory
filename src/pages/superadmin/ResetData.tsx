@@ -31,41 +31,78 @@ export default function SuperAdminResetData() {
     fetchTenants();
   }, [profile]);
 
-  const collectionsToReset = [
-    { id: 'orders', label: 'Orders (Pesanan)' },
-    { id: 'invoice_collections', label: 'Invoices (Faktur Penjualan)' },
-    { id: 'finance_invoices', label: 'Billing Invoices (Tagihan Langganan)' },
-    { id: 'payment_receipts', label: 'Payment Receipts (Kuitansi)' },
-    { id: 'transactions', label: 'Transactions (Jurnal/Keuangan)' },
-    { id: 'bank_accounts', label: 'Bank Accounts (Rekening)' },
-    { id: 'bank_transfers', label: 'Bank Transfers (Transfer Antar Rekening)' },
-    { id: 'dailyClosings', label: 'Daily Closings (Tutup Buku)' },
-    { id: 'charityRecords', label: 'Charity Records (Zakat/Infaq)' },
-    { id: 'products', label: 'Products (Produk)' },
-    { id: 'categories', label: 'Categories (Kategori Produk)' },
-    { id: 'warehouses', label: 'Warehouses (Gudang)' },
-    { id: 'stock_logs', label: 'Stock Logs (Riwayat Stok)' },
-    { id: 'suppliers', label: 'Suppliers (Pemasok)' },
-    { id: 'purchase_requests', label: 'Purchase Requests (PR)' },
-    { id: 'purchase_orders', label: 'Purchase Orders (PO)' },
-    { id: 'goods_receipts', label: 'Goods Receipts (GR)' },
-    { id: 'purchase_invoices', label: 'Purchase Invoices (PI)' },
-    { id: 'customers', label: 'Customers (Pelanggan)' },
-    { id: 'customer_categories', label: 'Customer Categories (Kategori Pelanggan)' },
-    { id: 'sales_targets', label: 'Sales Targets (Target Penjualan)' },
-    { id: 'coupons', label: 'Coupons (Kupon Diskon)' },
-    { id: 'approval_requests', label: 'Approval Requests (Persetujuan)' },
-    { id: 'delete_requests', label: 'Delete/Edit Requests (Permintaan Edit/Hapus)' },
-    { id: 'payment_corrections', label: 'Payment Corrections (Koreksi Pembayaran)' },
-    { id: 'expenseRules', label: 'Expense Rules (Aturan Biaya)' },
-    { id: 'roles', label: 'Custom Roles (Jabatan)' },
-    { id: 'counters', label: 'Counters (Sequence Numbers / ID)' },
-    { id: 'services', label: 'Layanan / Services (Produk Jasa)' },
-    { id: 'service_categories', label: 'Kategori Layanan' },
-    { id: 'business_lines', label: 'Business Lines (Market Bisnis)' },
-    { id: 'stock_opnames', label: 'Stock Opname' },
-    { id: 'reviews', label: 'Product Reviews (Ulasan Produk)' }
+  const collectionGroups = [
+    {
+      title: 'Sales & Orders',
+      collections: [
+        { id: 'orders', label: 'Orders (Pesanan)' },
+        { id: 'invoice_collections', label: 'Invoices (Faktur Penjualan)' },
+        { id: 'sales_targets', label: 'Sales Targets (Target Penjualan)' },
+        { id: 'coupons', label: 'Coupons (Kupon Diskon)' }
+      ]
+    },
+    {
+      title: 'Finance & Accounting',
+      collections: [
+        { id: 'finance_invoices', label: 'Billing Invoices (Tagihan Langganan)' },
+        { id: 'payment_receipts', label: 'Payment Receipts (Kuitansi)' },
+        { id: 'transactions', label: 'Transactions (Jurnal/Keuangan)' },
+        { id: 'bank_accounts', label: 'Bank Accounts (Rekening)' },
+        { id: 'bank_transfers', label: 'Bank Transfers (Transfer Antar Rekening)' },
+        { id: 'dailyClosings', label: 'Daily Closings (Tutup Buku)' },
+        { id: 'payment_corrections', label: 'Payment Corrections (Koreksi Pembayaran)' },
+        { id: 'charityRecords', label: 'Charity Records (Zakat/Infaq)' },
+        { id: 'expenseRules', label: 'Expense Rules (Aturan Biaya)' }
+      ]
+    },
+    {
+      title: 'Inventory & Products',
+      collections: [
+        { id: 'products', label: 'Products (Produk)' },
+        { id: 'categories', label: 'Categories (Kategori Produk)' },
+        { id: 'warehouses', label: 'Warehouses (Gudang)' },
+        { id: 'stock_logs', label: 'Stock Logs (Riwayat Stok)' },
+        { id: 'stock_opnames', label: 'Stock Opname' },
+        { id: 'reviews', label: 'Product Reviews (Ulasan Produk)' }
+      ]
+    },
+    {
+      title: 'Services & Marketplace',
+      collections: [
+        { id: 'services', label: 'Layanan / Services (Produk Jasa)' },
+        { id: 'service_categories', label: 'Kategori Layanan' },
+        { id: 'business_lines', label: 'Business Lines (Market Bisnis)' }
+      ]
+    },
+    {
+      title: 'Purchasing (Pembelian)',
+      collections: [
+        { id: 'suppliers', label: 'Suppliers (Pemasok)' },
+        { id: 'purchase_requests', label: 'Purchase Requests (PR)' },
+        { id: 'purchase_orders', label: 'Purchase Orders (PO)' },
+        { id: 'goods_receipts', label: 'Goods Receipts (GR)' },
+        { id: 'purchase_invoices', label: 'Purchase Invoices (PI)' }
+      ]
+    },
+    {
+      title: 'Customers & CRM',
+      collections: [
+        { id: 'customers', label: 'Customers (Pelanggan)' },
+        { id: 'customer_categories', label: 'Customer Categories (Kategori Pelanggan)' }
+      ]
+    },
+    {
+      title: 'System & Approval',
+      collections: [
+        { id: 'approval_requests', label: 'Approval Requests (Persetujuan)' },
+        { id: 'delete_requests', label: 'Delete/Edit Requests (Permintaan Edit/Hapus)' },
+        { id: 'roles', label: 'Custom Roles (Jabatan)' },
+        { id: 'counters', label: 'Counters (Sequence Numbers / ID)' }
+      ]
+    }
   ];
+
+  const collectionsToReset = collectionGroups.flatMap(g => g.collections);
 
   const handleResetInitiate = () => {
     if (!selectedResetTenant) return;
@@ -173,22 +210,29 @@ export default function SuperAdminResetData() {
             </select>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <label className="block text-xs font-semibold text-gray-600">2. Pilih Data yang Akan Dihapus</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {collectionsToReset.map(coll => (
-                <label key={coll.id} className="flex items-center p-3 border border-gray-100 rounded-md hover:bg-white cursor-pointer transition-colors text-xs font-medium text-gray-600">
-                  <input
-                    type="checkbox"
-                    checked={resetCollections.includes(coll.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) setResetCollections([...resetCollections, coll.id]);
-                      else setResetCollections(resetCollections.filter(id => id !== coll.id));
-                    }}
-                    className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 mr-3"
-                  />
-                  <span className="text-sm text-gray-700">{coll.label}</span>
-                </label>
+            <div className="space-y-6">
+              {collectionGroups.map((group, idx) => (
+                <div key={idx} className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">{group.title}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {group.collections.map(coll => (
+                      <label key={coll.id} className="flex items-center p-3 border border-gray-200 bg-white shadow-sm rounded-lg hover:border-indigo-300 cursor-pointer transition-all text-xs font-medium text-gray-600">
+                        <input
+                          type="checkbox"
+                          checked={resetCollections.includes(coll.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setResetCollections([...resetCollections, coll.id]);
+                            else setResetCollections(resetCollections.filter(id => id !== coll.id));
+                          }}
+                          className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 mr-3"
+                        />
+                        <span className="text-sm text-gray-700">{coll.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
             <div className="flex space-x-4 mt-2">

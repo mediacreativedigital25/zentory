@@ -117,11 +117,13 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn() && (
+      allow get: if isSignedIn() && (
         request.auth.uid == userId || 
         isSuperAdmin() || 
         (userExists() && existing().tenantId != null && existing().tenantId == getTenantId())
       );
+      
+      allow list: if isSuperAdmin();
       
       allow create: if isSignedIn() && (
         request.auth.uid == userId || 

@@ -263,7 +263,7 @@ export default function Invoices() {
       await addDoc(collection(db, 'invoice_collections'), {
         tenantId: profile.tenantId,
         collectionNumber,
-        customerId: allSameCustomer ? firstCustomer?.customerId : null,
+        customerId: allSameCustomer ? (firstCustomer?.customerId || null) : null,
         customerName: allSameCustomer ? (firstCustomer?.customerName || 'Pelanggan') : 'Berbagai Pelanggan',
         date: serverTimestamp(),
         orderIds: sortedSelectedOrders.map(o => o.id),

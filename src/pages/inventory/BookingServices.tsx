@@ -403,19 +403,18 @@ export default function BookingServices() {
                       <input
                         type="text"
                         required
+                        readOnly
                         value={formData.sku}
-                        onChange={(e) =>
-                          setFormData({ ...formData, sku: e.target.value })
-                        }
-                        className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
+                        className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100 cursor-not-allowed"
                       />
                     </div>
 
                     <div>
                       <label className="block mb-1 text-xs font-semibold text-gray-600">
-                        Kategori Layanan
+                        Kategori Layanan <span className="text-red-500">*</span>
                       </label>
                       <select
+                        required
                         value={formData.category}
                         onChange={(e) =>
                           setFormData({ ...formData, category: e.target.value })
@@ -434,9 +433,10 @@ export default function BookingServices() {
                     {businessLines.length > 0 && (
                       <div className="col-span-2">
                         <label className="block mb-1 text-xs font-semibold text-gray-600">
-                          Market Bisnis (Opsional)
+                          Market Bisnis <span className="text-red-500">*</span>
                         </label>
                         <select
+                          required
                           value={formData.businessLineId}
                           onChange={(e) =>
                             setFormData({
@@ -446,7 +446,7 @@ export default function BookingServices() {
                           }
                           className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
                         >
-                          <option value="">Tanpa Market Bisnis</option>
+                          <option value="">Pilih Market Bisnis</option>
                           {businessLines.map((b) => (
                             <option key={b.id} value={b.id}>
                               {b.name}

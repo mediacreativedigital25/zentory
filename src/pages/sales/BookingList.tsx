@@ -303,6 +303,26 @@ export default function BookingList() {
         notes: editData.notes,
         updatedAt: serverTimestamp()
       });
+
+      if (collectionName === 'payment_corrections' && (selectedBooking as any).invoiceNumber) {
+         try {
+           const oQ = query(collection(db, 'orders'), where('tenantId', '==', profile?.tenantId || (selectedBooking as any).tenantId), where('orderNumber', '==', (selectedBooking as any).invoiceNumber), limit(1));
+           const oSnap = await getDocs(oQ);
+           if (!oSnap.empty) {
+              await updateDoc(doc(db, 'orders', oSnap.docs[0].id), {
+                 status: editData.status,
+                 updatedAt: serverTimestamp()
+              });
+           }
+         } catch (e) { console.error("Failed syncing order status", e); }
+      }
+
+      if ((editData.status === 'confirmed' || editData.status === 'processed') && (selectedBooking.status !== 'confirmed' && selectedBooking.status !== 'processed')) {
+          import('../../lib/autoReceipt').then(({ autoGenerateReceiptForConfirm }) => {
+             autoGenerateReceiptForConfirm({ ...selectedBooking, status: editData.status }, profile).catch(err => console.error("Auto receipt error:", err));
+          });
+      }
+
       setIsEditOpen(false);
     } catch (error: any) {
       const collectionName = (selectedBooking as any)?.docType === 'booking' ? 'payment_corrections' : 'orders';

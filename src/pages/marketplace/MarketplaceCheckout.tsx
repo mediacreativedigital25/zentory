@@ -34,20 +34,39 @@ export default function MarketplaceCheckout() {
   
   // Form State
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [addressData, setAddressData] = useState({
-    name: profile?.displayName || '',
-    phone: '',
-    address: profile?.addressDetails?.detail || profile?.address || '',
-    province: profile?.addressDetails?.province || '',
-    city: profile?.addressDetails?.city || '',
-    district: profile?.addressDetails?.district || '',
-    village: profile?.addressDetails?.village || '',
-    postalCode: profile?.addressDetails?.postalCode || '',
-    shareLocation: '',
-    pack: '',
-    bookingDate: new Date().toISOString().split('T')[0],
-    bookingTime: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const [addressData, setAddressData] = useState(() => {
+    const saved = localStorage.getItem('checkout_customer_data');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          bookingDate: parsed.bookingDate || new Date().toISOString().split('T')[0],
+          bookingTime: parsed.bookingTime || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
+        };
+      } catch (e) {
+        console.error('Failed to parse checkout_customer_data', e);
+      }
+    }
+    return {
+      name: profile?.displayName || '',
+      phone: '',
+      address: profile?.addressDetails?.detail || profile?.address || '',
+      province: profile?.addressDetails?.province || '',
+      city: profile?.addressDetails?.city || '',
+      district: profile?.addressDetails?.district || '',
+      village: profile?.addressDetails?.village || '',
+      postalCode: profile?.addressDetails?.postalCode || '',
+      shareLocation: '',
+      pack: '',
+      bookingDate: new Date().toISOString().split('T')[0],
+      bookingTime: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem('checkout_customer_data', JSON.stringify(addressData));
+  }, [addressData]);
 
   // Region API States
   const [provinces, setProvinces] = useState<any[]>([]);
@@ -219,6 +238,7 @@ export default function MarketplaceCheckout() {
   }, [profile]);
   
   const [paymentMethod, setPaymentMethod] = useState('whatsapp');
+  const [paymentType, setPaymentType] = useState<'dp' | 'full'>('dp');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [finalOrderTotal, setFinalOrderTotal] = useState(0);
@@ -236,10 +256,10 @@ export default function MarketplaceCheckout() {
 
   // Down Payment Logic
   const downPaymentSettings = tenant?.paymentMethods?.downPayment;
-  const isDownPaymentApplied = isBookingTheme && downPaymentSettings?.isEnabled;
+  const isDownPaymentOptionAvailable = isBookingTheme && downPaymentSettings?.isEnabled;
   let downPaymentAmount = 0;
   
-  if (isDownPaymentApplied && downPaymentSettings) {
+  if (isDownPaymentOptionAvailable && downPaymentSettings) {
     if (downPaymentSettings.type === 'percentage') {
       downPaymentAmount = (cartTotal * (downPaymentSettings.amount || 0)) / 100;
     } else if (downPaymentSettings.type === 'fixed') {
@@ -247,6 +267,7 @@ export default function MarketplaceCheckout() {
     }
   }
   
+  const isDownPaymentApplied = isDownPaymentOptionAvailable && paymentType === 'dp';
   const paymentAmountToProcess = isDownPaymentApplied ? downPaymentAmount : cartTotal;
 
   useEffect(() => {
@@ -328,10 +349,10 @@ export default function MarketplaceCheckout() {
 
         const productsToUpdate: { ref: any, currentStock: number, newStock: number, name: string, productId: string }[] = [];
         for (const pInfo of productDocs) {
-          if (pInfo.data.type !== 'service') {
+          if (pInfo.data.type !== 'service' && !isBookingTheme && pInfo.data.type !== 'booking') {
             const currentStock = pInfo.data.stock || 0;
             if (currentStock < pInfo.requestedQty) {
-              throw new Error(`Stok ${pInfo.requestedQty} tidak mencukupi (Tersisa: ${currentStock}).`);
+              throw new Error(`Stok produk ${pInfo.productName} tidak mencukupi (Tersisa: ${currentStock}).`);
             }
             productsToUpdate.push({
               ref: pInfo.ref,
@@ -386,7 +407,7 @@ export default function MarketplaceCheckout() {
             hpp: item.product.hpp || 0
           })),
           paymentMethod,
-          paymentType: 'cash',
+          paymentType: isDownPaymentOptionAvailable ? paymentType : 'full',
           paymentStatus: 'unpaid',
           totalAmount: cartTotal,
           downPaymentAmount: isDownPaymentApplied ? downPaymentAmount : 0,
@@ -539,7 +560,6 @@ export default function MarketplaceCheckout() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center">
           <Link to={`/${getBasePath()}/${tenantSlug}`} className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition-colors">
@@ -549,309 +569,12 @@ export default function MarketplaceCheckout() {
           <div className="flex-1 text-center font-bold text-lg text-gray-900">
             {tenant?.name || 'Checkout'}
           </div>
-          <div className="w-8 sm:w-32" /> {/* Spacer for centering */}
+          <div className="w-8 sm:w-32" />
         </div>
       </header>
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {renderStepIndicator()}
-        
-        {currentStep === 1 && (
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="flex-1">
-              <div className="bg-green-50 text-green-700 p-4 rounded-xl border border-green-100 flex items-start gap-3 mb-6">
-                 <Tag className="w-5 h-5 shrink-0 mt-0.5" />
-                 <div>
-                   <h4 className="font-semibold">Available Offer</h4>
-                   <p className="text-sm mt-1">Dapatkan diskon ongkos kirim ke seluruh Indonesia untuk pembelian pertama.</p>
-                 </div>
-              </div>
-              
-              <h2 className="text-xl font-bold text-gray-900 mb-4">My Shopping Bag ({totalItems} Items)</h2>
-              
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
-                {cart.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    Keranjang kosong. <Link to={`/${getBasePath()}/${tenantSlug}`} className="text-indigo-600 underline">Ayo belanja!</Link>
-                  </div>
-                ) : (
-                  cart.map(item => (
-                    <div key={item.id} className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 relative group">
-                      <div className="w-24 h-24 bg-gray-100 rounded-lg shrink-0 flex items-center justify-center overflow-hidden">
-                         {item.product.image || item.product.imageUrl ? (
-                            <img src={item.product.image || item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
-                         ) : (
-                            <ShoppingCart className="w-8 h-8 text-gray-300" />
-                         )}
-                      </div>
-                      <div className="flex-1 flex flex-col justify-between">
-                         <div className="pr-8">
-                           <h3 className="font-semibold text-gray-900 text-lg leading-snug mb-1">{item.product.name}</h3>
-                           <p className="text-sm text-gray-500 mb-2">Sold by: <span className="text-indigo-600 font-medium">{tenant?.name}</span></p>
-                           <div className="inline-block bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">In Stock</div>
-                         </div>
-                         <div className="mt-4 flex items-center gap-4">
-                            <div className="flex items-center gap-1 bg-white border border-gray-300 rounded overflow-hidden">
-                              <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-2 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600"><Minus className="w-4 h-4" /></button>
-                              <input type="number" readOnly value={item.quantity} className="w-10 text-center text-sm font-semibold text-gray-900 bg-white" />
-                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-2 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600"><Plus className="w-4 h-4" /></button>
-                            </div>
-                         </div>
-                      </div>
-                      <div className="absolute top-4 sm:top-6 right-4 sm:right-6 text-right flex flex-col items-end gap-2">
-                        <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500 transition-colors">
-                           <Trash2 className="w-5 h-5" />
-                        </button>
-                        <div className="text-lg font-bold text-indigo-600 mt-2">Rp {item.product.price.toLocaleString('id-ID')}</div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-            
-            <div className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-6">
-               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2"><Gift className="w-4 h-4 text-gray-500" /> Offer</h3>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Enter Promo Code" className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
-                    <button className="bg-indigo-100 text-indigo-700 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-indigo-200 transition-colors">Apply</button>
-                  </div>
-               </div>
-               
-               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="font-bold text-gray-900 mb-4">Price Details</h3>
-                  <div className="space-y-3 text-sm">
-                     <div className="flex justify-between text-gray-600">
-                       <span>Bag Total</span>
-                       <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
-                     </div>
-                     <div className="flex justify-between text-gray-600">
-                       <span>Coupon Discount</span>
-                       <span className="text-indigo-600 font-semibold cursor-pointer">Apply Coupon</span>
-                     </div>
-                     <div className="flex justify-between text-gray-600">
-                       <span>Delivery Charges</span>
-                       <span className="text-green-600 font-semibold">TBD</span>
-                     </div>
-                  </div>
-                  <div className="border-t border-gray-100 mt-4 pt-4">
-                     <div className="flex justify-between font-bold text-lg text-gray-900 mb-2">
-                       <span>{isDownPaymentApplied ? 'Total Layanan' : 'Order Total'}</span>
-                       <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
-                     </div>
-                     {isDownPaymentApplied && (
-                       <div className="flex justify-between items-center text-lg font-bold text-indigo-700 bg-indigo-50 p-4 rounded-xl mt-4">
-                         <span>Down Payment (DP)</span>
-                         <span>Rp {paymentAmountToProcess.toLocaleString('id-ID')}</span>
-                       </div>
-                     )}
-                  </div>
-                  
-                  <button 
-                    onClick={handleNextStep}
-                    disabled={cart.length === 0}
-                    className="w-full mt-6 bg-indigo-600 text-white font-bold py-3.5 rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Place Order
-                  </button>
-               </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 2 && (
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
-               <h2 className="text-xl font-bold text-gray-900 mb-6">{isBookingTheme ? 'Detail Pemesan' : 'Delivery Address'}</h2>
-               <div className="space-y-4 max-w-2xl">
-                 {hasAddress ? (
-                  <div className="border border-gray-300 rounded-lg p-4 mb-4">
-                     <div className="grid grid-cols-[120px_10px_1fr] gap-2 mb-2 text-sm text-gray-800">
-                        <div className="font-semibold">Nama</div><div>:</div><div>{addressData.name}</div>
-                        <div className="font-semibold">No WhatsApp</div><div>:</div><div>{addressData.phone}</div>
-                        {isBookingTheme && addressData.bookingDate && (
-                           <>
-                             <div className="font-semibold">Jadwal</div><div>:</div>
-                             <div>{new Date(addressData.bookingDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})} {addressData.bookingTime}</div>
-                           </>
-                        )}
-                        <div className="font-semibold">Lokasi</div><div>:</div><div>{addressData.address}, Desa {addressData.village}, Kec. {addressData.district}, {addressData.city}, {addressData.province}</div>
-                        {isBookingTheme && addressData.shareLocation && (
-                           <>
-                             <div className="font-semibold">Share Location</div><div>:</div>
-                             <div>
-                               <a href={addressData.shareLocation} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Lihat Map</a>
-                             </div>
-                           </>
-                        )}
-                        {isBookingTheme && (addressData as any).pack && (
-                           <>
-                             <div className="font-semibold">Pack Catering</div><div>:</div>
-                             <div>{(addressData as any).pack}</div>
-                           </>
-                        )}
-                     </div>
-                     <div className="mt-4 flex justify-end">
-                       <button onClick={() => setIsAddressModalOpen(true)} className="text-indigo-600 font-semibold text-sm hover:text-indigo-700">
-                         {isBookingTheme ? 'Ubah Data' : 'Ubah Alamat'}
-                       </button>
-                     </div>
-                  </div>
-                 ) : (
-                  <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg mb-6">
-                    <p className="text-gray-500 mb-4">{isBookingTheme ? 'Belum ada data pemesan' : 'Belum ada alamat pengiriman'}</p>
-                    <button onClick={() => setIsAddressModalOpen(true)} className="bg-indigo-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
-                      {isBookingTheme ? 'Isi Data Pemesan' : 'Tambah Alamat'}
-                    </button>
-                  </div>
-                 )}
-               </div>
-               
-               <div className="mt-8 flex items-center justify-between">
-                 <button onClick={handlePrevStep} className="text-gray-500 hover:text-gray-900 font-semibold px-4 py-2 rounded-lg transition-colors border border-gray-200">
-                   Back to Cart
-                 </button>
-                 <button onClick={handleNextStep} className="bg-indigo-600 text-white font-bold px-8 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors shadow-md">
-                   Continue
-                 </button>
-               </div>
-            </div>
-            
-            {/* Same Sidebar for Order Summary */}
-            <div className="w-full lg:w-80 xl:w-96 shrink-0">
-               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="font-bold text-gray-900 mb-4">Order Summary</h3>
-                  <div className="space-y-4 mb-6">
-                    {cart.map(item => (
-                      <div key={item.id} className="flex gap-3">
-                         <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden shrink-0">
-                            {item.product.image || item.product.imageUrl ? (
-                              <img src={item.product.image || item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                                <ShoppingCart className="w-5 h-5 text-gray-300" />
-                              </div>
-                            )}
-                         </div>
-                         <div className="flex-1">
-                           <h4 className="text-sm font-semibold text-gray-800 line-clamp-1">{item.product.name}</h4>
-                           <div className="text-xs text-gray-500 mt-0.5">Qty: {item.quantity}</div>
-                           <div className="text-sm font-bold text-indigo-600 mt-0.5">Rp {item.product.price.toLocaleString('id-ID')}</div>
-                         </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
-                     <div className="flex justify-between font-bold text-lg text-gray-900">
-                       <span>{isDownPaymentApplied ? 'Total Layanan' : 'Total'}</span>
-                       <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
-                     </div>
-                     {isDownPaymentApplied && (
-                       <div className="flex justify-between font-bold text-indigo-700 bg-indigo-50 p-3 rounded-lg text-sm">
-                         <span>Down Payment (DP)</span>
-                         <span>Rp {paymentAmountToProcess.toLocaleString('id-ID')}</span>
-                       </div>
-                     )}
-                  </div>
-               </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 3 && (
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
-               <h2 className="text-xl font-bold text-gray-900 mb-6">Payment Options</h2>
-               
-               <div className="space-y-4 max-w-2xl">
-                 <div 
-                   onClick={() => setPaymentMethod('whatsapp')}
-                   className={`border-2 rounded-xl p-4 cursor-pointer transition-colors flex items-center gap-4 ${paymentMethod === 'whatsapp' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}
-                 >
-                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'whatsapp' ? 'border-indigo-600' : 'border-gray-300'}`}>
-                     {paymentMethod === 'whatsapp' && <div className="w-2.5 h-2.5 bg-indigo-600 rounded-full" />}
-                   </div>
-                   <div className="flex-1">
-                     <h4 className="font-semibold text-gray-900">WhatsApp Checkout</h4>
-                     <p className="text-sm text-gray-500 mt-1">Selesaikan pembayaran & konfirmasi via chat WhatsApp ke penjual.</p>
-                   </div>
-                 </div>
-                 
-                 <div 
-                   className="border-2 border-gray-100 rounded-xl p-4 flex items-center gap-4 bg-gray-50 opacity-60 relative overflow-hidden"
-                 >
-                   <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></div>
-                   <div className="flex-1">
-                     </div>
-                  </div>
-                  {tenant?.paymentMethods?.manual?.isEnabled && tenant?.paymentMethods?.manual?.accounts?.length > 0 && (
-                    <div 
-                      onClick={() => setPaymentMethod('manual')}
-                      className={`border-2 rounded-xl p-4 cursor-pointer transition-colors flex items-center gap-4 ${paymentMethod === 'manual' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}
-                    >
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'manual' ? 'border-indigo-600' : 'border-gray-300'}`}>
-                        {paymentMethod === 'manual' && <div className="w-2.5 h-2.5 bg-indigo-600 rounded-full" />}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">Transfer Bank / Manual</h4>
-                        <p className="text-sm text-gray-500 mt-1">Transfer langsung ke rekening toko dan konfirmasi manual.</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mt-8 flex items-center justify-between max-w-2xl">
-                 <button onClick={handlePrevStep} className="text-gray-500 hover:text-gray-900 font-semibold px-4 py-2 rounded-lg transition-colors border border-gray-200">
-                   Back to Address
-                 </button>
-               </div>
-            </div>
-            
-            <div className="w-full lg:w-80 xl:w-96 shrink-0">
-               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="font-bold text-gray-900 mb-4">Final Summary</h3>
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                    <h4 className="text-sm font-semibold text-gray-900 mb-1">Kirim Ke:</h4>
-                    <p className="text-sm text-gray-600 font-medium">{addressData.name} ({addressData.phone})</p>
-                    {isBookingTheme && addressData.bookingDate && (
-                      <p className="text-sm text-indigo-700 font-semibold mb-1 mt-1">
-                        Jadwal: {new Date(addressData.bookingDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})} {addressData.bookingTime}
-                      </p>
-                    )}
-                    <p className="text-sm text-gray-600 mt-1">{addressData.address}</p>
-                    <p className="text-sm text-gray-600">Desa/Kel {addressData.village}, Kec. {addressData.district}</p>
-                    <p className="text-sm text-gray-600">{addressData.city}, {addressData.province}</p>
-                    <p className="text-sm text-gray-600">{addressData.postalCode && `Kode Pos: ${addressData.postalCode}`}</p>
-                  </div>
-                  
-                  <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
-                     <div className="flex justify-between font-bold text-lg text-gray-900">
-                       <span>{isDownPaymentApplied ? 'Total Layanan' : 'Total'}</span>
-                       <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
-                     </div>
-                     {isDownPaymentApplied && (
-                       <div className="flex justify-between font-bold text-indigo-700 bg-indigo-50 p-3 rounded-lg text-sm">
-                         <span>Down Payment (DP)</span>
-                         <span>Rp {paymentAmountToProcess.toLocaleString('id-ID')}</span>
-                       </div>
-                     )}
-                  </div>
-                  
-                  <button 
-                    onClick={handlePlaceOrder}
-                    disabled={isSubmitting}
-                    className="w-full mt-6 bg-indigo-600 text-white font-bold py-3.5 rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
-                  >
-                    {isSubmitting ? 'Memproses...' : 'Confirm Order'}
-                  </button>
-               </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 4 && (
+        {currentStep === 4 ? (
           <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-8 sm:p-12 text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="w-10 h-10 text-green-600" />
@@ -899,7 +622,7 @@ export default function MarketplaceCheckout() {
                        href={`https://wa.me/${tenant?.settings?.phone || tenant?.phone}?text=${encodeURIComponent(`Halo ${tenant.name},\nSaya telah melakukan pembayaran untuk pesanan nomor *${orderId}* sebesar Rp ${finalOrderTotal.toLocaleString('id-ID')}.\n\nBerikut bukti transfernya:`)}`}
                        target="_blank"
                        rel="noopener noreferrer"
-                       className="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-green-600 transition-colors"
+                       className="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-600 transition-colors"
                      >
                        <MessageSquare className="w-4 h-4" />
                        Konfirmasi Pembayaran
@@ -912,222 +635,342 @@ export default function MarketplaceCheckout() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
                <Link 
                  to={`/${getBasePath()}/${tenantSlug}`}
-                 className="bg-indigo-600 text-white font-bold px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors w-full sm:w-auto"
+                 className="bg-indigo-600 text-white font-bold px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors w-full sm:w-auto"
                >
                  Kembali Belanja
                </Link>
             </div>
           </div>
-        )}
-      </main>
-
-      {/* Address Modal */}
-      {isAddressModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="font-bold text-gray-900">{isBookingTheme ? 'Detail Pemesan' : 'Alamat Pengiriman'}</h3>
-              <button 
-                onClick={() => setIsAddressModalOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-              <div className="space-y-4">
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">{isBookingTheme ? 'Nama' : 'Nama Lengkap'} *</label>
-                     <input 
-                       type="text" 
-                       required
-                       value={addressData.name}
-                       onChange={e => setAddressData({...addressData, name: e.target.value})}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                       placeholder="Misal: Budi Santoso"
-                     />
-                   </div>
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">No. Handphone / WhatsApp *</label>
-                     <input 
-                       type="text" 
-                       required
-                       value={addressData.phone}
-                       onChange={e => setAddressData({...addressData, phone: e.target.value})}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                       placeholder="Misal: 08123456789"
-                     />
-                   </div>
-                 </div>
-                 
-                 {isBookingTheme && (
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        ) : cart.length === 0 ? (
+           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <ShoppingCart className="w-10 h-10 text-gray-400" />
+             </div>
+             <h2 className="text-2xl font-bold text-gray-900 mb-4">Keranjang Kosong</h2>
+             <p className="text-gray-500 mb-8">Anda belum menambahkan produk ke dalam keranjang belanja.</p>
+             <Link 
+               to={`/${getBasePath()}/${tenantSlug}`}
+               className="bg-indigo-600 text-white font-bold px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors inline-block"
+             >
+               Mulai Belanja
+             </Link>
+           </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1 space-y-6">
+              {/* Form Section */}
+              <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">{isBookingTheme ? 'Detail Pemesan' : 'Detail Tagihan'}</h2>
+                
+                <div className="space-y-5">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                      <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pelaksanaan *</label>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">{isBookingTheme ? 'Nama' : 'Nama Lengkap'} *</label>
                        <input 
-                         type="date" 
+                         type="text" 
                          required
-                         value={addressData.bookingDate || ''}
-                         onChange={e => setAddressData({...addressData, bookingDate: e.target.value})}
-                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" 
-                       />
-                     </div>
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-1">Waktu Pelaksanaan *</label>
-                       <input 
-                         type="time" 
-                         required
-                         value={addressData.bookingTime || ''}
-                         onChange={e => setAddressData({...addressData, bookingTime: e.target.value})}
-                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" 
-                       />
-                     </div>
-                   </div>
-                 )}
-
-                 <div>
-                   <label className="block text-sm font-semibold text-gray-700 mb-1">Alamat Lengkap *</label>
-                   <textarea 
-                     rows={3}
-                     required
-                     value={addressData.address}
-                     onChange={e => setAddressData({...addressData, address: e.target.value})}
-                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 resize-none" 
-                     placeholder="Jalan, RT/RW, Patokan"
-                   />
-                 </div>
-                 
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">Provinsi *</label>
-                     <select
-                       required
-                       value={selectedProvinceId || (provinces.find(p => p.name === addressData.province)?.id || '')}
-                       onChange={handleProvinceChange}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                     >
-                       <option value="">Pilih Provinsi</option>
-                       {provinces.map(p => (
-                         <option key={p.id} value={p.id}>{p.name}</option>
-                       ))}
-                     </select>
-                   </div>
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">Kota / Kabupaten *</label>
-                     <select
-                       required
-                       value={selectedCityId || (cities.find(c => c.name === addressData.city)?.id || '')}
-                       onChange={handleCityChange}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                       disabled={!selectedProvinceId && !addressData.province}
-                     >
-                       <option value="">Pilih Kota/Kabupaten</option>
-                       {cities.map(c => (
-                         <option key={c.id} value={c.id}>{c.name}</option>
-                       ))}
-                     </select>
-                   </div>
-                 </div>
-
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">Kecamatan *</label>
-                     <select
-                       required
-                       value={selectedDistrictId || (districts.find(d => d.name === addressData.district)?.id || '')}
-                       onChange={handleDistrictChange}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                       disabled={!selectedCityId && !addressData.city}
-                     >
-                       <option value="">Pilih Kecamatan</option>
-                       {districts.map(d => (
-                         <option key={d.id} value={d.id}>{d.name}</option>
-                       ))}
-                     </select>
-                   </div>
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">Desa / Kelurahan *</label>
-                     <select
-                       required
-                       value={selectedVillageId || (villages.find(v => v.name === addressData.village)?.id || '')}
-                       onChange={handleVillageChange}
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                       disabled={!selectedDistrictId && !addressData.district}
-                     >
-                       <option value="">Pilih Desa/Kelurahan</option>
-                       {villages.map(v => (
-                         <option key={v.id} value={v.id}>{v.name}</option>
-                       ))}
-                     </select>
-                   </div>
-                 </div>
-                 
-                 {!isBookingTheme && (
-                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-1">Kode Pos</label>
-                     <input 
-                       type="text"
-                       value={addressData.postalCode}
-                       onChange={e => setAddressData({...addressData, postalCode: e.target.value})} 
-                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                       placeholder="Misal: 12345"
-                     />
-                   </div>
-                 )}
-
-                 {isBookingTheme && (
-                   <>
-                     <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-1">Share Location (URL/Link Google Maps) *</label>
-                       <input 
-                         type="url"
-                         required
-                         value={addressData.shareLocation || ''}
-                         onChange={e => setAddressData({...addressData, shareLocation: e.target.value})} 
+                         value={addressData.name}
+                         onChange={e => setAddressData({...addressData, name: e.target.value})}
                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
-                         placeholder="https://maps.google.com/..."
+                         placeholder="Misal: Budi Santoso"
                        />
                      </div>
                      <div>
-                       <label className="block text-sm font-semibold text-gray-700 mb-1">Pack Catering / Keterangan (Opsional)</label>
-                       <textarea
-                         rows={2}
-                         value={(addressData as any).pack || ''}
-                         onChange={e => setAddressData({...addressData, pack: e.target.value})} 
-                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 resize-none" 
-                         placeholder="Misal: 50 Pack"
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">No. Handphone / WhatsApp *</label>
+                       <input 
+                         type="text" 
+                         required
+                         value={addressData.phone}
+                         onChange={e => setAddressData({...addressData, phone: e.target.value})}
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
+                         placeholder="Misal: 08123456789"
                        />
                      </div>
-                   </>
-                 )}
+                   </div>
+                   
+                   {isBookingTheme && (
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                       <div>
+                         <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pelaksanaan *</label>
+                         <input 
+                           type="date" 
+                           required
+                           value={addressData.bookingDate || ''}
+                           onChange={e => setAddressData({...addressData, bookingDate: e.target.value})}
+                           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" 
+                         />
+                       </div>
+                       <div>
+                         <label className="block text-sm font-semibold text-gray-700 mb-1">Waktu Pelaksanaan *</label>
+                         <input 
+                           type="time" 
+                           required
+                           value={addressData.bookingTime || ''}
+                           onChange={e => setAddressData({...addressData, bookingTime: e.target.value})}
+                           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" 
+                         />
+                       </div>
+                     </div>
+                   )}
+
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Provinsi *</label>
+                       <select
+                         required
+                         value={selectedProvinceId || (provinces.find(p => p.name === addressData.province)?.id || '')}
+                         onChange={handleProvinceChange}
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                       >
+                         <option value="">Pilih Provinsi</option>
+                         {provinces.map(p => (
+                           <option key={p.id} value={p.id}>{p.name}</option>
+                         ))}
+                       </select>
+                     </div>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Kota / Kabupaten *</label>
+                       <select
+                         required
+                         value={selectedCityId || (cities.find(c => c.name === addressData.city)?.id || '')}
+                         onChange={handleCityChange}
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                         disabled={!selectedProvinceId && !addressData.province}
+                       >
+                         <option value="">Pilih Kota/Kabupaten</option>
+                         {cities.map(c => (
+                           <option key={c.id} value={c.id}>{c.name}</option>
+                         ))}
+                       </select>
+                     </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Kecamatan *</label>
+                       <select
+                         required
+                         value={selectedDistrictId || (districts.find(d => d.name === addressData.district)?.id || '')}
+                         onChange={handleDistrictChange}
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                         disabled={!selectedCityId && !addressData.city}
+                       >
+                         <option value="">Pilih Kecamatan</option>
+                         {districts.map(d => (
+                           <option key={d.id} value={d.id}>{d.name}</option>
+                         ))}
+                       </select>
+                     </div>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Desa / Kelurahan *</label>
+                       <select
+                         required
+                         value={selectedVillageId || (villages.find(v => v.name === addressData.village)?.id || '')}
+                         onChange={handleVillageChange}
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                         disabled={!selectedDistrictId && !addressData.district}
+                       >
+                         <option value="">Pilih Desa/Kelurahan</option>
+                         {villages.map(v => (
+                           <option key={v.id} value={v.id}>{v.name}</option>
+                         ))}
+                       </select>
+                     </div>
+                   </div>
+                   
+                   <div>
+                     <label className="block text-sm font-semibold text-gray-700 mb-1">{isBookingTheme ? 'Alamat Pelaksanaan' : 'Alamat Jalan'} *</label>
+                     <textarea 
+                       rows={3}
+                       required
+                       value={addressData.address}
+                       onChange={e => setAddressData({...addressData, address: e.target.value})}
+                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 resize-none" 
+                       placeholder="Nama jalan, RT/RW, Patokan"
+                     />
+                   </div>
+
+                   {!isBookingTheme && (
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-700 mb-1">Kode Pos</label>
+                       <input 
+                         type="text"
+                         value={addressData.postalCode}
+                         onChange={e => setAddressData({...addressData, postalCode: e.target.value})} 
+                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
+                         placeholder="Misal: 12345"
+                       />
+                     </div>
+                   )}
+
+                   {isBookingTheme && (
+                     <>
+                       <div>
+                         <label className="block text-sm font-semibold text-gray-700 mb-1">Share Location (URL/Link Google Maps) *</label>
+                         <input 
+                           type="url"
+                           required
+                           value={addressData.shareLocation || ''}
+                           onChange={e => setAddressData({...addressData, shareLocation: e.target.value})} 
+                           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500" 
+                           placeholder="https://maps.google.com/..."
+                         />
+                       </div>
+                       <div>
+                         <label className="block text-sm font-semibold text-gray-700 mb-1">Catatan Pesanan / Keterangan (Opsional)</label>
+                         <textarea
+                           rows={2}
+                           value={(addressData as any).pack || ''}
+                           onChange={e => setAddressData({...addressData, pack: e.target.value})} 
+                           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 resize-none" 
+                           placeholder="Catatan untuk penjual"
+                         />
+                       </div>
+                     </>
+                   )}
+                </div>
               </div>
             </div>
             
-            <div className="p-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
-               <button 
-                 onClick={() => setIsAddressModalOpen(false)}
-                 className="px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 rounded-lg transition-colors border border-gray-300"
-               >
-                 Batal
-               </button>
-               <button 
-                 onClick={() => {
-                   if (!addressData.name || !addressData.phone || !addressData.address || !addressData.district || !addressData.village || !addressData.city || !addressData.province || (isBookingTheme && !addressData.shareLocation)) {
-                       alert(isBookingTheme ? 'Mohon lengkapi seluruh field yang wajib diisi termasuk Link Google Maps.' : 'Mohon lengkapi seluruh field yang wajib diisi.');
-                       return;
-                   }
-                   setIsAddressModalOpen(false);
-                 }}
-                 className="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
-               >
-                 Simpan
-               </button>
+            {/* Right Sidebar: Order Summary & Payment */}
+            <div className="w-full lg:w-96 xl:w-[400px] shrink-0 space-y-6">
+               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100">
+                    <h3 className="text-xl font-bold text-gray-900">Pesanan Anda</h3>
+                  </div>
+
+                  {/* Cart Items Summary */}
+                  <div className="p-6 bg-gray-50/50 border-b border-gray-100">
+                    <div className="space-y-4">
+                      {cart.map(item => (
+                        <div key={item.id} className="flex gap-4">
+                           <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg overflow-hidden shrink-0 flex items-center justify-center relative shadow-sm">
+                              {item.product.image || item.product.imageUrl ? (
+                                <img src={item.product.image || item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <ShoppingCart className="w-6 h-6 text-gray-300" />
+                              )}
+                              <div className="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                                {item.quantity}
+                              </div>
+                           </div>
+                           <div className="flex-1 min-w-0 flex flex-col justify-center">
+                             <div className="flex justify-between items-start gap-2">
+                               <h4 className="text-sm font-semibold text-gray-800 line-clamp-2">{item.product.name}</h4>
+                             </div>
+                             <div className="text-sm font-bold text-gray-900 mt-1">Rp {(item.product.price * item.quantity).toLocaleString('id-ID')}</div>
+                           </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-gray-200 space-y-3 font-semibold text-sm text-gray-600">
+                       <div className="flex justify-between">
+                         <span>Subtotal</span>
+                         <span className="text-gray-900">Rp {cartTotal.toLocaleString('id-ID')}</span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span>Pengiriman</span>
+                         <span className="text-gray-900 text-right">Sesuai Alamat</span>
+                       </div>
+                       <div className="flex justify-between text-lg font-bold text-indigo-700 pt-3 border-t border-gray-200">
+                         <span>Total</span>
+                         <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
+                       </div>
+                       {isDownPaymentApplied && (
+                         <div className="flex justify-between items-center text-sm font-bold text-indigo-700 bg-indigo-50 p-3 rounded-lg">
+                           <span>Down Payment (DP)</span>
+                           <span>Rp {paymentAmountToProcess.toLocaleString('id-ID')}</span>
+                         </div>
+                       )}
+                    </div>
+                  </div>
+
+                  {/* Booking Payment Options */}
+                  {isDownPaymentOptionAvailable && (
+                    <div className="p-6 border-b border-gray-100">
+                       <h4 className="font-bold text-gray-900 mb-4">Opsi Pembayaran Booking</h4>
+                       <div className="grid grid-cols-2 gap-3">
+                         <label className={`border flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer transition-colors text-center ${paymentType === 'dp' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                           <input type="radio" name="payment_type" className="sr-only" checked={paymentType === 'dp'} onChange={() => setPaymentType('dp')} />
+                           <span className="font-bold text-sm text-gray-900 mb-1 leading-tight">Down Payment</span>
+                           <span className="text-sm text-indigo-600 font-bold">Rp {downPaymentAmount.toLocaleString('id-ID')}</span>
+                         </label>
+                         <label className={`border flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer transition-colors text-center ${paymentType === 'full' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                           <input type="radio" name="payment_type" className="sr-only" checked={paymentType === 'full'} onChange={() => setPaymentType('full')} />
+                           <span className="font-bold text-sm text-gray-900 mb-1 leading-tight">Bayar Penuh</span>
+                           <span className="text-sm text-indigo-600 font-bold">Rp {cartTotal.toLocaleString('id-ID')}</span>
+                         </label>
+                       </div>
+                    </div>
+                  )}
+
+                  {/* Payment Options */}
+                  <div className="p-6">
+                     <h4 className="font-bold text-gray-900 mb-4">Metode Pembayaran</h4>
+                     <div className="space-y-3">
+                       <label className={`border flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-colors ${paymentMethod === 'whatsapp' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                         <div className="pt-0.5">
+                           <input 
+                             type="radio" 
+                             name="payment_method" 
+                             className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-600" 
+                             checked={paymentMethod === 'whatsapp'} 
+                             onChange={() => setPaymentMethod('whatsapp')} 
+                           />
+                         </div>
+                         <div>
+                           <div className="font-semibold text-gray-900 text-sm">WhatsApp / Langsung</div>
+                           {paymentMethod === 'whatsapp' && (
+                             <div className="text-xs text-gray-500 mt-1">Selesaikan pesanan dan konfirmasi lewat chat WhatsApp dengan toko.</div>
+                           )}
+                         </div>
+                       </label>
+
+                       {tenant?.paymentMethods?.manual?.isEnabled && tenant?.paymentMethods?.manual?.accounts?.length > 0 && (
+                         <label className={`border flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-colors ${paymentMethod === 'manual' ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                           <div className="pt-0.5">
+                             <input 
+                               type="radio" 
+                               name="payment_method" 
+                               className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-600" 
+                               checked={paymentMethod === 'manual'} 
+                               onChange={() => setPaymentMethod('manual')} 
+                             />
+                           </div>
+                           <div>
+                             <div className="font-semibold text-gray-900 text-sm">Transfer Bank Pribadi</div>
+                             {paymentMethod === 'manual' && (
+                               <div className="text-xs text-gray-500 mt-1">Lakukan transfer bank ke rekening yang dipilih di langkah berikutnya.</div>
+                             )}
+                           </div>
+                         </label>
+                       )}
+                     </div>
+
+                     <div className="mt-8 pt-6 border-t border-gray-100 text-xs text-gray-500 mb-6">
+                       Data pribadi Anda akan digunakan untuk memproses pesanan Anda, mendukung pengalaman Anda di situs web ini, dan tujuan lain yang wajar.
+                     </div>
+
+                     <button 
+                       onClick={() => {
+                          if (!addressData.name || !addressData.phone || !addressData.address || !addressData.district || !addressData.village || !addressData.city || !addressData.province || (isBookingTheme && !addressData.shareLocation)) {
+                             alert(isBookingTheme ? 'Mohon lengkapi seluruh field yang wajib diisi termasuk Link Google Maps.' : 'Mohon lengkapi seluruh field alamat yang wajib diisi.');
+                             return;
+                          }
+                          handlePlaceOrder();
+                       }}
+                       disabled={isSubmitting || cart.length === 0}
+                       className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 text-base flex justify-center items-center gap-2"
+                     >
+                       {isSubmitting ? 'Memproses...' : 'Buat pesanan'}
+                     </button>
+                  </div>
+               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }

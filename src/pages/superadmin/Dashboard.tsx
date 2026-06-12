@@ -31,11 +31,27 @@ export default function SuperAdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [tenantSnap, userSnap, invoiceSnap] = await Promise.all([
-          getDocs(query(collection(db, 'tenants'), orderBy('createdAt', 'desc'))),
-          getDocs(collection(db, 'users')),
-          getDocs(query(collection(db, 'finance_invoices'), orderBy('createdAt', 'desc'), limit(100)))
-        ]);
+        let tenantSnap, userSnap, invoiceSnap;
+        try {
+          tenantSnap = await getDocs(query(collection(db, 'tenants'), orderBy('createdAt', 'desc')));
+        } catch (e) {
+          handleFirestoreError(e, OperationType.GET, 'tenants', auth, profile);
+          throw e; // prevent execution
+        }
+        
+        userSnap = { docs: [] };
+        try {
+          userSnap = await getDocs(collection(db, 'users'));
+        } catch (e) {
+          console.error("Skipping users length count due to list permission error:", e);
+        }
+
+        try {
+          invoiceSnap = await getDocs(query(collection(db, 'finance_invoices'), orderBy('createdAt', 'desc'), limit(100)));
+        } catch (e) {
+          handleFirestoreError(e, OperationType.GET, 'finance_invoices', auth, profile);
+          throw e;
+        }
 
         const tenantData = tenantSnap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant));
         const userData = userSnap.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile));
