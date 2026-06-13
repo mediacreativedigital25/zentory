@@ -1,8 +1,10 @@
-import React from 'react';
-import { ShoppingCart, X, Trash2, Plus, Minus, MessageSquare } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { ShoppingCart, X, Trash2, Plus, Minus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { Tenant } from '../../types';
+import { useAuth } from '../../hooks/useAuth';
+import AuthPopup from '../auth/AuthPopup';
 
 interface MarketplaceCartDrawerProps {
   tenant: Tenant | null;
@@ -10,6 +12,18 @@ interface MarketplaceCartDrawerProps {
 
 export default function MarketplaceCartDrawer({ tenant }: MarketplaceCartDrawerProps) {
   const { cart, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, totalItems, cartTotal } = useCart();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
+
+  const handleCheckoutClick = () => {
+    if (!user || user.isAnonymous) {
+      setShowAuthPopup(true);
+    } else {
+      setIsCartOpen(false);
+      navigate(`/marketplace/${tenant?.slug}/checkout`);
+    }
+  };
 
   if (!isCartOpen) return null;
 
@@ -100,15 +114,26 @@ export default function MarketplaceCartDrawer({ tenant }: MarketplaceCartDrawerP
               <span className="text-xl font-bold text-gray-900">Rp {cartTotal.toLocaleString('id-ID')}</span>
             </div>
             
-            <Link 
-              to={`/marketplace/${tenant?.slug}/checkout`}
+            <button 
+              onClick={handleCheckoutClick}
               className="w-full bg-indigo-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
               Checkout Sekarang
-            </Link>
+            </button>
           </div>
         )}
       </div>
+
+      <AuthPopup 
+        isOpen={showAuthPopup} 
+        onClose={() => setShowAuthPopup(false)} 
+        tenant={tenant}
+        onSuccess={() => {
+          setShowAuthPopup(false);
+          setIsCartOpen(false);
+          navigate(`/marketplace/${tenant?.slug}/checkout`);
+        }}
+      />
     </>
   );
 }

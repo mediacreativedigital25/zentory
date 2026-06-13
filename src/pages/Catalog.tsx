@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import ConfirmModal from '../components/ConfirmModal';
+import AuthPopup from '../components/auth/AuthPopup';
 
 interface Coupon {
   id: string;
@@ -112,6 +113,7 @@ export default function Catalog() {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
   // Modal states
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -464,8 +466,8 @@ export default function Catalog() {
   };
 
   const handleCheckout = async () => {
-    if (!user) {
-      navigate(`/catalog/${tenantSlug}/auth`);
+    if (!user || user.isAnonymous) {
+      setShowAuthPopup(true);
       return;
     }
 
@@ -1354,6 +1356,15 @@ export default function Catalog() {
           </>
         )}
       </AnimatePresence>
+
+      <AuthPopup 
+        isOpen={showAuthPopup} 
+        onClose={() => setShowAuthPopup(false)} 
+        tenant={tenant}
+        onSuccess={() => {
+          setShowAuthPopup(false);
+        }}
+      />
     </div>
   );
 }
