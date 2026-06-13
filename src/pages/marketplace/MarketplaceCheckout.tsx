@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, MapPin, CreditCard, CheckCircle2, ChevronRight, Minus, Plus, Trash2, ArrowLeft, Tag, Gift, X, MessageSquare, Copy, CheckCheck } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, runTransaction } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db, auth } from '../../lib/firebase';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../hooks/useAuth';
 import { Tenant } from '../../types';
@@ -12,7 +12,7 @@ export default function MarketplaceCheckout() {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const navigate = useNavigate();
   const { cart, cartTotal, totalItems, updateQuantity, removeFromCart, clearCart, isCartOpen, setIsCartOpen } = useCart();
-  const { user, profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -31,6 +31,13 @@ export default function MarketplaceCheckout() {
     if (tenant?.catalogTheme === 'v1') return 'marketplace';
     return 'catalog';
   };
+
+  useEffect(() => {
+    if (!loading && (!user || user.isAnonymous)) {
+      const basePath = getBasePath();
+      navigate(`/${basePath}/${tenantSlug}/auth?redirect=${encodeURIComponent(`/${basePath}/${tenantSlug}/checkout`)}`);
+    }
+  }, [user, loading, navigate, tenantSlug, tenant]);
   
   // Form State
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -414,7 +421,7 @@ export default function MarketplaceCheckout() {
           totalItems,
           status: 'pending',
           type: 'catalog',
-          userId: profile?.uid || null,
+          userId: profile?.uid || auth.currentUser?.uid || null,
           createdAt: serverTimestamp(),
           date: serverTimestamp()
         });
@@ -429,6 +436,8 @@ export default function MarketplaceCheckout() {
             customerInfo: addressData,     
             invoiceNumber: generatedOrderNumber,
             totalAmount: cartTotal,
+            paymentType: isDownPaymentOptionAvailable ? paymentType : 'full',
+            paymentStatus: 'unpaid',
             downPaymentAmount: isDownPaymentApplied ? downPaymentAmount : 0,
             bookingDate: addressData.bookingDate || new Date().toISOString().split('T')[0],
             bookingTime: addressData.bookingTime || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }),
@@ -440,6 +449,7 @@ export default function MarketplaceCheckout() {
               quantity: item.quantity
             })),
             status: 'pending',
+            userId: profile?.uid || auth.currentUser?.uid || null,
             createdAt: serverTimestamp()
           });
         }
@@ -461,7 +471,7 @@ export default function MarketplaceCheckout() {
             log.qty,
             log.prev,
             log.curr,
-            profile?.uid || 'CUSTOMER',
+            profile?.uid || auth.currentUser?.uid || 'CUSTOMER',
             profile?.displayName || addressData.name || 'System',
             { id: finalOrderId, number: generatedOrderNumber },
             `Checkout Marketplace V1`
@@ -513,7 +523,7 @@ export default function MarketplaceCheckout() {
       setCurrentStep(4);
     } catch (error) {
       console.error('Error placing order:', error);
-      alert('Terjadi kesalahan saat membuat pesanan.');
+      alert(error instanceof Error ? error.message : 'Terjadi kesalahan saat membuat pesanan.');
     } finally {
       setIsSubmitting(false);
     }
@@ -557,6 +567,14 @@ export default function MarketplaceCheckout() {
       </div>
     </div>
   );
+
+  if (loading || !user || user.isAnonymous) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, getDoc } from 'firebase/firestore';
-import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { auth, db } from '../lib/firebase';
 import { LogIn, UserPlus, Mail, Lock, User, MapPin, ArrowLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -11,6 +11,8 @@ export default function CustomerAuth() {
   const { tenantSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect');
   const [mode, setMode] = useState<'login' | 'register'>(location.state?.mode || 'login');
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,7 +98,11 @@ export default function CustomerAuth() {
         }
       }
       const basePath = tenant?.catalogTheme === 'booking-v1' ? 'booking' : tenant?.catalogTheme === 'v1' ? 'marketplace' : 'catalog';
-      navigate(`/${basePath}/${tenantSlug}/dashboard`);
+      if (redirect) {
+        navigate(redirect);
+      } else {
+        navigate(`/${basePath}/${tenantSlug}/dashboard`);
+      }
     } catch (err: any) {
       setError('Email atau sandi salah.');
     } finally {
